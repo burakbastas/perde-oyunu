@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
 <title>Perde Macerası</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1f5e25">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Perde">
+
 <style>
   @font-face { font-family: Bravura; src: url(fonts/Bravura.woff) format("woff"); }
   * { box-sizing: border-box; }
@@ -49,7 +56,11 @@
   #imza { background: #1f5e25; color: #d6ecd0; text-align: center; font-size: 12px;
           padding: 4px 10px 8px; line-height: 1.4; }
   #imza b { color: #fff; }
+    #kur { background: #ffd54a; color: #3b2f2f; border: 0; border-radius: 20px; padding: 6px 10px;
+         font-weight: 800; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .adim { text-align: left; margin: 8px 0; padding: 8px 10px; background: #f1f7ee; border-radius: 8px; font-size: 15px; }
   @media (max-width: 400px) { #baslik { display: none; } }
+
 
   /* ---- OYUN ---- */
   #ekranOyun { background: #f6fbf2; }
@@ -118,6 +129,7 @@
   #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
            background: #222; color: #fff; padding: 10px 18px; border-radius: 20px; max-width: 90%;
            font-size: 14px; display: none; z-index: 30; text-align: center; }
+
 </style>
 </head>
 <body>
@@ -133,7 +145,9 @@
   <div id="ust">
     <div class="hap" id="yildizSayi">⭐ 0</div>
     <div id="baslik">PERDE MACERASI</div>
+        <button id="kur" style="display:none">📲 Yükle</button>
     <button id="ayar" title="İlerlemeyi sıfırla">⚙️</button>
+
     <button id="bilgi" title="Hakkında">ℹ️</button>
   </div>
   <div id="serit"><span id="unvan"></span><span id="seri"></span></div>
@@ -1083,6 +1097,56 @@ $('bilgi').onclick = function () {
 window.addEventListener('resize', function () {
   if ($('ekranHarita').classList.contains('acik')) haritaCiz(false);
 });
+// =====================================================
+// 12b) ANA EKRANA EKLE
+// =====================================================
+let KUR_OLAY = null;
+const KURULU = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+const MOBIL = IOS || /android/i.test(navigator.userAgent);
+if (!KURULU && MOBIL) $('kur').style.display = '';
+
+
+window.addEventListener('beforeinstallprompt', function (e) {
+  e.preventDefault();
+  KUR_OLAY = e;
+});
+window.addEventListener('appinstalled', function () {
+  $('kur').style.display = 'none';
+  toast('🎉 Uygulama ana ekrana eklendi!', 3000);
+});
+
+$('kur').onclick = function () {
+  if (KUR_OLAY) {
+    KUR_OLAY.prompt();
+    KUR_OLAY.userChoice.then(function () { KUR_OLAY = null; });
+    return;
+  }
+  const adimlar = IOS
+    ? '<div class="adim">1️⃣ <b>Safari</b> ile açtığından emin ol.</div>' +
+      '<div class="adim">2️⃣ Alttaki <b>Paylaş</b> düğmesine dokun (kareden yukarı ok çıkan simge).</div>' +
+      '<div class="adim">3️⃣ <b>Ana Ekrana Ekle</b> seçeneğini bul ve dokun.</div>' +
+      '<div class="adim">4️⃣ Sağ üstteki <b>Ekle</b> düğmesine bas.</div>'
+    : '<div class="adim">1️⃣ Tarayıcının sağ üstündeki <b>⋮</b> menüsünü aç.</div>' +
+      '<div class="adim">2️⃣ <b>Uygulamayı yükle</b> veya <b>Ana ekrana ekle</b> seçeneğine dokun.</div>' +
+      '<div class="adim">3️⃣ Çıkan pencerede onayla.</div>';
+  modalAc(
+    '<h2>📲 Ana ekrana ekle</h2>' +
+    '<p>Oyun uygulama gibi tek dokunuşla açılır.</p>' + adimlar +
+    '<button class="dugme" id="kurKapat">Tamam</button>'
+  );
+  $('kurKapat').onclick = modalKapat;
+};
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(function () {});
+}
+
+// =====================================================
+// 13) BAŞLAT
+// =====================================================
 
 // =====================================================
 // 13) BAŞLAT
