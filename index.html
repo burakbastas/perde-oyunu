@@ -1105,7 +1105,8 @@ const KURULU = window.matchMedia('(display-mode: standalone)').matches || window
 const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
             (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
-const MOBIL = IOS || /android/i.test(navigator.userAgent);
+const MOBIL = IOS || /android/i.test(navigator.userAgent) ||
+              (navigator.maxTouchPoints > 1 && window.matchMedia('(pointer: coarse)').matches);
 if (!KURULU && MOBIL) $('kur').style.display = '';
 
 
