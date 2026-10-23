@@ -129,6 +129,58 @@
   #toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
            background: #222; color: #fff; padding: 10px 18px; border-radius: 20px; max-width: 90%;
            font-size: 14px; display: none; z-index: 30; text-align: center; }
+/* ---- YOL SEÇİMİ + KOMA MACERASI ---- */
+#yolSatir { display: flex; gap: 6px; padding: 0 8px 8px; background: #1f5e25; }
+#kmUst { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #1f5e25; color: #fff; }
+#kmUst button, #kmCik { background: none; border: 0; color: #fff; font-size: 22px; cursor: pointer; }
+#kmBaslik { flex: 1; font-weight: 800; font-size: 14px; letter-spacing: .5px; }
+#kmListe { flex: 1; overflow-y: auto; padding: 14px; }
+.kmSev { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px; margin-bottom: 10px;
+         border: 2px solid #7bbf6a; border-radius: 12px; background: #fff; font-size: 15px;
+         font-weight: 700; text-align: left; cursor: pointer; font-family: inherit; }
+.kmSev.kilit { opacity: .45; cursor: default; }
+.kmSev .no { flex: 0 0 34px; height: 34px; border-radius: 50%; background: #46c35f; color: #fff;
+             display: flex; align-items: center; justify-content: center; }
+.kmSev.kilit .no { background: #6b8cae; }
+#kmIlerleme { flex: 1; height: 12px; background: rgba(0,0,0,.3); border-radius: 8px; overflow: hidden; }
+#kmDolgu { height: 100%; width: 0; background: #ffd54a; transition: width .3s; }
+#kmKalp { font-size: 18px; letter-spacing: 2px; white-space: nowrap; }
+#kmGovde { flex: 1; overflow-y: auto; padding: 14px; }
+#kmSoru { border: 1px solid #ddd; border-radius: 10px; width: 100%; max-width: 420px; margin: 0 auto 8px;
+          padding: 1rem; font-size: 1.6rem; font-weight: 700; background: #fff; text-align: center; }
+#kmSoru.glif { font-family: Bravura; font-size: 64px; line-height: 1.5; }
+#kmAlt { text-align: center; color: #555; margin-bottom: 14px; font-size: 15px; }
+#kmSiklar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 420px; margin: 0 auto; }
+#kmSiklar .sik { padding: 14px 6px; font-size: 17px; min-height: 58px; }
+#kmSiklar .sik.glif { font-family: Bravura; font-size: 44px; line-height: 1.4; min-height: 84px; }
+#kmSonuc { text-align: center; margin-top: 12px; font-size: 18px; min-height: 1.5em; font-weight: 600; }
+/* ---- 3 DALLI HARİTA ---- */
+#yolSatir { display: none; }
+#harita { overflow-x: hidden; }
+.dalBas { position: sticky; top: 0; z-index: 6; display: grid; grid-template-columns: repeat(3, 1fr);
+          gap: 6px; padding: 6px; background: linear-gradient(rgba(23,74,28,.95), rgba(23,74,28,0)); }
+.dalPill { background: rgba(0,0,0,.45); color: #fff; border-radius: 12px; padding: 5px 2px;
+           text-align: center; font-size: 12px; font-weight: 800; line-height: 1.25; cursor: pointer; }
+.dalPill small { color: #ffe9a8; font-weight: 700; font-size: 11px; }
+/* ---- DÖRTLÜ-BEŞLİ ---- */
+#dbUst { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: #1f5e25; color: #fff; }
+#dbCik { background: none; border: 0; color: #fff; font-size: 22px; cursor: pointer; }
+#dbIlerleme { flex: 1; height: 12px; background: rgba(0,0,0,.3); border-radius: 8px; overflow: hidden; }
+#dbDolgu { height: 100%; width: 0; background: #ffd54a; transition: width .3s; }
+#dbKalp { font-size: 18px; letter-spacing: 2px; white-space: nowrap; }
+#dbGovde { flex: 1; overflow-y: auto; padding: 14px; }
+#dbSoru { border: 1px solid #ddd; border-radius: 10px; width: 100%; max-width: 420px; margin: 0 auto 8px;
+          background: #fff; text-align: center; font-size: 1.5rem; font-weight: 700; padding: 1rem; }
+#dbSoru.porte { padding: 4px; }
+#dbSoru svg { display: block; width: 100%; height: auto; }
+#dbAlt { text-align: center; color: #555; margin-bottom: 14px; font-size: 15px; }
+#dbSiklar { margin: 0 auto; max-width: 420px; }
+#dbSiklar.adlar .sik { display: block; width: 100%; min-height: 54px; margin: .5rem 0; padding: .6rem; font-size: 17px; }
+#dbSiklar.portler { display: grid; grid-template-columns: 1fr; gap: 10px; }
+#dbSiklar.portler .sik { padding: 4px; margin: 0; background: #fff; }
+#dbSiklar.portler .sik svg { display: block; width: 100%; height: auto; pointer-events: none; }
+#dbSonuc { text-align: center; margin-top: 12px; font-size: 18px; min-height: 1.5em; font-weight: 600; }
+#dbSonuc small { display: block; font-size: 14px; font-weight: 600; color: #555; margin-top: 4px; }
 
 </style>
 </head>
@@ -157,6 +209,11 @@
     <button class="menubtn" id="zayifBtn">🎯 Zayıf</button>
     <button class="menubtn" id="gunBtn">📅 Günlük<span id="gunNokta"></span></button>
   </div>
+  <div id="yolSatir">
+    <button class="menubtn" id="komaBtn">🎼 Koma Macerası</button>
+    <button class="menubtn" id="dortluBtn">🎻 Dörtlü-Beşli</button>
+  </div>
+
   <div id="imza">Geliştiren: <b>Burak Baştaş</b> · OMÜ Türk Sanat Müziği</div>
 </div>
 
@@ -174,6 +231,44 @@
     <div id="ipucu"></div>
     <div id="siklar"></div>
     <div id="sonuc"></div>
+  </div>
+</div>
+<!-- KOMA MACERASI: SEVİYE LİSTESİ -->
+<div id="ekranKoma" class="ekran" style="background:#f6fbf2">
+  <div id="kmUst">
+    <button id="kmGeri">←</button>
+    <div id="kmBaslik">🎼 KOMA MACERASI</div>
+    <div class="hap" id="kmYildiz">⭐ 0</div>
+  </div>
+  <div id="kmListe"></div>
+</div>
+
+<!-- KOMA MACERASI: OYUN -->
+<div id="ekranKomaOyun" class="ekran" style="background:#f6fbf2">
+  <div id="kmUst">
+    <button id="kmCik">✕</button>
+    <div id="kmIlerleme"><div id="kmDolgu"></div></div>
+    <div id="kmKalp"></div>
+  </div>
+  <div id="kmGovde">
+    <div id="kmSoru"></div>
+    <div id="kmAlt"></div>
+    <div id="kmSiklar"></div>
+    <div id="kmSonuc"></div>
+  </div>
+</div>
+<!-- DÖRTLÜ-BEŞLİ: OYUN -->
+<div id="ekranDBOyun" class="ekran" style="background:#f6fbf2">
+  <div id="dbUst">
+    <button id="dbCik">✕</button>
+    <div id="dbIlerleme"><div id="dbDolgu"></div></div>
+    <div id="dbKalp"></div>
+  </div>
+  <div id="dbGovde">
+    <div id="dbSoru"></div>
+    <div id="dbAlt"></div>
+    <div id="dbSiklar"></div>
+    <div id="dbSonuc"></div>
   </div>
 </div>
 
@@ -525,7 +620,7 @@ function kapiToast(i) {
   }
 }
 
-function haritaCiz(kaydir) {
+function haritaCizEski(kaydir) {
   const ns = 'http://www.w3.org/2000/svg';
   const yol = $('yol'), harita = $('harita');
   const w = harita.clientWidth || 360;
@@ -1146,17 +1241,737 @@ if ('serviceWorker' in navigator) {
 }
 
 // =====================================================
-// 13) BAŞLAT
+// KOMA MACERASI
 // =====================================================
+const KM_ANAHTAR = 'komaMacerasiV1';
 
+const KM_VERI = [
+  { ad: 'Koma',           kod: 'F',         koma: [1],      isaret: 'k'  },
+  { ad: 'Bakiye',         kod: 'B',         koma: [4],      isaret: 'bk' },
+  { ad: 'Küçük Mücenneb', kod: 'S',         koma: [5],      isaret: 'km' },
+  { ad: 'Büyük Mücenneb', kod: 'K',         koma: [8],      isaret: 'bm' },
+  { ad: 'Tanini',         kod: 'T',         koma: [9],      cift: true   },
+  { ad: 'Artık İkili',    kod: 'A12 - A13', koma: [12, 13]               }
+];
+
+// h: KM_VERI sıra numaraları (0 Koma, 1 Bakiye, 2 Küçük, 3 Büyük, 4 Tanini, 5 Artık İkili)
+// agir: bakiye ve küçük mücenneb sembollerinin kaç kat sık çıkacağı
+const KM_TUM = ['adKoma', 'komaAd', 'adKod', 'kodAd'];
+const KM_SEVIYELER = [
+  { ad: 'Koma, Bakiye, Tanini: koma değerleri', h: [0,1,4],         t: ['adKoma','komaAd'], n: 6 },
+  { ad: 'Koma, Bakiye, Tanini: simge harfleri', h: [0,1,4],         t: ['adKod','kodAd'],   n: 6 },
+  { ad: 'Mücennebler eklendi: koma değerleri',  h: [0,1,2,3,4],     t: ['adKoma','komaAd'], n: 6 },
+  { ad: 'Mücennebler: simge harfleri',          h: [0,1,2,3,4],     t: ['adKod','kodAd'],   n: 6 },
+  { ad: 'Artık İkili eklendi: karışık',         h: [0,1,2,3,4,5],   t: KM_TUM,              n: 8, boss: true },
+  { ad: 'Diyez ve bemol: Koma, Bakiye',         h: [0,1],           t: ['simgeAd','adSimge','simgeKoma'], n: 8, agir: 2 },
+  { ad: 'Diyez ve bemol: dört aralık',          h: [0,1,2,3],       t: ['simgeAd','simgeKoma','adSimge','simgeKod'], n: 10, agir: 3 },
+  { ad: 'Diyez ve bemol: Tanini dahil',         h: [0,1,2,3,4],     t: ['simgeAd','simgeKoma','adSimge','simgeKod'], n: 10, agir: 3 },
+  { ad: 'Büyük final: her şey karışık',         h: [0,1,2,3,4,5],   t: KM_TUM.concat(['simgeAd','adSimge','simgeKoma','simgeKod']), n: 12, boss: true },
+  { ad: 'Simge → koma değeri',                  h: [0,1,2,3,4],     t: ['simgeKoma','simgeAd'],           n: 10, agir: 3 },
+  { ad: 'Simge → harf (F, B, S, K, T)',         h: [0,1,2,3,4],     t: ['simgeKod','simgeKoma'],          n: 10, agir: 3 },
+  { ad: 'Bakiye ve küçük mücenneb odağı',       h: [0,1,2,3,4],     t: ['simgeAd','simgeKoma','simgeKod','adSimge'], n: 12, agir: 6 },
+  { ad: 'Sembol finali: k, bk, km, bm, T',      h: [0,1,2,3,4],     t: ['simgeAd','simgeKoma','simgeKod','adSimge'], n: 14, agir: 4, boss: true }
+];
+
+// ---- Kayıt ----
+let KM_KAYIT = { yildiz: [] };
+try {
+  const k = JSON.parse(localStorage.getItem(KM_ANAHTAR));
+  if (k && Array.isArray(k.yildiz)) KM_KAYIT = k;
+} catch (e) {}
+function kmKaydet() { try { localStorage.setItem(KM_ANAHTAR, JSON.stringify(KM_KAYIT)); } catch (e) {} }
+function kmYildizOf(i) { return KM_KAYIT.yildiz[i] || 0; }
+function kmAcikMi(i) { return i === 0 || kmYildizOf(i - 1) > 0; }
+
+// ---- Semboller (dosyadaki DEGISTIRGE tablosunu kullanır) ----
+function kmIsaret(v, y) {
+  if (v.isaret) return DEGISTIRGE[y + v.isaret];
+  if (v.cift) return y === '+' ? 0xE263 : 0xE264;   // çift diyez / çift bemol
+  return null;
+}
+function kmSemboller(havuz) {
+  const L = [];
+  havuz.forEach(function (v) {
+    ['+', '-'].forEach(function (y) {
+      const kod = kmIsaret(v, y);
+      if (kod) {
+        const yon = y === '+' ? 'diyez' : 'bemol';
+        L.push({
+          key: v.ad + y,
+          ad: v.ad + (y === '+' ? ' Diyez' : ' Bemol'),
+          kisa: (v.isaret ? v.isaret : 'tanini') + ' ' + yon,   // k diyez, bk bemol, km diyez...
+          glif: String.fromCodePoint(kod),
+          koma: v.koma.join(' - '),
+          kod: v.kod,
+          agir: (v.isaret === 'bk' || v.isaret === 'km')        // bakiye ve küçük mücenneb
+        });
+      }
+    });
+  });
+  return L;
+}
+
+// ---- Soru üretimi ----
+function kmSoruUret(tip, havuz, agir) {
+  const q = {};
+  const kom = function (v) { return v.koma.join(' - '); };
+  if (tip === 'simgeAd' || tip === 'adSimge' || tip === 'simgeKoma' || tip === 'simgeKod') {
+    const pool = kmSemboller(havuz);
+    // Bakiye ve küçük mücenneb, "agir" kadar kat daha sık seçilir
+    const adaylar = [];
+    pool.forEach(function (x) {
+      const kat = x.agir ? (agir || 1) : 1;
+      for (let n = 0; n < kat; n++) adaylar.push(x);
+    });
+    const o = rastgele(adaylar);
+
+        if (tip === 'simgeAd') {
+      q.soru = o.glif; q.glifSoru = true; q.alt = 'Bu işaret hangi aralığı gösterir?';
+      q.dogru = { key: o.ad.replace(/ (Diyez|Bemol)$/, ''), label: o.ad.replace(/ (Diyez|Bemol)$/, '') };
+      q.pool = KM_VERI.map(function (v) { return { key: v.ad, label: v.ad }; });
+    } else if (tip === 'adSimge') {
+      q.soru = o.ad; q.alt = 'Hangi işaret?';
+      q.dogru = { key: o.key, glif: o.glif };
+      q.pool = pool.map(function (x) { return { key: x.key, glif: x.glif }; });
+    } else {
+
+      // Şıklar için bütün semboller kullanılır, böylece hep 4 farklı şık çıkar
+      const alan = tip === 'simgeKoma' ? 'koma' : 'kod';
+      const son = alan === 'koma' ? ' koma' : '';
+      const gorulen = {};
+      q.pool = [];
+      kmSemboller(KM_VERI.slice(0, 5)).forEach(function (x) {
+        if (!gorulen[x[alan]]) {
+          gorulen[x[alan]] = true;
+          q.pool.push({ key: x[alan], label: x[alan] + son });
+        }
+      });
+      q.soru = o.glif; q.glifSoru = true;
+      q.alt = alan === 'koma' ? 'Bu işaret kaç komadır?' : 'Bu işaretin simge harfi nedir?';
+      q.dogru = { key: o[alan], label: o[alan] + son };
+    }
+    return q;
+  }
+  const o = rastgele(havuz);
+  if (tip === 'adKoma') {
+    q.soru = o.ad; q.alt = 'Kaç komadır?';
+    q.dogru = { key: o.ad, label: kom(o) };
+    q.pool = havuz.map(function (v) { return { key: v.ad, label: kom(v) }; });
+  } else if (tip === 'komaAd') {
+    q.soru = kom(o) + ' koma'; q.alt = 'Hangi aralıktır?';
+    q.dogru = { key: o.ad, label: o.ad };
+    q.pool = havuz.map(function (v) { return { key: v.ad, label: v.ad }; });
+  } else if (tip === 'adKod') {
+    q.soru = o.ad; q.alt = 'Simgesi (harfi) nedir?';
+    q.dogru = { key: o.ad, label: o.kod };
+    q.pool = havuz.map(function (v) { return { key: v.ad, label: v.kod }; });
+  } else {
+    q.soru = o.kod; q.alt = 'Bu simge hangi aralığı gösterir?';
+    q.dogru = { key: o.ad, label: o.ad };
+    q.pool = havuz.map(function (v) { return { key: v.ad, label: v.ad }; });
+  }
+  return q;
+}
+
+// ---- Seviye listesi ----
+function kmAc() {
+  ekranAc('ekranKoma');
+  kmListeCiz();
+}
+function kmListeCiz() {
+  const kap = $('kmListe');
+  kap.innerHTML = '';
+  let toplam = 0;
+  KM_SEVIYELER.forEach(function (s, i) {
+    const y = kmYildizOf(i), acik = kmAcikMi(i);
+    toplam += y;
+    const b = document.createElement('button');
+    b.className = 'kmSev' + (acik ? '' : ' kilit');
+    b.innerHTML = '<span class="no">' + (acik ? (i + 1) : '🔒') + '</span>' +
+                  '<span style="flex:1">' + (s.boss ? '👑 ' : '') + s.ad + '</span>' +
+                  '<span style="color:#f6b800">' + (y ? '★'.repeat(y) + '☆'.repeat(3 - y) : '') + '</span>';
+    b.onclick = function () {
+      if (!acik) { toast('Önce önceki seviyeyi geç 🔒'); return; }
+      kmBaslat(i);
+    };
+    kap.appendChild(b);
+  });
+  $('kmYildiz').textContent = '⭐ ' + toplam;
+}
+
+// ---- Oyun ----
+let KM = null;
+function kmBaslat(i) {
+  const s = KM_SEVIYELER[i];
+  const havuz = s.h.map(function (x) { return KM_VERI[x]; });
+  const sorular = [];
+  let onceki = '';
+  for (let j = 0; j < s.n; j++) {
+    let q = null;
+    for (let d = 0; d < 6; d++) {
+      q = kmSoruUret(s.t[j % s.t.length], havuz, s.agir || 1);
+      if (q.soru !== onceki) break;
+    }
+    onceki = q.soru;
+    sorular.push(q);
+  }
+  KM = { i: i, sorular: sorular, k: 0, kalp: 3, hata: 0, dogru: 0, kilit: false, zaman: null };
+  ekranAc('ekranKomaOyun');
+  kmSoruGoster();
+}
+
+function kmSoruGoster() {
+  KM.kilit = false;
+  const q = KM.sorular[KM.k];
+  $('kmDolgu').style.width = (KM.k / KM.sorular.length * 100) + '%';
+  $('kmKalp').textContent = '❤️'.repeat(KM.kalp) + '🖤'.repeat(3 - KM.kalp);
+  const so = $('kmSoru');
+  so.textContent = q.soru;
+  so.className = q.glifSoru ? 'glif' : '';
+  $('kmAlt').textContent = q.alt;
+  $('kmSonuc').textContent = '';
+  $('kmSonuc').style.color = '';
+  const kap = $('kmSiklar');
+  kap.innerHTML = '';
+  const dis = karistir(q.pool.filter(function (x) { return x.key !== q.dogru.key; })).slice(0, 3);
+  const butonlar = [];
+  karistir([q.dogru].concat(dis)).forEach(function (x) {
+    const b = document.createElement('button');
+    b.className = 'sik' + (x.glif ? ' glif' : '');
+    b.textContent = x.glif || x.label;
+    b.onclick = function () {
+      if (KM.kilit) return;
+      KM.kilit = true;
+      butonlar.forEach(function (y) { y.btn.disabled = true; });
+      const dogruMu = x.key === q.dogru.key;
+      if (dogruMu) {
+        KM.dogru++;
+        b.classList.add('dogru');
+        $('kmSonuc').textContent = '✅ Doğru!';
+        $('kmSonuc').style.color = '#2c7a3f';
+      } else {
+        KM.hata++; KM.kalp--;
+        b.classList.add('yanlis');
+        butonlar.forEach(function (y) { if (y.key === q.dogru.key) y.btn.classList.add('dogru'); });
+        $('kmSonuc').textContent = '❌ Doğrusu işaretlendi';
+        $('kmSonuc').style.color = '#c53030';
+        $('kmKalp').textContent = '❤️'.repeat(KM.kalp) + '🖤'.repeat(3 - KM.kalp);
+      }
+      KM.zaman = setTimeout(function () {
+        if (KM.kalp <= 0) kmBitir(false);
+        else if (KM.k + 1 >= KM.sorular.length) kmBitir(true);
+        else { KM.k++; kmSoruGoster(); }
+      }, dogruMu ? 900 : 1700);
+    };
+    butonlar.push({ btn: b, key: x.key });
+    kap.appendChild(b);
+  });
+}
+
+function kmListeyeDon() {
+  modalKapat();
+  if (KM && KM.zaman) clearTimeout(KM.zaman);
+  ekranAc('ekranHarita');
+  haritaCiz(true, 1);
+}
+
+
+function kmBitir(basari) {
+  const i = KM.i;
+  $('kmDolgu').style.width = '100%';
+  if (!basari) {
+    modalAc(
+      '<h2>💔 Kalpler bitti</h2><p>' + KM.dogru + ' doğru cevap verdin. Bir daha dene!</p>' +
+      '<button class="dugme" id="kmTekrar">Tekrar dene</button>' +
+      '<button class="dugme gri" id="kmListeBtn">Seviye listesi</button>'
+    );
+    $('kmTekrar').onclick = function () { modalKapat(); kmBaslat(i); };
+    $('kmListeBtn').onclick = kmListeyeDon;
+    return;
+  }
+  const y = KM.hata === 0 ? 3 : (KM.hata === 1 ? 2 : 1);
+  KM_KAYIT.yildiz[i] = Math.max(kmYildizOf(i), y);
+  kmKaydet();
+  const sonrakiVar = i + 1 < KM_SEVIYELER.length;
+  modalAc(
+    '<h2>🎉 Seviye ' + (i + 1) + ' tamam!</h2>' + yildizDizi(y) +
+    '<p>' + KM.dogru + ' doğru · ' + KM.hata + ' hata</p>' +
+    (sonrakiVar ? '<button class="dugme" id="kmSonraki">Sonraki seviye</button>'
+                : '<p><b>Koma Macerası\'nı bitirdin! 🏆</b></p>') +
+    '<button class="dugme gri" id="kmTekrar">Tekrar oyna</button>' +
+    '<button class="dugme gri" id="kmListeBtn">Seviye listesi</button>'
+  );
+  if (sonrakiVar) $('kmSonraki').onclick = function () { modalKapat(); kmBaslat(i + 1); };
+  $('kmTekrar').onclick = function () { modalKapat(); kmBaslat(i); };
+  $('kmListeBtn').onclick = kmListeyeDon;
+}
+
+// ---- Düğmeler ----
+$('komaBtn').onclick = kmAc;
+$('dortluBtn').onclick = function () { toast('🎻 Dörtlü-Beşli Macerası hazırlanıyor.', 2500); };
+$('kmGeri').onclick = function () { ekranAc('ekranHarita'); haritaCiz(true); };
+$('kmCik').onclick = function () {
+  modalAc(
+    '<h2>Çıkmak istiyor musun?</h2><p>Bu turdaki ilerleme kaybolur.</p>' +
+    '<button class="dugme gri" id="kmDevam">Devam et</button>' +
+    '<button class="dugme" id="kmCikEvet" style="background:#e53e3e;box-shadow:0 4px 0 #a02020">Çık</button>'
+  );
+  $('kmDevam').onclick = modalKapat;
+  $('kmCikEvet').onclick = kmListeyeDon;
+};
 // =====================================================
-// 13) BAŞLAT
+// 3 DALLI HARİTA
 // =====================================================
+const DAL_ARALIK = 84, DAL_ALT = 150, DAL_UST = 130;
+const YAKINDA_SAYI = 4;
+
+function dalListesi() {
+  return [
+    { ad: '🎶 Perde', yol: ['#a8742f', '#e8c27a'], n: SEVIYELER.length,
+      yildiz: yildizOf, acik: acikMi,
+      boss: function (i) { return SEVIYELER[i].boss; },
+      git: function (i) { seviyeIntro(i); },
+      kilitMesaj: kapiToast,
+      biten: function () { return bitenSayi(); } },
+    { ad: '🎼 Koma', yol: ['#5b4bb0', '#b9b0f0'], n: KM_SEVIYELER.length,
+      yildiz: kmYildizOf, acik: kmAcikMi,
+      boss: function (i) { return !!KM_SEVIYELER[i].boss; },
+      git: function (i) { kmBaslat(i); },
+      kilitMesaj: function () { toast('Önce önceki seviyeyi geç 🔒'); },
+      biten: function () {
+        let c = 0;
+        KM_SEVIYELER.forEach(function (s, i) { if (kmYildizOf(i) > 0) c++; });
+        return c;
+      } },
+    { ad: '🎻 Dörtlü-Beşli', yol: ['#a8452f', '#f0a58f'], n: YAKINDA_SAYI, yakinda: true,
+      yildiz: function () { return 0; },
+      acik: function () { return false; },
+      boss: function () { return false; },
+      git: function () {},
+      kilitMesaj: function () { toast('🎻 Dörtlü-Beşli Macerası hazırlanıyor.', 2500); },
+      biten: function () { return 0; } }
+  ];
+}
+
+function haritaCiz(kaydir, hedefDal) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const yol = $('yol'), harita = $('harita');
+  const w = harita.clientWidth || 360;
+  const dallar = dalListesi();
+  const enUzun = Math.max.apply(null, dallar.map(function (d) { return d.n; }));
+  const H = DAL_UST + DAL_ALT + (enUzun - 1) * DAL_ARALIK;
+  yol.style.height = H + 'px';
+  yol.innerHTML = '';
+
+  const bas = { x: w / 2, y: H - 48 };
+  const hesap = dallar.map(function (d, b) {
+    const cx = w * (0.1667 + b * 0.3333), genlik = w * 0.055;
+    const pts = [];
+    for (let i = 0; i < d.n; i++) {
+      pts.push({ x: cx + genlik * Math.sin(i * 1.05 + b * 2), y: H - DAL_ALT - i * DAL_ARALIK });
+    }
+    let cur = d.n - 1;
+    for (let i = 0; i < d.n; i++) { if (d.yildiz(i) === 0) { cur = i; break; } }
+    return { pts: pts, cur: cur };
+  });
+
+  function dalaKaydir(b, yumusak) {
+    const y = hesap[b].pts[hesap[b].cur].y - harita.clientHeight / 2;
+    if (yumusak) harita.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    else harita.scrollTop = Math.max(0, y);
+  }
+
+  // Yapışık başlık
+  const ust = document.createElement('div');
+  ust.className = 'dalBas';
+  dallar.forEach(function (d, b) {
+    const p = document.createElement('div');
+    p.className = 'dalPill';
+    p.innerHTML = d.ad + '<br><small>' + (d.yakinda ? 'yakında' : d.biten() + ' / ' + d.n) + '</small>';
+    p.onclick = function () { dalaKaydir(b, true); };
+    ust.appendChild(p);
+  });
+  yol.appendChild(ust);
+
+  // Yollar
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('width', w); svg.setAttribute('height', H);
+  dallar.forEach(function (d, b) {
+    let dd = 'M ' + bas.x + ' ' + bas.y;
+    let a = bas;
+    hesap[b].pts.forEach(function (p) {
+      const ym = (a.y + p.y) / 2;
+      dd += ' C ' + a.x + ' ' + ym + ', ' + p.x + ' ' + ym + ', ' + p.x + ' ' + p.y;
+      a = p;
+    });
+    [[d.yol[0], 24], [d.yol[1], 16]].forEach(function (c) {
+      const p = document.createElementNS(ns, 'path');
+      p.setAttribute('d', dd); p.setAttribute('fill', 'none');
+      p.setAttribute('stroke', c[0]); p.setAttribute('stroke-width', c[1]);
+      p.setAttribute('stroke-linecap', 'round');
+      if (d.yakinda) p.setAttribute('opacity', '.55');
+      svg.appendChild(p);
+    });
+  });
+  yol.appendChild(svg);
+
+  // Süsler (dalların arasındaki boşluklara)
+  const susler = ['🌳', '🌲', '🌿', '🌸', '🍄', '🪨'];
+  for (let i = 0; i < enUzun; i += 2) {
+    const el = document.createElement('div');
+    el.className = 'suslu';
+    el.style.fontSize = '22px';
+    el.textContent = susler[i % susler.length];
+    el.style.left = (w * (i % 4 === 0 ? 0.333 : 0.667) - 11) + 'px';
+    el.style.top = (H - DAL_ALT - i * DAL_ARALIK + 40) + 'px';
+    yol.appendChild(el);
+  }
+
+  // Başlangıç düğümü
+  const bs = document.createElement('div');
+  bs.className = 'dugum';
+  bs.style.width = bs.style.height = '46px';
+  bs.style.left = (bas.x - 23) + 'px';
+  bs.style.top = (bas.y - 23) + 'px';
+  bs.style.background = '#ffd54a';
+  bs.style.borderColor = '#c9a300';
+  bs.style.cursor = 'default';
+  bs.textContent = '🏁';
+  yol.appendChild(bs);
+
+  // Seviye düğümleri
+  dallar.forEach(function (d, b) {
+    hesap[b].pts.forEach(function (p, i) {
+      const boss = d.boss(i), boyut = boss ? 58 : 50;
+      const acik = d.acik(i), bitti = d.yildiz(i) > 0;
+      const el = document.createElement('div');
+      el.className = 'dugum ' + (bitti ? 'bitti' : (acik ? 'simdi' : 'kilit')) + (boss ? ' boss' : '');
+      el.style.width = el.style.height = boyut + 'px';
+      el.style.left = (p.x - boyut / 2) + 'px';
+      el.style.top = (p.y - boyut / 2) + 'px';
+      el.style.fontSize = '18px';
+      el.textContent = acik ? (i + 1) : '🔒';
+      if (boss) {
+        const t = document.createElement('div');
+        t.className = 'tac'; t.textContent = '👑';
+        el.appendChild(t);
+      }
+      el.onclick = function () {
+        if (!d.acik(i)) { d.kilitMesaj(i); return; }
+        d.git(i);
+      };
+      yol.appendChild(el);
+
+      if (bitti) {
+        const y = document.createElement('div');
+        y.className = 'yildizlar';
+        y.style.left = (p.x - 35) + 'px';
+        y.style.top = (p.y + boyut / 2 + 1) + 'px';
+        y.style.color = '#ffd54a';
+        y.textContent = '★'.repeat(d.yildiz(i)) + '☆'.repeat(3 - d.yildiz(i));
+        yol.appendChild(y);
+      }
+    });
+
+    if (d.yakinda) {
+      const son = hesap[b].pts[d.n - 1];
+      const t = document.createElement('div');
+      t.className = 'tabela';
+      t.textContent = '🚧 YAKINDA';
+      t.style.left = son.x + 'px';
+      t.style.top = (son.y - 62) + 'px';
+      t.style.transform = 'translateX(-50%)';
+      yol.appendChild(t);
+    }
+  });
+
+  seritYaz();
+  if (kaydir) dalaKaydir(hedefDal || 0, false);
+}
+// =====================================================
+// DÖRTLÜ-BEŞLİ MACERASI
+// =====================================================
+const DB_ANAHTAR = 'dortluBesliV1';
+
+// [ad, tür, karar sesi, formül, notalar (Nota + oktav + işaret)]
+const DB_HAM = [
+  ['Çargâh Beşlisi',   'Beşli',  'Çargâh', 'TTBT', 'Do5 Re5 Mi5 Fa5 Sol5'],
+  ['Buselik Beşlisi',  'Beşli',  'Dügâh',  'TBTT', 'La4 Si4 Do5 Re5 Mi5'],
+  ['Kürdi Beşlisi',    'Beşli',  'Dügâh',  'BTTT', 'La4 Si4-km Do5 Re5 Mi5'],
+  ['Rast Beşlisi',     'Beşli',  'Rast',   'TKST', 'Sol4 La4 Si4-k Do5 Re5'],
+  ['Hüseyni Beşlisi',  'Beşli',  'Dügâh',  'KSTT', 'La4 Si4-k Do5 Re5 Mi5'],
+  ['Hicaz Beşlisi',    'Beşli',  'Dügâh',  'SAST', 'La4 Si4-bk Do5+bk Re5 Mi5'],
+  ['Uşşak Dörtlüsü',   'Dörtlü', 'Dügâh',  'KST',  'La4 Si4-k Do5 Re5'],
+  ['Saba Dörtlüsü',    'Dörtlü', 'Dügâh',  'KSS',  'La4 Si4-k Do5 Re5-bk'],
+  ['Segâh Dörtlüsü',   'Dörtlü', 'Segâh',  'STK',  'Si4-k Do5 Re5 Mi5-k'],
+  ['Segâh Beşlisi',    'Beşli',  'Segâh',  'STKT', 'Si4-k Do5 Re5 Mi5-k Fa5+bk'],
+  ['Müstear Dörtlüsü', 'Dörtlü', 'Segâh',  'TSK',  'Si4-k Do5+bk Re5 Mi5-k'],
+  ['Müstear Beşlisi',  'Beşli',  'Segâh',  'TSKT', 'Si4-k Do5+bk Re5 Mi5-k Fa5+bk'],
+  ['Hüzzam Beşlisi',   'Beşli',  'Segâh',  'STSA', 'Si4-k Do5 Re5 Mi5-bk Fa5+bk'],
+  ['Nikriz Beşlisi',   'Beşli',  'Rast',   'TSAS', 'Sol4 La4 Si4-bk Do5+bk Re5'],
+  ['Ferahnâk Beşlisi', 'Beşli',  'Irak',   'STTK', 'Fa4+bk Sol4 La4 Si4 Do5+bk']
+];
+const DB_KOD = { 1: 'F', 4: 'B', 5: 'S', 8: 'K', 9: 'T', 12: 'A', 13: 'A' };
+const DB_KARARLAR = ['Rast', 'Dügâh', 'Segâh', 'Çargâh', 'Irak', 'Neva', 'Hüseyni', 'Bûselik'];
+
+const DB_VERI = DB_HAM.map(function (r) {
+  const notalar = r[4].split(' ').map(function (t) {
+    const m = /^(Do|Re|Mi|Fa|Sol|La|Si)(\d)(?:([+-])(k|bk|km|bm))?$/.exec(t);
+    if (!m) throw new Error('Dörtlü-Beşli nota okunamadı: ' + t);
+    const harf = m[1].toLowerCase(), okt = +m[2], isaret = m[3] || null, tur = m[4] || null;
+    let koma = okt * 53 + KOMA_TABAN[harf];
+    if (isaret) koma += (isaret === '+' ? 1 : -1) * KOMA_DEGER[tur];
+    return { harf: harf, oktav: okt, isaret: isaret, tur: tur, koma: koma };
+  });
+  let turet = '';
+  for (let i = 1; i < notalar.length; i++) turet += DB_KOD[notalar[i].koma - notalar[i - 1].koma] || '?';
+  if (turet !== r[3]) hataYaz('Dörtlü-Beşli uyuşmazlık: ' + r[0] + ' formül ' + r[3] + ' ama notalardan ' + turet + ' çıktı');
+  return { ad: r[0], tur: r[1], karar: r[2], formul: r[3], notalar: notalar };
+});
+
+// Seviyeler (h: DB_VERI sıra numaraları)
+const DB_PORTE = ['portAd', 'adPort'];
+const DB_FORM  = ['formulAd', 'adFormul'];
+const DB_HEPSI = ['portAd', 'adPort', 'formulAd', 'adFormul', 'adKarar'];
+const DB_SEVIYELER = [
+  { ad: 'Çargâh, Buselik, Kürdi, Rast: porte ve ad', h: [0,1,2,3],                     t: DB_PORTE,                          n: 6 },
+  { ad: 'Aynı beşliler: aralık formülleri',          h: [0,1,2,3],                     t: DB_FORM,                           n: 6 },
+  { ad: 'Hüseyni ve Hicaz eklendi',                  h: [0,1,2,3,4,5],                 t: DB_PORTE,                          n: 7 },
+  { ad: 'Karar sesi ve formüller',                   h: [0,1,2,3,4,5],                 t: ['adKarar','formulAd','adFormul'], n: 7 },
+  { ad: 'Uşşak dörtlüsü: karışık',                   h: [0,1,2,3,4,5,6],               t: DB_HEPSI,                          n: 8, boss: true },
+  { ad: 'İleri: dörtlüler',                          h: [6,7,8,10],                    t: DB_HEPSI,                          n: 8 },
+  { ad: 'İleri: beşliler, porte ve ad',              h: [9,11,12,13,14],               t: DB_PORTE,                          n: 8 },
+  { ad: 'İleri: beşliler, formül ve karar sesi',     h: [9,11,12,13,14],               t: ['formulAd','adFormul','adKarar'], n: 8 },
+  { ad: 'Büyük final: tüm dörtlü ve beşliler',       h: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14], t: DB_HEPSI,                   n: 12, boss: true }
+];
+
+// ---- Kayıt ----
+let DB_KAYIT = { yildiz: [] };
+try {
+  const k = JSON.parse(localStorage.getItem(DB_ANAHTAR));
+  if (k && Array.isArray(k.yildiz)) DB_KAYIT = k;
+} catch (e) {}
+function dbKaydet() { try { localStorage.setItem(DB_ANAHTAR, JSON.stringify(DB_KAYIT)); } catch (e) {} }
+function dbYildizOf(i) { return DB_KAYIT.yildiz[i] || 0; }
+function dbAcikMi(i) { return i === 0 || dbYildizOf(i - 1) > 0; }
+
+// ---- Porte çizimi (çok notalı) ----
+function dbNotaCiz(kutu, notalar) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 280 140');
+  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  function cizgi(x1, x2, y) {
+    const l = document.createElementNS(ns, 'line');
+    l.setAttribute('x1', x1); l.setAttribute('x2', x2);
+    l.setAttribute('y1', y);  l.setAttribute('y2', y);
+    l.setAttribute('stroke', '#333');
+    svg.appendChild(l);
+  }
+  function glif(kod, x, y) {
+    const t = document.createElementNS(ns, 'text');
+    t.setAttribute('x', x); t.setAttribute('y', y);
+    t.setAttribute('font-family', 'Bravura');
+    t.setAttribute('font-size', 40);
+    t.setAttribute('text-anchor', 'middle');
+    t.textContent = String.fromCodePoint(kod);
+    svg.appendChild(t);
+  }
+  for (let i = 0; i < 5; i++) cizgi(0, 280, 50 + i * 10);
+  glif(SOL_ANAHTARI, 22, 80);
+  const bas = notalar.length === 4 ? 91 : 70;
+  notalar.forEach(function (p, i) {
+    const nx = bas + i * 42, ax = nx - 17;
+    const y = ALT_CIZGI_Y - ((p.oktav * 7 + HARF_SIRASI[p.harf]) - 30) * 5;
+    for (let yl = 40; yl >= y - 0.1; yl -= 10) cizgi(nx - 9, nx + 9, yl);
+    for (let yl = 100; yl <= y + 0.1; yl += 10) cizgi(nx - 9, nx + 9, yl);
+    if (p.isaret) glif(DEGISTIRGE[p.isaret + p.tur], ax, y);
+    glif(NOTA_BASI, nx, y);
+  });
+  kutu.innerHTML = '';
+  kutu.appendChild(svg);
+}
+
+// ---- Soru üretimi ----
+function dbSoruUret(tip, havuz) {
+  const o = rastgele(havuz);
+  const q = { bilgi: o.ad + ' · ' + o.formul + ' · karar sesi: ' + o.karar };
+  // Aynı uzunluktaki yapılar önce gelir (çeldirici benzerliği)
+  const benzer = karistir(havuz.filter(function (x) { return x !== o; }))
+    .sort(function (a, b) {
+      return (a.notalar.length === o.notalar.length ? 0 : 1) - (b.notalar.length === o.notalar.length ? 0 : 1);
+    });
+  const dogruAd = { key: o.ad, label: o.ad };
+
+  if (tip === 'portAd') {
+    q.nota = o.notalar; q.alt = 'Bu porte hangi dörtlü ya da beşlidir?';
+    q.dogru = dogruAd;
+    q.pool = benzer.map(function (x) { return { key: x.ad, label: x.ad }; });
+  } else if (tip === 'adPort') {
+    q.soru = o.ad; q.alt = 'Hangi porte doğrudur?'; q.portSik = true;
+    q.dogru = { key: o.ad, nota: o.notalar };
+    q.pool = benzer.map(function (x) { return { key: x.ad, nota: x.notalar }; });
+  } else if (tip === 'formulAd') {
+    q.soru = o.formul; q.alt = 'Bu aralık formülü hangi dörtlü ya da beşliye aittir?';
+    q.dogru = dogruAd;
+    q.pool = benzer.map(function (x) { return { key: x.ad, label: x.ad }; });
+  } else if (tip === 'adFormul') {
+    q.soru = o.ad; q.alt = 'Aralık formülü nedir?';
+    q.dogru = { key: o.formul, label: o.formul };
+    q.pool = benzer.map(function (x) { return { key: x.formul, label: x.formul }; });
+  } else {
+    q.soru = o.ad; q.alt = 'Karar sesi (yeri) nedir?';
+    q.dogru = { key: o.karar, label: o.karar };
+    q.pool = karistir(DB_KARARLAR).map(function (x) { return { key: x, label: x }; });
+  }
+  return q;
+}
+
+// ---- Oyun ----
+let DB = null;
+function dbBaslat(i) {
+  const s = DB_SEVIYELER[i];
+  const havuz = s.h.map(function (x) { return DB_VERI[x]; });
+  const sorular = [];
+  let onceki = '';
+  for (let j = 0; j < s.n; j++) {
+    let q = null;
+    for (let d = 0; d < 8; d++) {
+      q = dbSoruUret(s.t[j % s.t.length], havuz);
+      if (q.dogru.key !== onceki) break;
+    }
+    onceki = q.dogru.key;
+    sorular.push(q);
+  }
+  DB = { i: i, sorular: sorular, k: 0, kalp: 3, hata: 0, dogru: 0, kilit: false, zaman: null };
+  ekranAc('ekranDBOyun');
+  dbSoruGoster();
+}
+
+function dbKalpYaz() { $('dbKalp').textContent = '❤️'.repeat(DB.kalp) + '🖤'.repeat(3 - DB.kalp); }
+
+function dbSoruGoster() {
+  DB.kilit = false;
+  const q = DB.sorular[DB.k];
+  $('dbDolgu').style.width = (DB.k / DB.sorular.length * 100) + '%';
+  dbKalpYaz();
+  const so = $('dbSoru');
+  if (q.nota) { so.className = 'porte'; dbNotaCiz(so, q.nota); }
+  else { so.className = ''; so.textContent = q.soru; }
+  $('dbAlt').textContent = q.alt;
+  $('dbSonuc').innerHTML = '';
+  $('dbSonuc').style.color = '';
+  const kap = $('dbSiklar');
+  kap.className = q.portSik ? 'portler' : 'adlar';
+  kap.innerHTML = '';
+  const dis = q.pool.filter(function (x) { return x.key !== q.dogru.key; }).slice(0, 3);
+  const butonlar = [];
+  karistir([q.dogru].concat(dis)).forEach(function (x) {
+    const b = document.createElement('button');
+    b.className = 'sik';
+    if (x.nota) dbNotaCiz(b, x.nota); else b.textContent = x.label;
+    b.onclick = function () {
+      if (DB.kilit) return;
+      DB.kilit = true;
+      butonlar.forEach(function (y) { y.btn.disabled = true; });
+      const dogruMu = x.key === q.dogru.key;
+      if (dogruMu) {
+        DB.dogru++;
+        b.classList.add('dogru');
+        $('dbSonuc').innerHTML = '✅ Doğru!<small>' + q.bilgi + '</small>';
+        $('dbSonuc').style.color = '#2c7a3f';
+      } else {
+        DB.hata++; DB.kalp--;
+        b.classList.add('yanlis');
+        butonlar.forEach(function (y) { if (y.key === q.dogru.key) y.btn.classList.add('dogru'); });
+        $('dbSonuc').innerHTML = '❌ Doğrusu işaretlendi<small>' + q.bilgi + '</small>';
+        $('dbSonuc').style.color = '#c53030';
+        dbKalpYaz();
+      }
+      DB.zaman = setTimeout(function () {
+        if (DB.kalp <= 0) dbBitir(false);
+        else if (DB.k + 1 >= DB.sorular.length) dbBitir(true);
+        else { DB.k++; dbSoruGoster(); }
+      }, dogruMu ? 1500 : 2400);
+    };
+    butonlar.push({ btn: b, key: x.key });
+    kap.appendChild(b);
+  });
+}
+
+function dbHaritayaDon() {
+  modalKapat();
+  if (DB && DB.zaman) clearTimeout(DB.zaman);
+  ekranAc('ekranHarita');
+  haritaCiz(true, 2);
+}
+
+function dbBitir(basari) {
+  const i = DB.i;
+  $('dbDolgu').style.width = '100%';
+  if (!basari) {
+    modalAc(
+      '<h2>💔 Kalpler bitti</h2><p>' + DB.dogru + ' doğru cevap verdin. Bir daha dene!</p>' +
+      '<button class="dugme" id="dbTekrar">Tekrar dene</button>' +
+      '<button class="dugme gri" id="dbHarita">Harita</button>'
+    );
+    $('dbTekrar').onclick = function () { modalKapat(); dbBaslat(i); };
+    $('dbHarita').onclick = dbHaritayaDon;
+    return;
+  }
+  const y = DB.hata === 0 ? 3 : (DB.hata === 1 ? 2 : 1);
+  DB_KAYIT.yildiz[i] = Math.max(dbYildizOf(i), y);
+  dbKaydet();
+  const sonrakiVar = i + 1 < DB_SEVIYELER.length;
+  modalAc(
+    '<h2>🎉 Seviye ' + (i + 1) + ' tamam!</h2>' + yildizDizi(y) +
+    '<p>' + DB.dogru + ' doğru · ' + DB.hata + ' hata</p>' +
+    (sonrakiVar ? '<button class="dugme" id="dbSonraki">Sonraki seviye</button>'
+                : '<p><b>Dörtlü-Beşli Macerası\'nı bitirdin! 🏆</b></p>') +
+    '<button class="dugme gri" id="dbTekrar">Tekrar oyna</button>' +
+    '<button class="dugme gri" id="dbHarita">Harita</button>'
+  );
+  if (sonrakiVar) $('dbSonraki').onclick = function () { modalKapat(); dbBaslat(i + 1); };
+  $('dbTekrar').onclick = function () { modalKapat(); dbBaslat(i); };
+  $('dbHarita').onclick = dbHaritayaDon;
+}
+
+$('dbCik').onclick = function () {
+  modalAc(
+    '<h2>Çıkmak istiyor musun?</h2><p>Bu turdaki ilerleme kaybolur.</p>' +
+    '<button class="dugme gri" id="dbDevam">Devam et</button>' +
+    '<button class="dugme" id="dbCikEvet" style="background:#e53e3e;box-shadow:0 4px 0 #a02020">Çık</button>'
+  );
+  $('dbDevam').onclick = modalKapat;
+  $('dbCikEvet').onclick = dbHaritayaDon;
+};
+
+// ---- Haritadaki üçüncü dalı gerçek oyunla değiştir ----
+const dalListesiEski = dalListesi;
+dalListesi = function () {
+  const dallar = dalListesiEski();
+  dallar[2] = {
+    ad: '🎻 Dörtlü-Beşli', yol: ['#a8452f', '#f0a58f'], n: DB_SEVIYELER.length,
+    yildiz: dbYildizOf, acik: dbAcikMi,
+    boss: function (i) { return !!DB_SEVIYELER[i].boss; },
+    git: function (i) { dbBaslat(i); },
+    kilitMesaj: function () { toast('Önce önceki seviyeyi geç 🔒'); },
+    biten: function () {
+      let c = 0;
+      DB_SEVIYELER.forEach(function (s, i) { if (dbYildizOf(i) > 0) c++; });
+      return c;
+    }
+  };
+  return dallar;
+};
+
 try {
   haritaCiz(true);
 } catch (e) {
   hataYaz('HATA: ' + e.message);
 }
 </script>
+<script data-goatcounter="https://perdeoyunu.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
 </body>
 </html>
