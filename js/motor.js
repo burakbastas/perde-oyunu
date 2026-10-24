@@ -280,7 +280,10 @@ function soruGoster() {
   const kontrol = $('oyKontrol');
   kontrol.hidden = true;
 
-  if (veri.tip === 'secim') secimCiz(alan, veri, q);
+  if (veri.tip === 'secim') {
+    secimCiz(alan, veri, q);
+    if (TUR.k === 0) alan.appendChild(h('p', { class: 'tusIpucu', html: 'Klavye: <kbd>1</kbd>–<kbd>' + Math.min(9, q.butonlar.length) + '</kbd> seç · <kbd>Enter</kbd> devam · <kbd>Esc</kbd> çık' }));
+  }
   else if (veri.tip === 'yer') yerCiz(alan, veri, q, kontrol);
   else if (veri.tip === 'dizi') diziCiz(alan, veri, q, kontrol);
 
@@ -440,12 +443,70 @@ function cevapla(dogru, ozelMesaj, dogruGorsel) {
   }
   const devam = $('oyDevam');
   devam.textContent = 'Devam';
-  devam.onclick = sonrakiSoru;
+  devam.onclick = devamEt;
+  q.cevapZamani = Date.now();
+  sh.scrollTop = 0;
   setTimeout(function () { try { devam.focus({ preventScroll: true }); } catch (e) {} }, 50);
+
+  // Doğru cevapta otomatik geçiş (Ayarlar'dan kapatılabilir).
+  // Şık sorusu: kısa. Porteye yazma, dizme ve hesaplı açıklamalar: açıklamanın uzunluğuna göre birkaç saniye.
+  if (dogru && DURUM.ayar.otoGec !== false) {
+    const acik = veri.aciklama || '';
+    const hesapSatir = (acik.match(/<li/g) || []).length;
+    const uzun = veri.tip !== 'secim' || acik.indexOf('class="hesap') >= 0;
+    otoBaslat(uzun ? Math.min(9000, 3500 + hesapSatir * 700) : 1200);
+  }
+}
+
+// ---------- Otomatik geçiş ----------
+let OTO_ZAMAN = null;
+function otoBaslat(ms) {
+  otoIptal();
+  const d = $('oyDevam');
+  d.style.setProperty('--sure', ms + 'ms');
+  void d.offsetWidth;            // animasyonu baştan başlat
+  d.classList.add('dolan');
+  OTO_ZAMAN = setTimeout(function () {
+    OTO_ZAMAN = null;
+    if (!TUR || modalAcikMi()) { otoIptal(); return; }   // çıkış penceresi açıksa bekle
+    devamEt();
+  }, ms);
+}
+function otoIptal() {
+  if (OTO_ZAMAN) { clearTimeout(OTO_ZAMAN); OTO_ZAMAN = null; }
+  const d = $('oyDevam');
+  if (d) d.classList.remove('dolan');
+}
+// Tek kapı: düğme, Enter, ekrana dokunma ve zamanlayıcı buradan geçer; iki kez geçmez
+function devamEt() {
+  if (!TUR || !$('oyGeri').classList.contains('acik')) return;
+  otoIptal();
+  sonrakiSoru();
+}
+// Bildirim açıkken ekranın herhangi bir yerine dokunmak = Devam
+function ekranaDokunKur() {
+  const ekran = $('ekranOyun');
+  // Terim balonu açıkken yapılan dokunuş yalnızca balonu kapatsın, soruyu geçirmesin.
+  // (window yakalama aşaması, balonu kapatan document dinleyicisinden önce çalışır.)
+  let balonKapatiyor = false;
+  window.addEventListener('pointerdown', function () { balonKapatiyor = !!document.querySelector('.terimBalon'); }, true);
+  ekran.addEventListener('click', function (e) {
+    const geri = $('oyGeri');
+    if (!TUR || !TUR.q || !geri.classList.contains('acik')) return;
+    const t = e.target;
+    if (t.closest('.terim')) { otoIptal(); return; }              // terim okunuyor: bekle
+    if (balonKapatiyor) { balonKapatiyor = false; return; }
+    if (Date.now() - (TUR.q.cevapZamani || 0) < 400) return;     // cevabı veren dokunuş sayılmasın
+    if (t.closest('a, .terimBalon, .oyUst, #oyJoker, #oyDevam, #oyKontrol')) return;
+    devamEt();
+  });
+  // Açıklamayı kaydıran öğrenci okuyordur: otomatik geçişi durdur
+  $('oyGeri').addEventListener('scroll', function () { if (OTO_ZAMAN && Date.now() - (TUR && TUR.q ? TUR.q.cevapZamani : 0) > 300) otoIptal(); }, { passive: true });
 }
 
 function sonrakiSoru() {
   if (!TUR) return;
+  otoIptal();
   $('oyGeri').classList.remove('acik');
   if (TUR.kalpVar && TUR.kalpKalan <= 0) return turBitir(false);
   if (TUR.k + 1 >= TUR.sorular.length) return turBitir(true);
@@ -467,7 +528,7 @@ function turBitir(basari) {
 
 function turdanCik(sor) {
   if (!TUR) { anaEkranaDon(); return; }
-  if (!sor) { clearInterval(TUR.zaman); TUR = null; modalKapat(); anaEkranaDon(); return; }
+  if (!sor) { clearInterval(TUR.zaman); otoIptal(); TUR = null; modalKapat(); anaEkranaDon(); return; }
   modalAc(h('div', null,
     h('h2', null, 'Çıkmak istiyor musun?'),
     h('p', null, 'Bu turdaki ilerleme kaybolur.' + (TUR && TUR.jokerKullandi ? ' Harcadığın yıldızlar iade edilmez.' : '')),

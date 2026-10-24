@@ -13,6 +13,7 @@
   document.querySelectorAll('#altMenu button').forEach(function (b) {
     b.addEventListener('click', function () { if (b.dataset.sekme === 'yol' && SEKME === 'yol') YOL_FILTRE = null; sekmeAc(b.dataset.sekme); });
   });
+  ekranaDokunKur();
   $('oyCik').addEventListener('click', function () { turdanCik(TUR && TUR.tip !== 'rehber' && TUR.tip !== 'deneme'); });
   $('dersCik').addEventListener('click', function () { DERS = null; anaEkranaDon(); });
   $('dersIleri').addEventListener('click', dersIleri);

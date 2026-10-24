@@ -74,6 +74,12 @@ function rehberKonumla() {
   }
   const r = el.getBoundingClientRect(), pay = 6;
   R.isik.style.cssText = 'left:' + (r.left - pay) + 'px;top:' + (r.top - pay) + 'px;width:' + (r.width + 2 * pay) + 'px;height:' + (r.height + 2 * pay) + 'px';
+  // Bilgisayardaki sol menü gibi dar, kenardaki hedefler: balon sağa
+  if (r.right + 14 + bw < W - 12 && r.left < W * 0.25 && r.width < W * 0.3) {
+    b.style.left = (r.right + 18) + 'px';
+    b.style.top = Math.max(8, Math.min(H - b.offsetHeight - 8, r.top + r.height / 2 - b.offsetHeight / 2)) + 'px';
+    return;
+  }
   b.style.left = Math.max(12, Math.min(W - bw - 12, r.left + r.width / 2 - bw / 2)) + 'px';
   const alta = r.bottom + 14 + b.offsetHeight < H - 8;
   b.style.top = (alta ? r.bottom + 14 : Math.max(8, r.top - 14 - b.offsetHeight)) + 'px';

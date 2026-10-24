@@ -467,7 +467,7 @@ function profilCiz(g) {
   ].forEach(function (x) {
     liste.appendChild(h('button', { class: 'modul', type: 'button', onclick: x[2] }, h('span', { class: 'modulNo' }, x[0]), h('span', { class: 'modulAd' }, x[1]), h('span', { class: 'modulOk' }, '›')));
   });
-  if (!KURULU) liste.appendChild(h('button', { class: 'modul', type: 'button', onclick: kurulumYardim }, h('span', { class: 'modulNo' }, '📲'), h('span', { class: 'modulAd' }, 'Ana ekrana ekle'), h('span', { class: 'modulOk' }, '›')));
+  if (!KURULU) liste.appendChild(h('button', { class: 'modul', type: 'button', onclick: kurulumYardim }, h('span', { class: 'modulNo' }, '📲'), h('span', { class: 'modulAd' }, MOBIL ? 'Ana ekrana ekle' : 'Bilgisayara yükle'), h('span', { class: 'modulOk' }, '›')));
   g.appendChild(liste);
   g.appendChild(h('p', { class: 'imza' }, 'Geliştiren: ', h('b', null, 'Burak Baştaş'), ' · OMÜ Türk Sanat Müziği', h('br'), 'Sürüm ' + SURUM));
 }
@@ -492,6 +492,7 @@ function nasilOynanir() {
     '<p>🧭 <b>Meşk Yolu</b>: Koma, Perde, Göçürme, Dörtlü-Beşli ve Makam dallarının üniteleri önerilen sırayla dizilir. <b>Dallar</b> görünümünden istediğin dala geçebilirsin; dallar birbirini kilitlemez.</p>' +
     '<p>📖 <b>Ders</b>: her ünite kısa bir dersle ve ipuçlu bir ısınma turuyla başlar. Dersi atlayabilirsin ama önerilmez.</p>' +
     '<p>🔢 <b>Seviyeler</b>: tanıma soruları. ✍️ <b>Yerleştirme</b>: cevabı porteye kendin yazarsın ya da harfleri, parçaları sırayla dizersin. 👑 <b>Final</b>: geçince o dalda sonraki ünite açılır. 🎁 <b>Sandık</b>: ünitenin karışık tekrarı.</p>' +
+    '<p>⏩ Doğru cevaptan sonra oyun kısa bir süre bekleyip <b>kendiliğinden geçer</b>; açıklamayı okumak istersen kaydır ya da bir terime dokun, geçiş durur. Yanlış cevapta açıklama bekler: <b>ekranın herhangi bir yerine dokunarak</b> devam edebilirsin. Ayarlar’dan kapatılabilir.</p>' +
     '<p>❤️ Her seviyede 3 kalp var. 0 hata 3 ⭐, 1 hata 2 ⭐, daha fazlası 1 ⭐.</p>' +
     '<p>🃏 <b>Jokerler</b>: yıldızlarınla %50, ipucu, atla ve +kalp alabilirsin. Joker kullanınca o seviyeden en fazla 2 ⭐ alırsın.</p>' +
     '<p>⏩ <b>Biliyorum</b>: bir üniteyi zaten biliyorsan kısa bir sınavla geçebilirsin. 🏆 <b>Altınla</b>: bitirdiğin bir üniteyi süreli bir ustalık turuyla altına çevir.</p>' +
@@ -510,6 +511,10 @@ function hakkinda() {
 }
 function yenilikler() {
   sayfa('🆕 Yenilikler', h('div', { class: 'metinSayfa', html:
+    '<h3>Sürüm 2.3</h3><ul>' +
+    '<li>💻 <b>Tablet ve bilgisayar</b> görünümü: daha geniş ve okunaklı ekranlar; bilgisayarda menü solda.</li>' +
+    '<li>⏩ Doğru cevaptan sonra <b>otomatik geçiş</b>; yanlışta ekranın herhangi bir yerine dokunarak devam. Ayarlar’dan kapatılabilir.</li>' +
+    '<li>⌨️ Bilgisayarda <b>klavye</b>: 1–4 şık seçer, Enter kontrol eder ve devam eder, ← → derste kart çevirir, Esc kapatır.</li></ul>' +
     '<h3>Sürüm 2.2</h3><ul>' +
     '<li>🔁 Yeni <b>Göçürme</b> dalı: aralık adımlarından başlayıp dörtlü, beşli ve makam dizisi göçürmeye 5 ünite. Antrenman Tekrar sekmesinde de duruyor.</li></ul>' +
     '<h3>Sürüm 2.1</h3><ul>' +
@@ -583,10 +588,15 @@ function ayarlar() {
   const bati = h('label', { class: 'anahtar' },
     h('input', { type: 'checkbox', checked: !!DURUM.ayar.bati, onchange: function (e) { DURUM.ayar.bati = e.target.checked; kaydet(); } }),
     h('span', null, '🎹 Batı Teorisi ünitelerini Meşk Yolu’nda göster'));
+  const oto = h('label', { class: 'anahtar' },
+    h('input', { type: 'checkbox', checked: DURUM.ayar.otoGec !== false, onchange: function (e) { DURUM.ayar.otoGec = e.target.checked; kaydet(); } }),
+    h('span', null, '⏩ Doğru cevaplarda otomatik geç'));
   modalAc(h('div', null,
     h('h2', null, '⚙️ Ayarlar'),
     iletisimKarti(),
     h('h3', null, 'Tema'), tema,
+    h('h3', null, 'Oyun'), oto,
+    h('p', { class: 'kucukNot' }, 'Doğru cevaptan sonra kısa bir süre bekleyip sonraki soruya geçer. Yanlış cevapta açıklama her zaman bekler; ekranın herhangi bir yerine dokunarak geçebilirsin.'),
     h('h3', null, 'Meşk Yolu'), bati,
     h('h3', null, 'İlerleme'),
     h('p', { class: 'kucukNot' }, 'Sıfırlarsan bütün oyunlardaki yıldızlar, kartlar, tekrar listesi ve seri silinir. Önce yedek almanı öneririz.'),
@@ -642,10 +652,12 @@ function kurulumYardim() {
   if (KUR_OLAY) { KUR_OLAY.prompt(); KUR_OLAY.userChoice.then(function () { KUR_OLAY = null; }); return; }
   const adimlar = IOS
     ? ['<b>Safari</b> ile açtığından emin ol.', 'Alttaki <b>Paylaş</b> düğmesine dokun (kareden yukarı ok çıkan simge).', '<b>Ana Ekrana Ekle</b> seçeneğini bul ve dokun.', 'Sağ üstteki <b>Ekle</b> düğmesine bas.']
-    : ['Tarayıcının sağ üstündeki <b>⋮</b> menüsünü aç.', '<b>Uygulamayı yükle</b> veya <b>Ana ekrana ekle</b> seçeneğine dokun.', 'Çıkan pencerede onayla.'];
+    : MOBIL
+      ? ['Tarayıcının sağ üstündeki <b>⋮</b> menüsünü aç.', '<b>Uygulamayı yükle</b> veya <b>Ana ekrana ekle</b> seçeneğine dokun.', 'Çıkan pencerede onayla.']
+      : ['<b>Chrome</b> ya da <b>Edge</b>’de: adres çubuğunun sağındaki <b>yükle</b> simgesine tıkla ya da <b>⋮</b> menüsünden <b>Uygulamayı yükle</b>’yi seç.', '<b>Safari</b>’de (Mac): <b>Dosya → Dock’a Ekle</b>.', 'Seyir kendi penceresinde açılır; masaüstünden ya da başlat menüsünden tek tıkla başlatılır.'];
   modalAc(h('div', null,
-    h('h2', null, '📲 Ana ekrana ekle'),
-    h('p', null, 'Oyun uygulama gibi tek dokunuşla açılır. iPhone’da ana ekrana eklemek, tarayıcının ilerlemeni silmesini de önler.'),
+    h('h2', null, MOBIL ? '📲 Ana ekrana ekle' : '💻 Bilgisayara yükle'),
+    h('p', null, MOBIL ? 'Oyun uygulama gibi tek dokunuşla açılır. iPhone’da ana ekrana eklemek, tarayıcının ilerlemeni silmesini de önler.' : 'Oyun ayrı bir uygulama penceresinde açılır ve internetsiz de çalışır.'),
     adimlar.map(function (a, i) { return h('div', { class: 'adim', html: (i + 1) + '. ' + a }); }),
     dugme('Tamam', modalKapat)));
 }
@@ -721,3 +733,42 @@ GERI_ISLEYICI = function () {
   if (YOL_FILTRE) { YOL_FILTRE = null; sekmeAc('yol'); return true; }
   return false;
 };
+
+// =====================================================
+// KLAVYE (bilgisayar): 1–9 şık seç, Enter kontrol/devam, ← → ders, Esc geri
+// =====================================================
+document.addEventListener('keydown', function (e) {
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  const hedef = e.target;
+  if (hedef && (hedef.tagName === 'INPUT' || hedef.tagName === 'TEXTAREA' || hedef.isContentEditable)) return;
+  const k = e.key;
+  const tikla = function (el) { if (el && !el.hidden && !el.disabled) { e.preventDefault(); el.click(); return true; } return false; };
+
+  if (k === 'Escape') { e.preventDefault(); try { GERI_ISLEYICI(); } catch (x) {} return; }
+
+  // Bülbül rehberi
+  if (typeof rehberAcikMi === 'function' && rehberAcikMi()) {
+    if (k === 'Enter' || k === 'ArrowRight' || k === ' ') { e.preventDefault(); rehberIleri(); }
+    return;
+  }
+  if (modalAcikMi()) return;   // pencerelerde yalnızca Esc (yanlışlıkla onay olmasın)
+
+  if ($('ekranDers').classList.contains('acik')) {
+    if (k === 'ArrowRight' || k === 'Enter') tikla($('dersIleri'));
+    else if (k === 'ArrowLeft') tikla($('dersGeri'));
+    return;
+  }
+
+  if ($('ekranOyun').classList.contains('acik') && TUR && TUR.q) {
+    const geri = $('oyGeri');
+    if (k === 'Enter' || k === ' ') {
+      if (geri.classList.contains('acik')) tikla($('oyDevam'));
+      else tikla($('oyKontrol'));
+      return;
+    }
+    if (/^[1-9]$/.test(k) && !geri.classList.contains('acik')) {
+      const siklar = document.querySelectorAll('#oyGovde .siklar .sik');
+      tikla(siklar[Number(k) - 1]);
+    }
+  }
+});
