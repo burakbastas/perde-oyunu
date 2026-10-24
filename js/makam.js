@@ -334,7 +334,7 @@ function gocurmeSorusu(asama, tip, perdesiz) {
   return {
     oge: oge, tip: 'yer',
     soru: { metin: baslik, kucuk: true }, alt: perdesiz ? 'İlk ses verildi. Aynı aralıklarla kalan sesleri porteye kur' : 'İlk ses verildi. Göçürülmüş diziyi porteye kur',
-    yer: { slotlar: g.notalar.map(function (n, i) { return i === 0 ? { sabit: n } : {}; }), palet: 'aeu', beklenen: g.notalar },
+    yer: { slotlar: g.notalar.map(function (n, i) { return i === 0 ? { sabit: n } : {}; }), palet: 'aeu', beklenen: g.notalar, harfSirali: true },
     dogruMetin: g.notalar.map(function (n) { return perdesiz ? notaKisa(n) : KOMADAN_PERDE[komaOf(n)].ad; }).join(' – '),
     aciklama: aciklama, ipucu: 'Her ses bir sonraki harfe yazılır.'
   };

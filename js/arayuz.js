@@ -317,6 +317,8 @@ function ogrenCiz(g) {
   g.appendChild(liste);
   g.appendChild(h('button', { class: 'modul sozluk', type: 'button', onclick: sozlukAc },
     h('span', { class: 'modulNo' }, '📖'), h('span', { class: 'modulAd' }, 'Sözlük'), h('span', { class: 'modulOk' }, '›')));
+  g.appendChild(h('button', { class: 'modul sozluk', type: 'button', onclick: arkaPlanlar },
+    h('span', { class: 'modulNo' }, '🖼️'), h('span', { class: 'modulAd' }, 'Arka planlar: koma tablosu, perdeler'), h('span', { class: 'modulOk' }, '›')));
   g.appendChild(h('p', { class: 'kucukNot ortala' }, 'İpucu: derslerde ve açıklamalarda altı noktalı terimlere dokunursan sözlük açılır.'));
 }
 function modulAc(m) {
@@ -462,6 +464,7 @@ function profilCiz(g) {
     ['🆕', 'Yenilikler', yenilikler],
     ['💾', 'Yedekle / geri yükle', yedekSayfasi],
     ['⚙️', 'Ayarlar', ayarlar],
+    ['🖼️', 'Arka planlar (duvar kâğıdı)', arkaPlanlar],
     ['📤', 'Arkadaşına öner', paylas],
     ['🐦', 'Bülbülün rehberini yeniden göster', function () { sekmeAc('yol', false); rehberBaslat(); }]
   ].forEach(function (x) {
@@ -486,6 +489,34 @@ function istat(ikon, sayi, ad) { return h('div', { class: 'istat' }, h('span', n
 
 function sayfa(baslik, ic) {
   modalAc(h('div', { class: 'sayfaModal' }, h('h2', null, baslik), ic, dugme('Kapat', modalKapat, 'gri')), { genis: true });
+}
+// ---------- Arka planlar (duvar kâğıtları) ----------
+const ARKA_PLANLAR = [
+  { dosya: 'seyir-masaustu-4k', ad: 'Masaüstü (4K)', tur: 'masaustu', aciklama: 'Perdeler porte üzerinde, koma tablosu, temel dörtlü ve beşliler' },
+  { dosya: 'seyir-telefon-koma-tablosu', ad: 'Koma tablosu', tur: 'telefon', aciklama: 'AEU işaretleri, harfleri ve koma değerleri' },
+  { dosya: 'seyir-telefon-dortlu-besliler', ad: 'Dörtlü ve beşliler', tur: 'telefon', aciklama: 'Harf kodları ve koma değerleri' },
+  { dosya: 'seyir-telefon-perdeler', ad: 'Perdeler', tur: 'telefon', aciklama: 'Tam perdeler ve üstlerindeki ara perdeler' }
+];
+function arkaPlanlar() {
+  const kart = function (a) {
+    const yol = 'arkaplan/' + a.dosya + '.png';
+    return h('div', { class: 'arkaKart ' + a.tur },
+      h('a', { href: yol, target: '_blank', rel: 'noopener', class: 'arkaOnizleme' },
+        h('img', { src: 'arkaplan/kucuk-' + a.dosya + '.jpg', alt: a.ad, loading: 'lazy' })),
+      h('div', { class: 'arkaBilgi' },
+        h('b', null, a.ad), h('small', null, a.aciklama),
+        h('a', { class: 'dugme ince arkaIndir', href: yol, download: a.dosya + '.png', target: '_blank', rel: 'noopener' }, '⬇️ İndir')));
+  };
+  const telefonlar = h('div', { class: 'arkaTelefonlar' }, ARKA_PLANLAR.filter(function (a) { return a.tur === 'telefon'; }).map(kart));
+  sayfa('🖼️ Arka planlar', h('div', { class: 'metinSayfa' },
+    h('p', null, 'Perdeleri, koma işaretlerini ve dörtlü-beşlileri her gün gözünün önünde tut. Görseller ücretsiz; arkadaşlarınla da paylaşabilirsin, üzerlerindeki QR kod uygulamayı açar.'),
+    MOBIL ? [h('h3', null, '📱 Telefon'), telefonlar, h('h3', null, '💻 Bilgisayar'), kart(ARKA_PLANLAR[0])]
+          : [h('h3', null, '💻 Bilgisayar'), kart(ARKA_PLANLAR[0]), h('h3', null, '📱 Telefon'), telefonlar],
+    h('div', { class: 'adim', html: IOS
+      ? '<b>iPhone’da:</b> İndir’e dokun, görsel açılınca üzerine uzun bas → <b>Fotoğraflara Ekle</b>. Sonra Fotoğraflar’da görseli açıp paylaş simgesinden <b>Duvar Kâğıdı Olarak Kullan</b>’ı seç.'
+      : MOBIL
+        ? '<b>Android’de:</b> İndir’e dokun, görsel İndirilenler’e kaydedilir. Galeride açıp menüden <b>Duvar kağıdı olarak ayarla</b>’yı seç.'
+        : '<b>Bilgisayarda:</b> İndir’e tıkla. Windows’ta indirilen görsele sağ tıklayıp <b>Masaüstü arka planı olarak ayarla</b>’yı, Mac’te Sistem Ayarları → <b>Duvar Kâğıdı</b>’nı kullan.' })));
 }
 function nasilOynanir() {
   sayfa('❓ Nasıl oynanır', h('div', { class: 'metinSayfa', html:
@@ -512,6 +543,8 @@ function hakkinda() {
 function yenilikler() {
   sayfa('🆕 Yenilikler', h('div', { class: 'metinSayfa', html:
     '<h3>Sürüm 2.4</h3><ul>' +
+    '<li>🖼️ Yeni: <b>Arka planlar</b>. Koma tablosu, perdeler ve dörtlü-beşliler telefon ve bilgisayar duvar kâğıdı olarak indirilebiliyor (Öğren ya da Profil).</li>' +
+    '<li>🎵 Porteye yazarken sesi doğru ama başka harfle yazarsan (ör. Re küçük mücenneb diyezi yerine Mi bakiye bemolü) artık “Ses doğru, yazım farklı” der ve nedenini açıklar.</li>' +
     '<li>🔁 <b>Göçürme</b> yenilendi: perde adlarını bilmeden başlanıyor. Önce dörtlü, beşli ve makam dizisini aralık hesabıyla porteye kuruyorsun; arızalı seslerin perde adları cevaptan sonra dipnotta. Perde adları son ünitede geliyor. İlerlemen yeni ünitelere taşındı.</li></ul>' +
     '<h3>Sürüm 2.3</h3><ul>' +
     '<li>💻 <b>Tablet ve bilgisayar</b> görünümü: daha geniş ve okunaklı ekranlar; bilgisayarda menü solda.</li>' +

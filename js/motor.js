@@ -358,8 +358,33 @@ function yerCiz(alan, veri, q, kontrol) {
     const goster = kabul.find(function (k) { return esit(deger, k); }) || y.beklenen;
     bil.kilitle(y.sadeceAdim ? deger.map(function (n, i) { return adim(n) === adim(goster[i]) ? n : goster[i]; }) : goster);
     kontrol.hidden = true;
-    cevapla(dogru, null, dogru ? null : porteSVG({ notalar: y.beklenen, aralik: 40, etiketler: y.etiketler }));
+    const es = dogru || y.sadeceAdim ? null : esSesNotu(deger, y);
+    cevapla(dogru, es ? es.baslik : null, dogru ? null : porteSVG({ notalar: y.beklenen, aralik: 40, etiketler: y.etiketler }), es ? es.metin : null);
   };
+}
+// Yazılan sesler doğru ama bazıları aynı sesin öteki yazımıysa (ör. Re k.müc. diyezi = Mi bakiye bemolü): açıkla
+function esSesNotu(deger, y) {
+  const b = y.beklenen;
+  if (!b || deger.length !== b.length) return null;
+  const farkli = [];
+  for (let i = 0; i < b.length; i++) {
+    if (komaOf(deger[i]) !== komaOf(b[i])) return null;      // en az bir ses gerçekten yanlış
+    if (!notaEsit(deger[i], b[i])) farkli.push(i);
+  }
+  if (!farkli.length) return null;
+  const L = farkli.map(function (i) {
+    const p = KOMADAN_PERDE[komaOf(b[i])];
+    return 'Yazdığın <b>' + notaKisa(deger[i]) + '</b> ile <b>' + notaKisa(b[i]) + '</b> aynı ses' + (p ? ' (' + p.ad + ')' : '') + '.';
+  });
+  let neden;
+  if (y.harfSirali) {
+    const i = farkli[0];
+    const onceki = HARF_AD[b[i - 1] ? b[i - 1].h : b[i].h];
+    neden = 'Ama göçürmede her ses <b>bir sonraki harfe</b> yazılır: ' + onceki + ayrilmaEki(onceki) + ' sonra ' + HARF_AD[b[i].h] + ' gelir. Böylece dizinin aralıkları harflerden de okunur.';
+  } else {
+    neden = 'Bu soruda istenen yazım: <b>' + farkli.map(function (i) { return notaKisa(b[i]); }).join(', ') + '</b>.';
+  }
+  return { baslik: '🎵 Ses doğru, yazım farklı', metin: '<p>' + L.join(' ') + ' ' + neden + '</p>' };
 }
 
 function diziCiz(alan, veri, q, kontrol) {
@@ -407,7 +432,7 @@ function diziCiz(alan, veri, q, kontrol) {
 function ustBilgiYaz() { if (typeof ustYaz === 'function') ustYaz(); }
 
 const OVGU = ['Harika!', 'Aferin!', 'Çok iyi!', 'Tam isabet!', 'Maşallah!', 'Bravo!', 'Süper!'];
-function cevapla(dogru, ozelMesaj, dogruGorsel) {
+function cevapla(dogru, ozelMesaj, dogruGorsel, ekAciklama) {
   const q = TUR.q;
   if (q.cevaplandi && q.sonucVerildi) return;
   q.cevaplandi = true; q.sonucVerildi = true;
@@ -436,6 +461,7 @@ function cevapla(dogru, ozelMesaj, dogruGorsel) {
   ic.appendChild(h('div', { class: 'geriBaslik' },
     h('span', { class: 'geriMaskot', html: bulbulSVG(dogru ? 'mutlu' : 'uzgun') }),
     h('span', null, ozelMesaj || (dogru ? rastgele(OVGU) : 'Doğrusu: ' + (veri.dogruMetin || '')))));
+  if (ekAciklama) ic.appendChild(h('div', { class: 'geriAciklama esSes', html: ekAciklama }));
   if (dogruGorsel) ic.appendChild(h('div', { class: 'geriPorte' }, dogruGorsel));
   if (veri.aciklama) {
     const batiMi = (TUR.seviye && TUR.seviye.dal === 'bati') || (veri.oge && veri.oge.indexOf('b:') === 0);

@@ -1,7 +1,7 @@
 // Seyir service worker
 // Uygulama dosyaları: ağ öncelikli (3 sn zaman aşımı), olmazsa önbellek.
 // Yazı tipleri ve ikonlar: önbellek öncelikli.
-const SURUM = '2.4.0';
+const SURUM = '2.4.2';
 const CACHE = 'perde-' + SURUM;
 const DOSYALAR = [
   './', './index.html', './manifest.webmanifest?v=' + SURUM, './icon-192.png?v=' + SURUM, './icon-512.png?v=' + SURUM,
@@ -32,6 +32,7 @@ self.addEventListener('fetch', function (e) {
   if (r.method !== 'GET') return;
   const url = new URL(r.url);
   if (url.origin !== self.location.origin) return;          // sayaç vb. dış istekler önbelleğe alınmaz
+  if (url.pathname.indexOf('/arkaplan/') >= 0) return;      // büyük arka plan görselleri önbelleğe alınmaz
   const sabit = /\.(woff2?|png|svg)$/.test(url.pathname);
   if (sabit) {
     e.respondWith(caches.match(r).then(function (v) {
