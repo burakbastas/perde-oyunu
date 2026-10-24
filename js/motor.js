@@ -31,7 +31,8 @@ DAL_SIRA.forEach(function (d) {
 });
 
 // Önerilen sıra (Meşk Yolu). Batı Teorisi isteğe bağlı olarak araya karışır.
-const MESK_TR = ['km1', 'p1', 'km2', 'p2', 'g1', 'km3', 'g2', 'db1', 'db2', 'p3', 'db3', 'g3', 'db4', 'g4', 'mk1', 'p4', 'mk2', 'db5', 'mk3', 'g5', 'p5'];
+// Göçürme dörtlü-beşliler öğrenildikten sonra gelir; perde adları gerekmez
+const MESK_TR = ['km1', 'p1', 'km2', 'p2', 'km3', 'db1', 'db2', 'p3', 'db3', 'gc1', 'db4', 'gc2', 'mk1', 'p4', 'mk2', 'db5', 'mk3', 'gc3', 'gc4', 'p5'];
 const MESK_BATI_SONRA = { p1: 'b1', km2: 'b2', p2: 'b3', km3: 'b4', db1: 'b5', db2: 'b6', p3: 'b7', db3: 'b8', db4: 'b9', mk1: 'b10' };
 function meskSirasi() {
   const L = [];
@@ -82,7 +83,7 @@ const UNVANLAR = [
   { min: 9,  ad: 'Mûsikişinas',   yonelme: 'Mûsikişinas’a',    anlam: 'Mûsikiden anlayan',                   renk: '#d84a33' },
   { min: 13, ad: 'Müntehî',       yonelme: 'Müntehî’ye',       anlam: 'İleri seviyeye ulaşmış',              renk: '#15834f' },
   { min: 17, ad: 'Muallim',       yonelme: 'Muallim’e',        anlam: 'Meşk verebilecek bilgide',            renk: '#7647b3' },
-  { min: 21, ad: 'Üstad-ı Kâmil', yonelme: 'Üstad-ı Kâmil’e',  anlam: 'Bütün Türk müziği ünitelerini bitiren', renk: '#d9a520' }
+  { min: KOMA_UNITELER.length + PERDE_UNITELER.length + GOCURME_UNITELER.length + CESNI_UNITELER.length + MAKAM_UNITELER.length, ad: 'Üstad-ı Kâmil', yonelme: 'Üstad-ı Kâmil’e',  anlam: 'Bütün Türk müziği ünitelerini bitiren', renk: '#d9a520' }
 ];
 function unvanOf(n) { let u = UNVANLAR[0]; UNVANLAR.forEach(function (x) { if (n >= x.min) u = x; }); return u; }
 function unvan() { return unvanOf(bitenUniteSayisi(TR_DALLAR)); }

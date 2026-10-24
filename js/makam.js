@@ -256,8 +256,10 @@ const SIRA_AD = ['1.', '2.', '3.', '4.', '5.', '6.', '7.', '8.'];
 // Göçürme sonuçları sık kullanılan perdelerde (1–3. paket) kalsın
 const GOCURME_YAYGIN = {};
 PAKET.slice(0, 3).forEach(function (pk) { pk.forEach(function (ad) { GOCURME_YAYGIN[ad] = true; }); });
-function gocurmeBul(araliklar, orijinalYer) {
-  const adaylar = karistir(perdeler(GOCURME_BASLANGIC).filter(function (p) { return p.ad !== orijinalYer; }));
+// Perde adı sorulmayan ilk ünitelerde başlangıç sesi işaretsiz olsun (kolaydan zora)
+const GOCURME_BASLANGIC_TAM = ['Yegâh', 'Hüseyni Aşiran', 'Acem Aşiran', 'Rast', 'Dügâh', 'Bûselik', 'Çargâh', 'Neva', 'Hüseyni', 'Acem', 'Gerdâniye'];
+function gocurmeBul(araliklar, orijinalYer, baslangiclar) {
+  const adaylar = karistir(perdeler(baslangiclar || GOCURME_BASLANGIC).filter(function (p) { return p.ad !== orijinalYer; }));
   for (let i = 0; i < adaylar.length; i++) {
     const L = gocurPerde(araliklar, adaylar[i]);
     if (L && L.every(function (n) { return GOCURME_YAYGIN[KOMADAN_PERDE[komaOf(n)].ad]; })) return { perde: adaylar[i], notalar: L };
@@ -275,7 +277,8 @@ function yanlisYazim(notalar) {
   return L;
 }
 
-function gocurmeSorusu(asama, tip) {
+function gocurmeSorusu(asama, tip, perdesiz) {
+  if (Array.isArray(asama)) asama = rastgele(asama);
   let yapi, ad, yer, gucluIdx = null, oge = null;
   if (asama === 'makam') {
     const m = rastgele(MAKAMLAR);
@@ -284,13 +287,18 @@ function gocurmeSorusu(asama, tip) {
     const c = rastgele(cesniler(asama === 'dortlu' ? D_TEMEL : B_TEMEL));
     yapi = c.araliklar; ad = c.ad; yer = c.yer; oge = c.oge;
   }
-  const g = gocurmeBul(yapi, yer);
-  if (!g) return gocurmeSorusu(asama, tip);
+  const g = gocurmeBul(yapi, yer, perdesiz ? GOCURME_BASLANGIC_TAM : null);
+  if (!g) return gocurmeSorusu(asama, tip, perdesiz);
   const hedef = g.perde.ad;
-  const r = tip === 'perde' ? 0.1 : tip === 'porte' ? 0.5 : tip === 'kur' ? 0.9 : Math.random();
-  const aciklama = '<b>' + ad + '</b> ' + hedef + ' perdesinde: ' +
-    g.notalar.map(function (n) { return KOMADAN_PERDE[komaOf(n)].ad; }).join(' – ') +
-    gocurmeAdimlari(g.notalar);
+  // Perde adı sorulmayan kipte yalnızca "doğru yazım" ve "porteye kur" soruları
+  const r = tip === 'perde' ? 0.1 : tip === 'porte' ? 0.5 : tip === 'kur' ? 0.9 : (perdesiz ? 0.4 + Math.random() * 0.6 : Math.random());
+  const formul = formulMetni(yapi);
+  const aciklama = perdesiz
+    ? '<b>' + ad + '</b> (' + formul + '): ' + g.notalar.map(notaKisa).join(' – ') + gocurmeAdimlari(g.notalar, true) + arizaDipnotu(g.notalar)
+    : '<b>' + ad + '</b> ' + hedef + ' perdesinde: ' +
+      g.notalar.map(function (n) { return KOMADAN_PERDE[komaOf(n)].ad; }).join(' – ') +
+      gocurmeAdimlari(g.notalar);
+  const baslik = perdesiz ? ad + ' · ' + formul : ad + ' → ' + hedef;
   if (r < 0.4) {
     // n. ses hangi perde
     let i = gucluIdx && Math.random() < 0.5 ? gucluIdx : 1 + Math.floor(Math.random() * (g.notalar.length - 1));
@@ -316,28 +324,29 @@ function gocurmeSorusu(asama, tip) {
     const genis = g.notalar.length > 5;
     return {
       oge: oge, tip: 'secim',
-      soru: { metin: ad + ' → ' + hedef, kucuk: true }, alt: 'Doğru yazım hangisi?',
+      soru: { metin: baslik, kucuk: true }, alt: perdesiz ? 'Aynı sesten başlayan dört yazım var. Doğru göçürülmüş olan hangisi?' : 'Doğru yazım hangisi?',
       siklar: [{ key: 'd', porte: { notalar: g.notalar, aralik: genis ? 33 : 38, enAz: genis ? 320 : 250 }, genis: true }]
         .concat(yanlislar.map(function (y, i) { return { key: 'y' + i, porte: { notalar: y.n, aralik: genis ? 33 : 38, enAz: genis ? 320 : 250 }, genis: true }; })),
-      dogru: 'd', dogruMetin: g.notalar.map(perdeAdiNota).join(' – '), aciklama: aciklama,
-      ipucu: 'Her sesin perdesini bul, sonra o harfe göre işaretini seç.'
+      dogru: 'd', dogruMetin: g.notalar.map(perdesiz ? notaKisa : perdeAdiNota).join(' – '), aciklama: aciklama,
+      ipucu: perdesiz ? 'Her adımda doğal aralığı bul (Mi–Fa ve Si–Do bakiye, diğerleri tanini), gereken aralıkla farkını işarete çevir.' : 'Her sesin perdesini bul, sonra o harfe göre işaretini seç.'
     };
   }
   return {
     oge: oge, tip: 'yer',
-    soru: { metin: ad + ' → ' + hedef, kucuk: true }, alt: 'İlk ses verildi. Göçürülmüş diziyi porteye kur',
+    soru: { metin: baslik, kucuk: true }, alt: perdesiz ? 'İlk ses verildi. Aynı aralıklarla kalan sesleri porteye kur' : 'İlk ses verildi. Göçürülmüş diziyi porteye kur',
     yer: { slotlar: g.notalar.map(function (n, i) { return i === 0 ? { sabit: n } : {}; }), palet: 'aeu', beklenen: g.notalar },
-    dogruMetin: g.notalar.map(function (n) { return KOMADAN_PERDE[komaOf(n)].ad; }).join(' – '),
+    dogruMetin: g.notalar.map(function (n) { return perdesiz ? notaKisa(n) : KOMADAN_PERDE[komaOf(n)].ad; }).join(' – '),
     aciklama: aciklama, ipucu: 'Her ses bir sonraki harfe yazılır.'
   };
 }
-function gocurmeUretici(asama) {
-  return function (n) { const L = []; for (let i = 0; i < n; i++) L.push(gocurmeSorusu(asama)); return L; };
+function gocurmeUretici(asama, perdesiz) {
+  return function (n) { const L = []; for (let i = 0; i < n; i++) L.push(gocurmeSorusu(asama, undefined, perdesiz)); return L; };
 }
 const GOCURME_ASAMALAR = [
-  { id: 'dortlu', ad: 'Dörtlüleri göçür', ikon: '4️⃣', uret: gocurmeUretici('dortlu') },
-  { id: 'besli', ad: 'Beşlileri göçür', ikon: '5️⃣', uret: gocurmeUretici('besli') },
-  { id: 'makam', ad: 'Makam dizilerini göçür', ikon: '🏵️', uret: gocurmeUretici('makam') }
+  { id: 'dortlu', ad: 'Dörtlüleri göçür', ikon: '4️⃣', uret: gocurmeUretici('dortlu', true) },
+  { id: 'besli', ad: 'Beşlileri göçür', ikon: '5️⃣', uret: gocurmeUretici('besli', true) },
+  { id: 'makam', ad: 'Makam dizilerini göçür', ikon: '🏵️', uret: gocurmeUretici('makam', true) },
+  { id: 'adlar', ad: 'Perde adlarıyla göçür', ikon: '🏷️', uret: gocurmeUretici(['dortlu', 'besli', 'makam'], false) }
 ];
 // ---- Göçürmenin hesabı (adım adım) ----
 // Her harfin oktav içindeki doğal yeri (koma): Do 0, Re 9, Mi 18, Fa 22, Sol 31, La 40, Si 49
@@ -348,10 +357,10 @@ function notaKisa(n) { return HARF_AD[n.h] + (n.a ? ' ' + isaretAdi(n.a).replace
 const ARALIK_ADI = { 1: 'koma', 4: 'bakiye', 5: 'küçük mücenneb', 8: 'büyük mücenneb', 9: 'tanini', 12: 'artık ikili', 13: 'artık ikili' };
 const YONELME_EKI = ['’ya', '’ye', '’ye', '’ya', '’e', '’ya', '’ye'];   // Do’ya, Re’ye, Mi’ye, Fa’ya, Sol’e, La’ya, Si’ye
 function dogalAralik(n) { return n.h === 2 || n.h === 6 ? 4 : 9; }   // Mi–Fa ve Si–Do bakiye, diğerleri tanini
-function gocurmeAdimlari(notalar) {
+function gocurmeAdimlari(notalar, perdesiz) {
   const L = [];
   const ilk = notalar[0];
-  L.push('<li>Başlangıç: <b>' + perdeAdiNota(ilk) + '</b> (' + notaKisa(ilk) + ')</li>');
+  L.push(perdesiz ? '<li>Başlangıç: <b>' + notaKisa(ilk) + '</b></li>' : '<li>Başlangıç: <b>' + perdeAdiNota(ilk) + '</b> (' + notaKisa(ilk) + ')</li>');
   for (let i = 1; i < notalar.length; i++) {
     const on = notalar[i - 1], n = notalar[i];
     const gereken = komaOf(n) - komaOf(on);
@@ -359,11 +368,27 @@ function gocurmeAdimlari(notalar) {
     let s = '<li>' + HARF_AD[on.h] + ' → ' + HARF_AD[n.h] + ': doğal aralık ' + ARALIK_ADI[dogal] + ' (' + dogal + ')';
     if (e) s += ', ama ' + HARF_AD[on.h] + ' ' + Math.abs(e) + ' koma ' + (e > 0 ? 'yükseltilmiş' : 'alçaltılmış') + ' → arada ' + dogal + (e > 0 ? ' − ' : ' + ') + Math.abs(e) + ' = ' + mevcut;
     s += '. Gereken <b>' + (ARALIK_HARF[gereken] || '?') + '</b> (' + ARALIK_ADI[gereken] + ', ' + gereken + '). ';
-    s += gereken + ' − ' + mevcut + ' = ' + (fark > 0 ? '+' : '') + fark + ' → ' + (fark === 0 ? HARF_AD[n.h] + ' işaretsiz' : HARF_AD[n.h] + YONELME_EKI[n.h] + ' ' + isaretAdi(n.a)) + ' → <b>' + perdeAdiNota(n) + '</b></li>';
+    const sonuc = fark === 0 ? HARF_AD[n.h] + ' işaretsiz' : HARF_AD[n.h] + YONELME_EKI[n.h] + ' ' + isaretAdi(n.a);
+    s += gereken + ' − ' + mevcut + ' = ' + (fark > 0 ? '+' : '') + fark + ' → ' + (perdesiz ? '<b>' + sonuc + '</b></li>' : sonuc + ' → <b>' + perdeAdiNota(n) + '</b></li>');
     L.push(s);
   }
   return '<div class="hesapBaslik">🧮 Hesap</div><ol class="hesap">' + L.join('') + '</ol>';
 }
+// Perde adı sorulmayan göçürmelerde: arızalı (işaretli) seslerin perde adları dipnot olarak
+function arizaDipnotu(notalar) {
+  const gor = {};
+  const L = [];
+  notalar.forEach(function (n) {
+    if (!n.a) return;
+    const p = KOMADAN_PERDE[komaOf(n)];
+    if (!p || gor[p.ad]) return;
+    gor[p.ad] = 1;
+    L.push(HARF_AD[n.h] + ' ' + isaretAdi(n.a) + ' = <b>' + p.ad + '</b>');
+  });
+  if (!L.length) return '';
+  return '<div class="dipnot">📝 <b>Dipnot · perde adları:</b> ' + L.join(' · ') + '</div>';
+}
+function formulMetni(araliklar) { return araliklar.map(function (k) { return ARALIK_HARF[k] || '?'; }).join(' '); }
 const HARF_ARALIK_TABLOSU = '<div class="harfAralik">' + [['Do', 'Re', 9], ['Re', 'Mi', 9], ['Mi', 'Fa', 4], ['Fa', 'Sol', 9], ['Sol', 'La', 9], ['La', 'Si', 9], ['Si', 'Do', 4]].map(function (x) {
   return '<span class="' + (x[2] === 4 ? 'bakiyeli' : '') + '"><b>' + x[0] + '–' + x[1] + '</b>' + (x[2] === 4 ? 'B · 4' : 'T · 9') + '</span>';
 }).join('') + '</div>';

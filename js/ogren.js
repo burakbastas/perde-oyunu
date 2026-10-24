@@ -170,4 +170,4 @@ const OGREN_MODULLERI = [
   ] },
   { id: 'gocurme', ikon: '🔁', ad: 'Göçürme', baglanti: null, kartlar: null }   // kartları göçürme dersinden alır
 ];
-OGREN_MODULLERI[7].kartlar = gocurmeDersi();
+OGREN_MODULLERI[7].kartlar = gocurmeTemelDersi();

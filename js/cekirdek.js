@@ -3,7 +3,7 @@
 // =====================================================
 'use strict';
 
-const SURUM = '2.3.0';
+const SURUM = '2.4.0';
 const WHATSAPP_NO = '905307302798';
 const UYGULAMA_ADRESI = 'https://burakbastas.github.io/perde-oyunu/';
 const ANAHTAR = 'perdeMacerasiV2';
@@ -101,6 +101,7 @@ function durumYukle() {
   if (k && k.v === 2) {
     DURUM = Object.assign(varsayilanDurum(), k);
     DURUM.ayar = Object.assign(varsayilanDurum().ayar, k.ayar || {});
+    if (typeof gocurmeTasi === 'function') gocurmeTasi();
     return 'v2';
   }
   const eski = okuJSON('perdeMacerasiV1'), km = okuJSON('komaMacerasiV1'), db = okuJSON('dortluBesliV1');
@@ -138,6 +139,7 @@ function yedekYukle(kod) {
   if (!veri || veri.v !== 2 || typeof veri.yildiz !== 'object') return false;
   DURUM = Object.assign(varsayilanDurum(), veri);
   DURUM.ayar = Object.assign(varsayilanDurum().ayar, veri.ayar || {});
+  if (typeof gocurmeTasi === 'function') gocurmeTasi();
   kaydet();
   return true;
 }

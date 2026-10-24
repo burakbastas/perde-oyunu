@@ -375,7 +375,7 @@ function tekrarCiz(g) {
   g.appendChild(h('h3', { class: 'bolumBaslik' }, '🔁 Göçürme antrenmanı'));
   g.appendChild(h('p', { class: 'kucukNot' }, 'Önce dörtlüler, sonra beşliler, sonra makam dizileri. Kalp yok, rahatça çalış.'));
   const ant = h('div', { class: 'antrenmanlar' });
-  ant.appendChild(h('button', { class: 'antKart', type: 'button', onclick: function () { dersGoster('🔁 Göçürme', gocurmeDersi(), function () { ekranAc('ekranAna'); sekmeAc('tekrar'); }); } }, '📖', h('span', null, 'Göçürme nedir?')));
+  ant.appendChild(h('button', { class: 'antKart', type: 'button', onclick: function () { dersGoster('🔁 Göçürme', gocurmeTemelDersi(), function () { ekranAc('ekranAna'); sekmeAc('tekrar'); }); } }, '📖', h('span', null, 'Göçürme nedir?')));
   GOCURME_ASAMALAR.forEach(function (a) {
     ant.appendChild(h('button', { class: 'antKart', type: 'button', onclick: function () { antrenmanBaslat(a); } }, a.ikon, h('span', null, a.ad)));
   });
@@ -511,6 +511,8 @@ function hakkinda() {
 }
 function yenilikler() {
   sayfa('🆕 Yenilikler', h('div', { class: 'metinSayfa', html:
+    '<h3>Sürüm 2.4</h3><ul>' +
+    '<li>🔁 <b>Göçürme</b> yenilendi: perde adlarını bilmeden başlanıyor. Önce dörtlü, beşli ve makam dizisini aralık hesabıyla porteye kuruyorsun; arızalı seslerin perde adları cevaptan sonra dipnotta. Perde adları son ünitede geliyor. İlerlemen yeni ünitelere taşındı.</li></ul>' +
     '<h3>Sürüm 2.3</h3><ul>' +
     '<li>💻 <b>Tablet ve bilgisayar</b> görünümü: daha geniş ve okunaklı ekranlar; bilgisayarda menü solda.</li>' +
     '<li>⏩ Doğru cevaptan sonra <b>otomatik geçiş</b>; yanlışta ekranın herhangi bir yerine dokunarak devam. Ayarlar’dan kapatılabilir.</li>' +
