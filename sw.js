@@ -1,14 +1,15 @@
 // Seyir service worker
 // Uygulama dosyaları: ağ öncelikli (3 sn zaman aşımı), olmazsa önbellek.
 // Yazı tipleri ve ikonlar: önbellek öncelikli.
-const SURUM = '2.4.2';
+const SURUM = '2.5.0';
 const CACHE = 'perde-' + SURUM;
 const DOSYALAR = [
   './', './index.html', './manifest.webmanifest?v=' + SURUM, './icon-192.png?v=' + SURUM, './icon-512.png?v=' + SURUM,
   './css/stil.css?v=' + SURUM,
   './fonts/seyir-nota.woff?v=' + SURUM, './fonts/nunito.woff?v=' + SURUM, './fonts/baloo2.woff?v=' + SURUM,
   './js/cekirdek.js?v=' + SURUM, './js/nota.js?v=' + SURUM, './js/perde.js?v=' + SURUM, './js/koma.js?v=' + SURUM, './js/cesni.js?v=' + SURUM, './js/makam.js?v=' + SURUM, './js/gocurme.js?v=' + SURUM,
-  './js/bati.js?v=' + SURUM, './js/ogren.js?v=' + SURUM, './js/motor.js?v=' + SURUM, './js/arayuz.js?v=' + SURUM, './js/rehber.js?v=' + SURUM, './js/baslat.js?v=' + SURUM, './qr.png'
+  './js/bati.js?v=' + SURUM, './js/ses.js?v=' + SURUM, './js/usul.js?v=' + SURUM, './js/ahenk.js?v=' + SURUM, './js/ogren.js?v=' + SURUM, './js/motor.js?v=' + SURUM, './js/arayuz.js?v=' + SURUM, './js/rehber.js?v=' + SURUM, './js/baslat.js?v=' + SURUM, './qr.png',
+  './ses/dum1.mp3', './ses/dum2.mp3', './ses/tek1.mp3', './ses/tek2.mp3', './ses/ke1.mp3', './ses/ke2.mp3'
 ];
 
 self.addEventListener('install', function (e) {
@@ -33,7 +34,7 @@ self.addEventListener('fetch', function (e) {
   const url = new URL(r.url);
   if (url.origin !== self.location.origin) return;          // sayaç vb. dış istekler önbelleğe alınmaz
   if (url.pathname.indexOf('/arkaplan/') >= 0) return;      // büyük arka plan görselleri önbelleğe alınmaz
-  const sabit = /\.(woff2?|png|svg)$/.test(url.pathname);
+  const sabit = /\.(woff2?|png|svg|mp3)$/.test(url.pathname);
   if (sabit) {
     e.respondWith(caches.match(r).then(function (v) {
       return v || fetch(r).then(function (y) {

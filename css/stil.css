@@ -1,9 +1,9 @@
 /* =====================================================
    PERDE MACERASI · çini / İznik teması
    ===================================================== */
-@font-face { font-family: SeyirNota; src: url(../fonts/seyir-nota.woff?v=2.4.2) format("woff"); font-display: block; }
-@font-face { font-family: Nunito; src: url(../fonts/nunito.woff?v=2.4.2) format("woff"); font-weight: 200 1000; font-display: swap; }
-@font-face { font-family: "Baloo 2"; src: url(../fonts/baloo2.woff?v=2.4.2) format("woff"); font-weight: 400 800; font-display: swap; }
+@font-face { font-family: SeyirNota; src: url(../fonts/seyir-nota.woff?v=2.5.0) format("woff"); font-display: block; }
+@font-face { font-family: Nunito; src: url(../fonts/nunito.woff?v=2.5.0) format("woff"); font-weight: 200 1000; font-display: swap; }
+@font-face { font-family: "Baloo 2"; src: url(../fonts/baloo2.woff?v=2.5.0) format("woff"); font-weight: 400 800; font-display: swap; }
 
 :root {
   --zemin: #fbf5ea;
@@ -21,6 +21,7 @@
   --zumrut: #15834f;
   --mor: #7647b3;
   --kiremit: #b8562a;
+  --erguvan: #a3366e;
   --altin: #d9a520;
   --altinAcik: #ffe08a;
   --dogru: #1e9e57;
@@ -39,7 +40,7 @@
   :root:not([data-tema="acik"]) {
     --zemin: #0b1430; --zemin2: #111c3d; --kart: #16224a; --metin: #eef1fb; --soluk: #a8b1cc; --cizgi: #2a376a;
     --ust: #0b1430; --ust2: #08102a;
-    --turkuaz: #2bb9bb; --kobalt: #6f8ff0; --mercan: #f26d55; --safran: #f6bc45; --zumrut: #3bbd7c; --mor: #a684e6; --kiremit: #e57f4f;
+    --turkuaz: #2bb9bb; --kobalt: #6f8ff0; --mercan: #f26d55; --safran: #f6bc45; --zumrut: #3bbd7c; --mor: #a684e6; --kiremit: #e57f4f; --erguvan: #e46aa5;
     --altin: #e9bd3d; --altinAcik: #6b5410;
     --dogru: #43cf82; --dogruZemin: #133a2a; --yanlis: #ff6b66; --yanlisZemin: #45191c; --secim: #8ea8ff; --vurgu: #ff8a6e;
     --golge: 0 3px 0 rgba(0, 0, 0, .35); --kilit: #2b3760; --kilitKenar: #3a4878; --desen: rgba(142, 168, 255, .06);
@@ -49,7 +50,7 @@
 :root[data-tema="koyu"] {
   --zemin: #0b1430; --zemin2: #111c3d; --kart: #16224a; --metin: #eef1fb; --soluk: #a8b1cc; --cizgi: #2a376a;
   --ust: #0b1430; --ust2: #08102a;
-  --turkuaz: #2bb9bb; --kobalt: #6f8ff0; --mercan: #f26d55; --safran: #f6bc45; --zumrut: #3bbd7c; --mor: #a684e6; --kiremit: #e57f4f;
+  --turkuaz: #2bb9bb; --kobalt: #6f8ff0; --mercan: #f26d55; --safran: #f6bc45; --zumrut: #3bbd7c; --mor: #a684e6; --kiremit: #e57f4f; --erguvan: #e46aa5;
   --altin: #e9bd3d; --altinAcik: #6b5410;
   --dogru: #43cf82; --dogruZemin: #133a2a; --yanlis: #ff6b66; --yanlisZemin: #45191c; --secim: #8ea8ff; --vurgu: #ff8a6e;
   --golge: 0 3px 0 rgba(0, 0, 0, .35); --kilit: #2b3760; --kilitKenar: #3a4878; --desen: rgba(142, 168, 255, .06);
@@ -659,3 +660,52 @@ svg.cember { width: 100%; max-width: 300px; height: auto; display: block; margin
 .arkaKart.telefon .arkaBilgi small { display: none; }
 .arkaBilgi b { font-size: 14px; line-height: 1.2; }
 .arkaIndir { text-decoration: none; display: inline-block; margin-top: 6px; text-align: center; }
+.diziSlot.acikSlot { opacity: .55; cursor: default; }
+.diziSlot.eksikSlot { border-style: dashed; opacity: .85; }
+
+/* ---------- 2.5: ritim notası, dinle, vur, sonsuz, bendir, ahenk ---------- */
+.ritimKutu { color: var(--metin); margin: 4px auto; max-width: 420px; }
+.ritimKutu.buyuk { max-width: 560px; background: var(--zemin); border-radius: 14px; padding: 6px 8px; }
+svg.ritim { display: block; width: 100%; height: auto; max-height: 130px; color: inherit; }
+.sik svg.ritim { max-height: 96px; }
+.ritimNota { transition: color .08s; }
+.ritimNota.calan { color: var(--vurgu); }
+.soruKutu .dinleDugme { margin: 8px auto 2px; display: inline-flex; width: auto; padding: 8px 18px; }
+.dinleDugme.caliyor { animation: dinleNabiz .6s ease-in-out infinite alternate; }
+@keyframes dinleNabiz { from { transform: scale(1); } to { transform: scale(1.05); } }
+.vurDugmeler { display: flex; gap: 8px; justify-content: center; margin: 6px 0; }
+.vurDugmeler .dugme { width: auto; flex: 1; max-width: 200px; margin: 0; }
+.vurDurum { text-align: center; font-weight: 800; color: var(--soluk); min-height: 22px; margin: 4px 0 8px; }
+.vurTuslar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; user-select: none; -webkit-user-select: none; }
+.vurTuslar.tek { grid-template-columns: 1fr; }
+.vurTus { min-height: 132px; border-radius: 22px; border: 2px solid var(--cizgi); background: var(--kart); color: var(--metin); cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; touch-action: none; box-shadow: var(--golge); font-family: inherit; }
+.vurTus b { font-size: 22px; letter-spacing: 1px; }
+.vurTus small { color: var(--soluk); font-weight: 700; }
+.vurTus.sag { border-color: var(--safran); }
+.vurTus.basildi { transform: scale(.96); background: var(--zemin2); }
+.sonsuzBlok .uniteBas.kilitli { opacity: .7; }
+.sonsuzBlok .uniteEylem .dugme { width: auto; margin: 6px 0 0; padding: 8px 20px; }
+.rekorSayi { font-size: 56px; font-weight: 900; color: var(--altin); line-height: 1.1; }
+.antKart.kilitli { opacity: .55; }
+.bendir { text-align: center; }
+.bendirSec { width: 100%; font: inherit; font-weight: 800; padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--cizgi); background: var(--kart); color: var(--metin); margin: 6px 0; }
+.devirSayac { min-height: 22px; font-weight: 800; color: var(--soluk); }
+.tempoSatir { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 6px 0 2px; }
+.tempoSatir .dugme { width: 52px; margin: 0; font-size: 22px; padding: 6px 0; }
+.tempoGoster { min-width: 120px; }
+.tempoSayi { font-size: 40px; font-weight: 900; }
+.bendir input[type=range] { width: 100%; accent-color: var(--safran); }
+.bendirOynat { font-size: 20px; padding: 14px; }
+.bendirOynat.caliyor { background: var(--mercan); }
+.bendirSecenekler { text-align: left; margin: 10px 0; display: grid; gap: 8px; }
+.bendirSecenek { display: flex; gap: 10px; align-items: flex-start; background: var(--zemin); border-radius: 12px; padding: 8px 10px; cursor: pointer; }
+.bendirSecenek input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--safran); }
+.bendirSecenek span { display: flex; flex-direction: column; }
+.bendirSecenek small { color: var(--soluk); }
+.bendirSes { display: flex; align-items: center; gap: 8px; margin: 8px 0; }
+.ahenkTablo { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0; }
+.ahenkTablo th, .ahenkTablo td { padding: 5px 6px; border-bottom: 1px solid var(--cizgi); text-align: left; }
+.ahenkTablo th { color: var(--soluk); font-size: 12px; }
+.mertebeCipler { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 4px 0 6px; }
+.mertebeCipler .cip.aktif { background: var(--safran); color: #1d2440; border-color: var(--safran); }

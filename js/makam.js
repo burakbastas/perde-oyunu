@@ -18,9 +18,16 @@ const MAKAM_HAM = [
   { id: 'hicaz',    ad: 'Hicaz',           alt: ['d-hicaz', 'Dügâh'],   ust: ['b-rast', 'Neva'],        karar: 'Dügâh',  guclu: 'Neva',      yeden: 'Rast',        donanim: ['Si4-bk', 'Fa5+bk', 'Do5+bk'] },
   { id: 'humayun',  ad: 'Hümayun',         alt: ['d-hicaz', 'Dügâh'],   ust: ['b-buselik', 'Neva'],     karar: 'Dügâh',  guclu: 'Neva',      yeden: 'Rast',        donanim: ['Si4-bk', 'Do5+bk'] },
   { id: 'uzzal',    ad: 'Uzzal',           alt: ['b-hicaz', 'Dügâh'],   ust: ['d-ussak', 'Hüseyni'],    karar: 'Dügâh',  guclu: 'Hüseyni',   yeden: 'Rast',        donanim: ['Si4-bk', 'Fa5+bk', 'Do5+bk'] },
-  { id: 'zirguleli',ad: 'Zirgüleli Hicaz', alt: ['b-hicaz', 'Dügâh'],   ust: ['d-hicaz', 'Hüseyni'],    karar: 'Dügâh',  guclu: 'Hüseyni',   yeden: 'Nim Zirgüle', donanim: ['Si4-bk', 'Fa5+k', 'Do5+bk', 'Sol5+bk'] }
+  { id: 'zirguleli',ad: 'Zirgüleli Hicaz', alt: ['b-hicaz', 'Dügâh'],   ust: ['d-hicaz', 'Hüseyni'],    karar: 'Dügâh',  guclu: 'Hüseyni',   yeden: 'Nim Zirgüle', donanim: ['Si4-bk', 'Fa5+k', 'Do5+bk', 'Sol5+bk'] },
+  // 2.5: Neva'da Hicaz çeşnisi olan iki makam (Sûzinâk dizisinin Dügâh'taki parçası Karcığar'dır)
+  { id: 'karcigar', ad: 'Karcığar',        alt: ['d-ussak', 'Dügâh'],   ust: ['b-hicaz', 'Neva'],       karar: 'Dügâh',  guclu: 'Neva',      yeden: 'Rast',        donanim: ['Si4-k', 'Mi5-bk', 'Fa5+bk'],
+    not: 'Tiz bölgede Muhayyer’de Uşşak dörtlüsü (Tiz Segâh), inerken Kürdi dörtlüsü (Sünbüle) kullanılır. Seyri inici-çıkıcıdır.' },
+  { id: 'suzinak',  ad: 'Sûzinâk',         alt: ['b-rast', 'Rast'],     ust: ['d-hicaz', 'Neva'],       karar: 'Rast',   guclu: 'Neva',      yeden: 'Irak',        donanim: ['Si4-k', 'Mi5-bk', 'Fa5+bk'],
+    not: 'Rast beşlisinin üstüne Neva’da Hicaz dörtlüsü. Dizinin Dügâh’tan başlayan kısmı Karcığar’ı verir.' }
 ];
-const MAKAM_PERDE_SECENEK = ['Rast', 'Dügâh', 'Segâh', 'Bûselik', 'Çargâh', 'Neva', 'Hüseyni', 'Gerdâniye', 'Irak', 'Nim Zirgüle', 'Acem', 'Evç'];
+const MK_ILK10 = ['cargah', 'rast', 'ussak', 'kurdi', 'huseyni', 'buselik', 'hicaz', 'humayun', 'uzzal', 'zirguleli'];
+const MK_TUM12 = MK_ILK10.concat(['karcigar', 'suzinak']);
+const MAKAM_PERDE_SECENEK = ['Rast', 'Dügâh', 'Segâh', 'Bûselik', 'Çargâh', 'Neva', 'Hüseyni', 'Gerdâniye', 'Irak', 'Nim Zirgüle', 'Acem', 'Evç', 'Yegâh', 'Geveşt', 'Acem Aşiran'];
 
 // ---- Göçürme motoru ----
 // Aralıkları (koma) verilen bir yapıyı, verilen ilk notadan başlayarak yazar.
@@ -138,6 +145,30 @@ function makamSoru(tip, m, havuz) {
     q.siklar = adSik([m].concat(makamCeldirici(m, havuz, 3)));
     q.dogru = m.id; q.dogruMetin = m.ad;
     q.ipucu = null;
+  } else if (tip === 'kimlik3') {
+    q.soru = { metin: 'Karar: ' + m.karar + ' · Güçlü: ' + m.guclu, kucuk: true };
+    if (!m.donanimYazilmaz) q.soru.porte = { notalar: [], donanim: m.donanimNota, enAz: 170 };
+    q.alt = m.donanimYazilmaz ? 'Donanıma işaret yazılmıyor. Hangi makam?' : 'Donanımı bu. Hangi makam?';
+    const imza = function (x) { return x.karar + '|' + x.guclu + '|' + (x.donanimYazilmaz ? 'y' : donanimAnahtar(x)); };
+    q.siklar = adSik([m].concat(makamCeldirici(m, havuz, 3, imza)));
+    q.dogru = m.id; q.dogruMetin = m.ad; q.ipucu = null;
+  } else if (tip === 'diziDogru') {
+    const yanlislar = [];
+    for (let d = 0; d < 30 && yanlislar.length < 3; d++) {
+      const y = yanlisYazim(m.dizi), k = diziImza(y);
+      if (k !== diziImza(m.dizi) && yanlislar.indexOf(k) < 0) yanlislar.push(k);
+    }
+    const porte = function (L) { return { notalar: L, aralik: 33, enAz: 320 }; };
+    q.soru = { metin: m.ad }; q.alt = 'Doğru dizi hangisi?';
+    q.siklar = [{ key: 'd', porte: porte(m.dizi), genis: true }].concat(yanlislar.map(function (k, i) { return { key: 'y' + i, porte: porte(JSON.parse(k)), genis: true }; }));
+    q.dogru = 'd'; q.dogruMetin = m.dizi.map(perdeAdiNota).join(' – ');
+    q.ipucu = m.altAd + ' + ' + m.ustAd;
+  } else if (tip === 'diziYaz') {
+    q.tip = 'yer';
+    q.soru = { metin: m.ad, kucuk: true }; q.alt = 'İlk ses verildi. Makamın dizisini porteye yaz';
+    q.yer = { slotlar: m.dizi.map(function (n, i) { return i === 0 ? { sabit: n } : {}; }), palet: 'aeu', beklenen: m.dizi, harfSirali: true, smin: 24, smax: 45 };
+    q.dogruMetin = m.dizi.map(perdeAdiNota).join(' – ');
+    q.ipucu = m.altAd + ' + ' + m.ustAd;
   } else if (tip === 'makamKur') {
     q.tip = 'dizi';
     q.soru = { metin: m.ad }; q.alt = 'Makamın dizisini kur: önce alt parça, sonra üst parça';
@@ -157,6 +188,7 @@ function makamSoru(tip, m, havuz) {
   return q;
 }
 
+function diziImza(L) { return JSON.stringify(L.map(function (n) { return { h: n.h, o: n.o, a: n.a || null }; })); }
 function makamUretici(o) {
   return function (n) {
     const havuz = makamlar(o.havuz);
@@ -200,7 +232,17 @@ function mkUnite(id, no, ad, kisa, ogeler, havuz) {
 const MAKAM_UNITELER = [
   mkUnite('mk1', 1, 'İlk makamlar', 'Çargâh, Rast, Uşşak, Kürdi', ['cargah', 'rast', 'ussak', 'kurdi'], ['cargah', 'rast', 'ussak', 'kurdi']),
   mkUnite('mk2', 2, 'Hüseyni ve Bûselik', 'Güçlüsü Hüseyni olan iki makam', ['huseyni', 'buselik'], ['cargah', 'rast', 'ussak', 'kurdi', 'huseyni', 'buselik']),
-  mkUnite('mk3', 3, 'Hicaz ailesi', 'Hicaz, Hümayun, Uzzal, Zirgüleli Hicaz', ['hicaz', 'humayun', 'uzzal', 'zirguleli'], MAKAMLAR.map(function (m) { return m.id; }))
+  mkUnite('mk3', 3, 'Hicaz ailesi', 'Hicaz, Hümayun, Uzzal, Zirgüleli Hicaz', ['hicaz', 'humayun', 'uzzal', 'zirguleli'], MK_ILK10),
+  mkUnite('mk4', 4, 'Karcığar ve Sûzinâk', 'Neva’da Hicaz çeşnisi olan iki makam', ['karcigar', 'suzinak'], MK_TUM12),
+  {
+    id: 'mk5', dal: 'makam', no: 5, ad: 'Makam ustalığı', kisa: 'İpucusuz tanıma, doğru dizi, diziyi porteye yazma', ogeler: [],
+    seviyeler: [
+      { id: 'mk5-1', tip: 'seviye', ad: 'Üç bilgiden makamı bul', soruSay: 8, uret: makamUretici({ havuz: MK_TUM12, tipler: ['kimlik3'] }) },
+      { id: 'mk5-2', tip: 'seviye', ad: 'Doğru dizi hangisi?', soruSay: 8, uret: makamUretici({ havuz: MK_TUM12, tipler: ['diziDogru'] }) },
+      { id: 'mk5-yer', tip: 'yer', ad: 'Diziyi porteye yaz', soruSay: 5, uret: makamUretici({ havuz: MK_TUM12, tipler: ['diziYaz'] }) },
+      { id: 'mk5-boss', tip: 'boss', ad: 'Makam ustalığı finali', soruSay: 10, uret: makamUretici({ havuz: MK_TUM12, tipler: ['kimlik3', 'diziDogru', 'benKimim', 'diziYaz', 'donanimMakam'] }) }
+    ]
+  }
 ];
 
 function makamKarti(m) {
@@ -238,7 +280,102 @@ MAKAM_UNITELER[2].ders = function () {
     .concat(makamlar(['hicaz', 'humayun', 'uzzal', 'zirguleli']).map(makamKarti));
 };
 
+MAKAM_UNITELER[3].ders = function () {
+  return [{ baslik: 'Neva’da Hicaz', metin:
+    '<p>Bu iki makamın ortak noktası: <b>Neva</b> perdesinde bir <b>Hicaz</b> çeşnisi. Donanımları da aynı: Si koma bemolü, Mi bakiye bemolü, Fa bakiye diyezi.</p>' +
+    '<p><b>Karcığar</b>: Dügâh’ta Uşşak dörtlüsü + Neva’da Hicaz beşlisi. Karar Dügâh.<br><b>Sûzinâk</b>: Rast’ta Rast beşlisi + Neva’da Hicaz dörtlüsü. Karar Rast.</p>' +
+    '<p>Sûzinâk dizisini Dügâh’tan okursan Karcığar’ı bulursun: ayıran şey <b>karar perdesi</b>.</p>' }]
+    .concat(makamlar(['karcigar', 'suzinak']).map(makamKarti));
+};
+MAKAM_UNITELER[4].ders = function () {
+  return [
+    { baslik: 'Ustalık', metin:
+      '<p>Bu ünitede ipucu yok. Bir makamı üç bilgiden tanıyacaksın: <b>karar</b>, <b>güçlü</b> ve <b>donanım</b>.</p>' +
+      '<p>Sonra makamın dizisini kendin yazacaksın: ilk ses verilir, gerisini alt ve üst parçanın aralıklarıyla porteye kurarsın.</p>' },
+    { baslik: 'Diziyi yazmanın yolu', cizim: function () { return h('div', { class: 'kartPorte' }, porteSVG(makamDiziPorte(MAKAM.karcigar))); }, metin:
+      '<p>1️⃣ Alt parçanın aralıklarını karardan başlayarak yaz.<br>2️⃣ Güçlüden itibaren üst parçanın aralıklarını ekle.<br>3️⃣ Her ses bir sonraki harfe yazılır; işareti göçürmedeki gibi doğal aralıkla karşılaştırarak bul.</p>' }
+  ];
+};
+
+// =====================================================
+// GÖÇÜRÜLMÜŞ (ŞED) MAKAMLAR
+// Kaynak: TDV İslâm Ansiklopedisi (Mâhur, Hicazkâr, Kürdîlihicazkâr, Nihâvend, Sultânîyegâh maddeleri)
+// Dizi, kaynak makamın aralıklarından göçürme motoruyla hesaplanır; donanım dizideki işaretlerdir.
+// =====================================================
+const SED_HAM = [
+  { id: 'mahur', ad: 'Mahur', kaynak: 'cargah', perde: 'Rast', guclu: 'Gerdâniye', yeden: 'Geveşt',
+    not: 'Batı müziğindeki Sol majöre denk gelir. Seyri inicidir.' },
+  { id: 'hicazkar', ad: 'Hicazkâr', kaynak: 'zirguleli', perde: 'Rast', guclu: 'Gerdâniye', yeden: 'Irak',
+    not: 'Seyri inicidir; ikinci güçlüsü Neva’dır.' },
+  { id: 'kurdilihicazkar', ad: 'Kürdîlihicazkâr', kaynak: 'kurdi', perde: 'Rast', guclu: 'Gerdâniye', yeden: 'Acem Aşiran',
+    not: 'Hacı Ârif Bey’in terkibi. Seyri inicidir; tam karar Rast’ta Kürdi çeşnisiyle verilir.' },
+  { id: 'nihavend', ad: 'Nihâvend', kaynak: 'buselik', ust: 'd-kurdi', perde: 'Rast', guclu: 'Neva', yeden: 'Irak',
+    not: 'Neva’daki dörtlü Kürdi ya da Hicaz olabilir; burada Kürdi’li hali gösteriliyor. Yarım karar Neva’da Kürdi çeşnisiyle yapılır.' },
+  { id: 'sultaniyegah', ad: 'Sultânîyegâh', kaynak: 'buselik', perde: 'Yegâh', guclu: 'Neva', yeden: 'Kaba Nim Hicaz',
+    not: 'Dügâh’taki dörtlü Hicaz ya da Kürdi olabilir; burada Hicaz’lı hali gösteriliyor. İkinci güçlüsü Dügâh’tır.' }
+];
+const SEDLER = SED_HAM.map(function (s) {
+  const k = MAKAM[s.kaynak], alt = k.altC, ust = s.ust ? CESNI[s.ust] : k.ustC;
+  const dizi = gocurPerde(alt.araliklar.concat(ust.araliklar), PERDE[s.perde], 20, 50);
+  if (!dizi) { console.warn('Şed dizisi yazılamadı: ' + s.ad); return null; }
+  const birlesme = alt.notalar.length - 1;
+  const ustYer = KOMADAN_PERDE[komaOf(dizi[birlesme])].ad;
+  let gi = dizi.findIndex(function (n) { return KOMADAN_PERDE[komaOf(n)].ad === s.guclu; });
+  if (gi < 0) gi = birlesme;
+  const isaretli = [];
+  dizi.forEach(function (n) { if (n.a && !isaretli.some(function (x) { return x.h === n.h && x.a === n.a; })) isaretli.push({ h: n.h, o: n.o, a: n.a }); });
+  return Object.assign({}, s, {
+    sed: true, oge: 'm:' + s.id, karar: s.perde, kaynakAd: k.ad,
+    altC: alt, ustC: ust, alt: [alt.id, s.perde], ust: [ust.id, ustYer],
+    altAd: alt.ad + ' (' + s.perde + ')', ustAd: ust.ad + ' (' + ustYer + ')',
+    dizi: dizi, gucluIdx: gi, donanim: [], donanimNota: isaretli,
+    not: k.ad + ' makamı dizisinin ' + s.perde + ' perdesine göçürülmüşü. ' + s.not
+  });
+}).filter(Boolean);
+SEDLER.forEach(function (m) { MAKAM[m.id] = m; });
+function makamBul(oge) { return MAKAMLAR.find(function (x) { return x.oge === oge; }) || SEDLER.find(function (x) { return x.oge === oge; }); }
+const SED_PERDE_SECENEK = ['Rast', 'Yegâh', 'Dügâh', 'Çargâh', 'Neva', 'Segâh', 'Acem Aşiran', 'Hüseyni Aşiran', 'Irak'];
+
+function sedSoru(tip, m) {
+  if (tip === 'kaynak' || tip === 'perde') {
+    const q = { oge: m.oge, tip: 'secim', aciklama: makamAciklama(m) + '<br>' + kacis(m.not), ipucu: 'Karar: ' + m.karar };
+    if (tip === 'kaynak') {
+      q.soru = { metin: m.ad }; q.alt = 'Hangi makamın göçürülmüşüdür (şeddi)?';
+      const dis = karistir(MK_ILK10.filter(function (x) { return x !== m.kaynak; })).slice(0, 3);
+      q.siklar = [m.kaynak].concat(dis).map(function (x) { return { key: x, metin: MAKAM[x].ad }; });
+      q.dogru = m.kaynak; q.dogruMetin = m.kaynakAd;
+      q.ipucu = 'Dizisi: ' + m.altAd + ' + ' + m.ustAd;
+    } else {
+      q.soru = { metin: m.ad, kucuk: true }; q.alt = m.kaynakAd + ' makamı dizisinin hangi perdeye göçürülmüşüdür?';
+      const dis = karistir(SED_PERDE_SECENEK.filter(function (x) { return x !== m.perde && x !== MAKAM[m.kaynak].karar; })).slice(0, 3);
+      q.siklar = [m.perde].concat(dis).map(function (x) { return { key: x, metin: x }; });
+      q.dogru = m.perde; q.dogruMetin = m.perde;
+      q.ipucu = 'Göçürülen makamın kararı, şeddin kararıdır.';
+    }
+    return q;
+  }
+  const havuz = tip === 'makamDonanim' ? SEDLER.concat(MAKAMLAR) : SEDLER;
+  const q = makamSoru(tip, m, havuz);
+  q.aciklama = makamAciklama(m) + '<br><span class="soluk">' + kacis(m.not) + '</span>';
+  return q;
+}
+function sedUretici(tipler) {
+  return function (n) {
+    const L = [];
+    let onceki = null;
+    for (let i = 0; i < n; i++) {
+      let m;
+      for (let d = 0; d < 10; d++) { m = rastgele(SEDLER); if (m !== onceki) break; }
+      onceki = m;
+      L.push(sedSoru(tipler[i % tipler.length], m));
+    }
+    return karistir(L);
+  };
+}
+
 function makamOgeSorusu(id) {
+  const sed = SEDLER.find(function (x) { return x.oge === id; });
+  if (sed) return sedSoru(rastgele(['kaynak', 'perde', 'karar', 'guclu', 'donanimMakam', 'diziDogru']), sed);
   const m = MAKAMLAR.find(function (x) { return x.oge === id; });
   let tip = rastgele(MK_KIMLIK.concat(MK_TANI, MK_DON, ['makamKur']));
   if ((tip === 'donanimMakam' || tip === 'makamDonanim') && m.donanimYazilmaz) tip = 'parcaAd';

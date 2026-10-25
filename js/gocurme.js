@@ -39,6 +39,16 @@ const GOCURME_UNITELER = [
   ])
 ];
 
+// 2.5 · Göçürülmüş (şed) makamlar: kuralı öğrenmiş olan öğrenci, göçürmenin müzikteki karşılığını tanır
+GOCURME_UNITELER.push(gUnite('gc5', 5, 'Göçürülmüş (şed) makamlar', 'Mahur, Hicazkâr, Kürdîlihicazkâr, Nihâvend, Sultânîyegâh', [
+  { id: 'gc5-1', tip: 'seviye', ad: 'Hangi makamın göçürülmüşü?', soruSay: 8, uret: sedUretici(['kaynak', 'perde']) },
+  { id: 'gc5-2', tip: 'seviye', ad: 'Karar, güçlü ve yeden', soruSay: 8, uret: sedUretici(['karar', 'guclu', 'yeden']) },
+  { id: 'gc5-3', tip: 'seviye', ad: 'Donanım', soruSay: 8, uret: sedUretici(['donanimMakam', 'makamDonanim']) },
+  { id: 'gc5-4', tip: 'seviye', ad: 'Doğru dizi hangisi?', soruSay: 6, uret: sedUretici(['diziDogru']) },
+  { id: 'gc5-boss', tip: 'boss', ad: 'Şed makamlar finali', soruSay: 10, uret: sedUretici(['kaynak', 'perde', 'guclu', 'donanimMakam', 'diziDogru', 'benKimim', 'yeden']) }
+]));
+GOCURME_UNITELER[4].ogeler = SEDLER.map(function (m) { return m.oge; });
+
 // ---- Dersler (perde adı kullanmadan) ----
 // Porte üzerinde örnek: alttaki etiketler yalnızca harf adları
 function gocurmeOrnegi(baslik, yapiAd, araliklar, baslangicPerde, onMetin) {
@@ -92,6 +102,18 @@ GOCURME_UNITELER[3].ders = function () {
       '<p>İpucu: önceki ünitelerin dipnotlarında gördüğün arızalı sesler burada işine yarayacak. Perde adlarına takılırsan <b>Perde</b> dalına dön.</p>' },
     G[3], G[4]
   ];
+};
+
+GOCURME_UNITELER[4].ders = function () {
+  return [
+    { baslik: 'Şed nedir?', metin:
+      '<p>Bir makamın dizisi başka bir perdeye göçürülünce ortaya yeni bir makam çıkabilir. Böyle makamlara <b>şed</b> (göçürülmüş makam) denir.</p>' +
+      '<p>Aralıklar kaynak makamla aynıdır; ama <b>karar perdesi</b>, güçlüsü ve çoğu zaman seyri değiştiği için ayrı bir makam sayılır.</p>' +
+      '<p>Bu ünitede beş şed makamı tanıyacaksın. Hepsi bildiğin makamlardan türüyor.</p>' },
+    { baslik: 'Hangisi neyin şeddi?', metin:
+      '<p><b>Mahur</b> = Çargâh → Rast<br><b>Hicazkâr</b> = Zirgüleli Hicaz → Rast<br><b>Kürdîlihicazkâr</b> = Kürdi → Rast<br><b>Nihâvend</b> = Bûselik → Rast<br><b>Sultânîyegâh</b> = Bûselik → Yegâh</p>' +
+      '<p>Dördü <b>Rast</b>’ta karar verir; Sultânîyegâh ise <b>Yegâh</b>’ta.</p>' }
+  ].concat(SEDLER.map(makamKarti));
 };
 
 // ---- Eski göçürme ilerlemesini yeni üniteye taşı (2.2 → 2.3) ----

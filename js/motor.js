@@ -10,10 +10,21 @@ const DALLAR = {
   gocurme: { ad: 'Göçürme',     ikon: '🔁', renk: 'var(--kiremit)', uniteler: GOCURME_UNITELER },
   cesni: { ad: 'Dörtlü-Beşli',  ikon: '🎻', renk: 'var(--mercan)',  uniteler: CESNI_UNITELER },
   makam: { ad: 'Makam',         ikon: '🏵️', renk: 'var(--zumrut)',  uniteler: MAKAM_UNITELER },
+  ahenk: { ad: 'Ahenk',         ikon: '🌬️', renk: 'var(--erguvan)', uniteler: AHENK_UNITELER },
+  usul:  { ad: 'Usul',          ikon: '🥁', renk: 'var(--safran)',  uniteler: USUL_UNITELER },
   bati:  { ad: 'Batı Teorisi',  ikon: '🎹', renk: 'var(--mor)',     uniteler: BATI_UNITELER }
 };
-const DAL_SIRA = ['koma', 'perde', 'gocurme', 'cesni', 'makam', 'bati'];
-const TR_DALLAR = ['koma', 'perde', 'gocurme', 'cesni', 'makam'];
+const DAL_SIRA = ['koma', 'perde', 'gocurme', 'cesni', 'makam', 'ahenk', 'usul', 'bati'];
+const TR_DALLAR = ['koma', 'perde', 'gocurme', 'cesni', 'makam', 'ahenk', 'usul'];
+
+// ---------- Sonsuz Meşk: her Türk müziği dalının sonunda ucu açık bir ünite ----------
+// O dalın geçilmiş seviyelerinden karışık sorular; doğru bildikçe zor seviyeler ağırlaşır.
+TR_DALLAR.forEach(function (d) {
+  const L = DALLAR[d].uniteler;
+  L.push({ id: 'sn-' + d, dal: d, no: L.length + 1, ad: 'Sonsuz Meşk', kisa: 'Bitmeyen karışık sorular · rekorunu geç', sonsuz: true, ogeler: [],
+    seviyeler: [{ id: 'sn-' + d, tip: 'sonsuz', ad: 'Sonsuz Meşk', soruSay: 0, uret: function () { return []; } }] });
+});
+function gercekUniteler(d) { return DALLAR[d].uniteler.filter(function (u) { return !u.sonsuz; }); }
 
 const UNITE = {}, SEVIYE = {}, DAL_SEVIYELERI = {};
 DAL_SIRA.forEach(function (d) {
@@ -26,14 +37,15 @@ DAL_SIRA.forEach(function (d) {
       SEVIYE[s.id] = s;
       DAL_SEVIYELERI[d].push(s);
     });
-    u.boss = u.seviyeler.filter(function (s) { return s.tip === 'boss'; }).pop();
+    u.boss = u.seviyeler.filter(function (s) { return s.tip === 'boss'; }).pop() || null;
   });
 });
 
 // Önerilen sıra (Meşk Yolu). Batı Teorisi isteğe bağlı olarak araya karışır.
 // Göçürme dörtlü-beşliler öğrenildikten sonra gelir; perde adları gerekmez
-const MESK_TR = ['km1', 'p1', 'km2', 'p2', 'km3', 'db1', 'db2', 'p3', 'db3', 'gc1', 'db4', 'gc2', 'mk1', 'p4', 'mk2', 'db5', 'mk3', 'gc3', 'gc4', 'p5'];
-const MESK_BATI_SONRA = { p1: 'b1', km2: 'b2', p2: 'b3', km3: 'b4', db1: 'b5', db2: 'b6', p3: 'b7', db3: 'b8', db4: 'b9', mk1: 'b10' };
+const MESK_TR = ['km1', 'p1', 'km2', 'p2', 'km3', 'db1', 'db2', 'p3', 'db3', 'gc1', 'db4', 'gc2', 'mk1', 'p4', 'mk2', 'db5', 'mk3', 'gc3', 'gc4', 'p5',
+  'u1', 'a1', 'mk4', 'u2', 'db6', 'p6', 'u3', 'gc5', 'a2', 'u4', 'mk5', 'p7', 'u5', 'u6', 'u7'];
+const MESK_BATI_SONRA = { p1: 'b1', km2: 'b2', p2: 'b3', km3: 'b4', db1: 'b5', db2: 'b6', p3: 'b7', db3: 'b8', db4: 'b9', mk1: 'b10', p5: 'b11', u1: 'b12', u2: 'b13' };
 function meskSirasi() {
   const L = [];
   MESK_TR.forEach(function (id) {
@@ -51,7 +63,7 @@ function acikMi(s) {
   const i = L.indexOf(s);
   return i <= 0 || bittiMi(L[i - 1]);
 }
-function uniteBitti(u) { return bittiMi(u.boss); }
+function uniteBitti(u) { return !!u.boss && bittiMi(u.boss); }
 function uniteBaslamadi(u) { return !u.seviyeler.some(bittiMi); }
 function uniteIlerleme(u) {
   const b = u.seviyeler.filter(bittiMi).length;
@@ -83,7 +95,8 @@ const UNVANLAR = [
   { min: 9,  ad: 'Mûsikişinas',   yonelme: 'Mûsikişinas’a',    anlam: 'Mûsikiden anlayan',                   renk: '#d84a33' },
   { min: 13, ad: 'Müntehî',       yonelme: 'Müntehî’ye',       anlam: 'İleri seviyeye ulaşmış',              renk: '#15834f' },
   { min: 17, ad: 'Muallim',       yonelme: 'Muallim’e',        anlam: 'Meşk verebilecek bilgide',            renk: '#7647b3' },
-  { min: KOMA_UNITELER.length + PERDE_UNITELER.length + GOCURME_UNITELER.length + CESNI_UNITELER.length + MAKAM_UNITELER.length, ad: 'Üstad-ı Kâmil', yonelme: 'Üstad-ı Kâmil’e',  anlam: 'Bütün Türk müziği ünitelerini bitiren', renk: '#d9a520' }
+  { min: 20, ad: 'Üstad-ı Kâmil', yonelme: 'Üstad-ı Kâmil’e',  anlam: 'Temel Türk müziği ünitelerini bitiren', renk: '#d9a520' },
+  { min: TR_DALLAR.reduce(function (t, d) { return t + gercekUniteler(d).length; }, 0), ad: 'Hâce', yonelme: 'Hâce’ye', anlam: 'Bütün Türk müziği ünitelerini bitiren meşk hocası', renk: '#8a1c4a' }
 ];
 function unvanOf(n) { let u = UNVANLAR[0]; UNVANLAR.forEach(function (x) { if (n >= x.min) u = x; }); return u; }
 function unvan() { return unvanOf(bitenUniteSayisi(TR_DALLAR)); }
@@ -117,7 +130,7 @@ function ogeGecerli(id) {
   if (p === 'p') return !!perdeOge(id);
   if (p === 'k') return KM_VERI.some(function (v) { return v.oge === id; });
   if (p === 'd') return CESNILER.some(function (c) { return c.oge === id; });
-  if (p === 'm') return MAKAMLAR.some(function (m) { return m.oge === id; });
+  if (p === 'm') return !!makamBul(id);
   if (p === 'b') return true;
   return false;
 }
@@ -135,7 +148,7 @@ function ogeAdi(id) {
   if (p[0] === 'p') return perdeOge(id).ad;
   if (p[0] === 'k') return KM_VERI.find(function (v) { return v.oge === id; }).ad;
   if (p[0] === 'd') return CESNILER.find(function (c) { return c.oge === id; }).ad;
-  if (p[0] === 'm') return MAKAMLAR.find(function (m) { return m.oge === id; }).ad;
+  if (p[0] === 'm') return makamBul(id).ad;
   if (p[0] === 'b') return p[1] === 'a' ? kodAd(p[2]) : tonAd(+p[2], 'majör') + ' / ' + tonAd(+p[2], 'minör');
   return id;
 }
@@ -175,7 +188,7 @@ function turBaslat(o) {
 
 function kalpYaz() {
   const k = $('oyKalp');
-  if (TUR.kalpVar) k.textContent = '❤️'.repeat(Math.max(0, TUR.kalpKalan)) + '🤍'.repeat(Math.max(0, TUR.kalpMax - TUR.kalpKalan));
+  if (TUR.kalpVar) k.textContent = '❤️'.repeat(Math.max(0, TUR.kalpKalan)) + '🤍'.repeat(Math.max(0, TUR.kalpMax - TUR.kalpKalan)) + (TUR.sonsuz ? '  ♾️ ' + TUR.dogru : '');
   else k.textContent = TUR.etiket || '';
 }
 
@@ -232,9 +245,10 @@ function ipucuGoster(m) {
 
 function soruGoster() {
   clearInterval(TUR.zaman);
+  if (typeof ritimDur === 'function') ritimDur();
   const veri = TUR.sorular[TUR.k];
   const q = TUR.q = { veri: veri, butonlar: [], cevaplandi: false, ipucuNo: 1 };
-  $('oyDolgu').style.width = (TUR.k / TUR.sorular.length * 100) + '%';
+  $('oyDolgu').style.width = (TUR.sonsuz ? (TUR.dogru % 10) * 10 : TUR.k / TUR.sorular.length * 100) + '%';
   kalpYaz();
   $('oyGeri').classList.remove('acik', 'dogru', 'yanlis');
   const g = bosalt($('oyGovde'));
@@ -246,6 +260,8 @@ function soruGoster() {
   if (s.metin) kutu.appendChild(h('div', { class: 'soruMetin' + (s.kucuk ? ' kucuk' : '') }, s.metin));
   if (s.glif) kutu.appendChild(h('div', { class: 'soruGlif bravura' }, s.glif));
   if (s.porte) kutu.appendChild(porteSVG(s.porte));
+  if (s.svg) kutu.appendChild(h('div', { class: 'ritimKutu' }, s.svg()));
+  if (veri.dinle) kutu.appendChild(dinleDugmesi(veri.dinle, true));
   g.appendChild(kutu);
   if (veri.alt) g.appendChild(h('div', { class: 'soruAlt' }, veri.alt));
 
@@ -287,11 +303,12 @@ function soruGoster() {
   }
   else if (veri.tip === 'yer') yerCiz(alan, veri, q, kontrol);
   else if (veri.tip === 'dizi') diziCiz(alan, veri, q, kontrol);
+  else if (veri.tip === 'vur') vurCiz(alan, veri, q);
 
   jokerYaz();
   ustBilgiYaz();
 
-  if (TUR.sure) {
+  if (TUR.sure && veri.tip !== 'vur' && !veri.dinle) {
     const sn = (veri.tip === 'secim' ? TUR.sure : TUR.sure + 10);
     const bas = Date.now();
     const cubuk = $('oySure');
@@ -306,7 +323,7 @@ function soruGoster() {
 
 function secimCiz(alan, veri, q) {
   const siklar = karistir(veri.siklar);
-  const porteli = siklar.some(function (x) { return x.porte; });
+  const porteli = siklar.some(function (x) { return x.porte || x.svg; });
   const genis = siklar.some(function (x) { return x.genis; });
   const glifli = siklar.some(function (x) { return x.glif; });
   const kisa = !porteli && !glifli && siklar.every(function (x) { return String(x.metin).length <= 14; }) && siklar.length >= 4;
@@ -315,6 +332,7 @@ function secimCiz(alan, veri, q) {
   siklar.forEach(function (x) {
     const b = h('button', { class: 'sik', type: 'button' });
     if (x.porte) b.appendChild(porteSVG(x.porte));
+    else if (x.svg) b.appendChild(x.svg());
     else if (x.glif) b.appendChild(h('span', { class: 'bravura' }, x.glif));
     else b.textContent = x.metin;
     const kayit = { b: b, x: x, dogru: dogrular.indexOf(x.key) >= 0 };
@@ -394,34 +412,43 @@ function diziCiz(alan, veri, q, kontrol) {
   const havuz = h('div', { class: 'diziHavuz' + (d.genis ? ' genis' : '') });
   alan.appendChild(slotlar);
   alan.appendChild(havuz);
+  // Açık uçlu dizide (d.acik) kutu sayısı gösterilmez: kaç taş seçileceği de sorunun parçası
+  const enCok = d.acik ? (d.enCok || d.havuz.length) : d.uzunluk;
+  const tamamMi = function () { return d.acik ? secilen.length >= 1 : secilen.length === d.uzunluk; };
+  const sonuc = [];   // kontrol sonrası kutu renkleri
   function ciz() {
     bosalt(slotlar);
-    for (let i = 0; i < d.uzunluk; i++) {
+    let kutu = d.acik ? secilen.length + (q.cevaplandi || secilen.length >= enCok ? 0 : 1) : d.uzunluk;
+    if (d.acik && q.cevaplandi) kutu = Math.max(secilen.length, d.beklenen.length);   // eksik kalanları da göster
+    for (let i = 0; i < kutu; i++) {
+      if (d.acik && q.cevaplandi && i >= secilen.length) {
+        const eks = d.havuz.find(function (y) { return y.key === d.beklenen[i]; });
+        slotlar.appendChild(h('button', { class: 'diziSlot yanlis eksikSlot', type: 'button', title: 'Eksik' }, eks ? eks.metin : '?'));
+        continue;
+      }
       const x = secilen[i];
-      const s = h('button', { class: 'diziSlot' + (x ? ' dolu' : ''), type: 'button' }, x ? x.metin : String(i + 1));
+      const s = h('button', { class: 'diziSlot' + (x ? ' dolu' : '') + (d.acik && !x ? ' acikSlot' : '') + (sonuc[i] ? ' ' + sonuc[i] : ''), type: 'button' }, x ? x.metin : (d.acik ? '…' : String(i + 1)));
       s.onclick = function () { if (q.cevaplandi || !x) return; secilen.splice(i, 1); ciz(); };
       slotlar.appendChild(s);
     }
     bosalt(havuz);
     d.havuz.forEach(function (x) {
       const kullanildi = !d.tekrarli && secilen.indexOf(x) >= 0;
-      const b = h('button', { class: 'diziTas', type: 'button', disabled: kullanildi || q.cevaplandi || secilen.length >= d.uzunluk }, x.metin);
-      b.onclick = function () { if (secilen.length < d.uzunluk) { secilen.push(x); ciz(); } };
+      const b = h('button', { class: 'diziTas', type: 'button', disabled: kullanildi || q.cevaplandi || secilen.length >= enCok }, x.metin);
+      b.onclick = function () { if (secilen.length < enCok) { secilen.push(x); ciz(); } };
       havuz.appendChild(b);
     });
-    kontrol.disabled = secilen.length !== d.uzunluk;
+    kontrol.disabled = !tamamMi();
   }
   ciz();
   kontrol.hidden = false;
   kontrol.textContent = 'Kontrol et';
   kontrol.onclick = function () {
-    if (q.cevaplandi || secilen.length !== d.uzunluk) return;
+    if (q.cevaplandi || !tamamMi()) return;
     const keys = secilen.map(function (x) { return x.key; });
     const kabul = d.kabul || [d.beklenen];
     const dogru = kabul.some(function (k) { return k.join('|') === keys.join('|'); });
-    Array.prototype.forEach.call(slotlar.children, function (s, i) {
-      s.classList.add(kabul.some(function (k) { return k[i] === keys[i]; }) ? 'dogru' : 'yanlis');
-    });
+    keys.forEach(function (key, i) { sonuc[i] = kabul.some(function (k) { return k[i] === key; }) ? 'dogru' : 'yanlis'; });
     kontrol.hidden = true;
     q.cevaplandi = true;
     ciz();
@@ -536,6 +563,7 @@ function sonrakiSoru() {
   otoIptal();
   $('oyGeri').classList.remove('acik');
   if (TUR.kalpVar && TUR.kalpKalan <= 0) return turBitir(false);
+  if (TUR.sonsuz && TUR.k + 1 >= TUR.sorular.length) TUR.sorular = TUR.sorular.concat(sonsuzSorulari(TUR.sonsuz, TUR.dogru, 5));
   if (TUR.k + 1 >= TUR.sorular.length) return turBitir(true);
   TUR.k++;
   soruGoster();
@@ -555,7 +583,7 @@ function turBitir(basari) {
 
 function turdanCik(sor) {
   if (!TUR) { anaEkranaDon(); return; }
-  if (!sor) { clearInterval(TUR.zaman); otoIptal(); TUR = null; modalKapat(); anaEkranaDon(); return; }
+  if (!sor) { clearInterval(TUR.zaman); otoIptal(); if (typeof ritimDur === 'function') ritimDur(); TUR = null; modalKapat(); anaEkranaDon(); return; }
   modalAc(h('div', null,
     h('h2', null, 'Çıkmak istiyor musun?'),
     h('p', null, 'Bu turdaki ilerleme kaybolur.' + (TUR && TUR.jokerKullandi ? ' Harcadığın yıldızlar iade edilmez.' : '')),
@@ -567,9 +595,10 @@ function turdanCik(sor) {
 // SEVİYE / ÖZEL TUR BAŞLATICILAR
 // =====================================================
 function seviyeBaslat(s) {
+  if (s.tip === 'sonsuz') { sonsuzBaslat(s.dal); return; }
   const q = s.uret(s.soruSay);
   turBaslat({
-    tip: s.tip, seviye: s, sorular: q, kalp: 3, joker: true, kayit: true,
+    tip: s.tip, seviye: s, sorular: q, kalp: 3, joker: true, kayit: true, sure: s.sure || 0,
     bitince: function (r) { seviyeSonucu(s, r); }
   });
 }
@@ -716,6 +745,59 @@ function antrenmanBaslat(a) {
         h('p', null, r.dogru + ' / ' + r.toplam + ' doğru'),
         dugme('Bir tur daha', function () { modalKapat(); antrenmanBaslat(a); }),
         dugme('Tamam', function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
+    }
+  });
+}
+
+// =====================================================
+// SONSUZ MEŞK
+// =====================================================
+function sonsuzHavuz(dal) {
+  const dallar = dal === 'karisik' ? TR_DALLAR : [dal];
+  let L = [];
+  dallar.forEach(function (d) { L = L.concat(DAL_SEVIYELERI[d].filter(function (s) { return s.tip !== 'sonsuz' && bittiMi(s); })); });
+  if (!L.length) dallar.forEach(function (d) { L = L.concat(DAL_SEVIYELERI[d].filter(function (s) { return s.tip !== 'sonsuz'; })); });
+  return L;
+}
+function sonsuzAcik(dal) {
+  if (dal === 'karisik') return TR_DALLAR.some(function (d) { return DAL_SEVIYELERI[d].some(function (s) { return s.tip !== 'sonsuz' && bittiMi(s); }); });
+  return acikMi(SEVIYE['sn-' + dal]);
+}
+// seri arttıkça listenin sonundaki (zor) seviyeler ağırlaşır; zayıf öğeler araya karışır
+function sonsuzSorulari(dal, seri, n) {
+  const L = sonsuzHavuz(dal);
+  const zor = Math.min(1, seri / 20);
+  const zayif = zayiflar().filter(function (id) { return dal === 'karisik' || ogeDali(id) === dal; });
+  const sorular = [];
+  for (let i = 0; i < n; i++) {
+    if (zayif.length && Math.random() < 0.2) { try { sorular.push(ogeSorusu(rastgele(zayif))); continue; } catch (e) {} }
+    const r = Math.pow(Math.random(), 1 - 0.75 * zor);
+    const s = L[Math.min(L.length - 1, Math.floor(r * L.length))];
+    try { sorular.push(s.uret(1)[0]); } catch (e) { console.warn(e); }
+  }
+  return sorular.filter(Boolean);
+}
+function sonsuzBaslat(dal) {
+  if (!sonsuzAcik(dal)) { toast(dal === 'karisik' ? 'Önce birkaç seviye bitir' : '🔒 Önce bu dalın bütün ünitelerini bitir', 2600); return; }
+  DURUM.rekor = DURUM.rekor || {};
+  turBaslat({
+    tip: 'sonsuz', sonsuz: dal, sorular: sonsuzSorulari(dal, 0, 5), kalp: 3, joker: false, kayit: true,
+    bitince: function (r) {
+      const eski = DURUM.rekor[dal] || 0, yeni = r.dogru > eski;
+      if (yeni) DURUM.rekor[dal] = r.dogru;
+      let odul = 0;
+      if (yeni && r.dogru >= 10) { odul = Math.floor(r.dogru / 10) - Math.floor(eski / 10); if (odul > 0) DURUM.bonus += odul; }
+      kaydet();
+      const ad = dal === 'karisik' ? 'Her şey karışık' : DALLAR[dal].ikon + ' ' + DALLAR[dal].ad;
+      modalAc(h('div', { class: 'sonuc' },
+        h('div', { class: 'sonucMaskot', html: bulbulSVG(yeni ? 'mutlu' : 'normal') }),
+        h('h2', null, '♾️ Sonsuz Meşk · ' + ad),
+        h('div', { class: 'rekorSayi' }, String(r.dogru)),
+        h('p', null, yeni ? (eski ? '🏅 Yeni rekor! Eski rekorun: ' + eski : '🏅 İlk rekorun!') : 'Rekorun: ' + eski),
+        odul > 0 ? h('p', null, '⭐ +' + odul) : h('p', { class: 'kucukNot' }, 'Rekorunu her 10 doğruda geçince ⭐ +1.'),
+        h('p', { class: 'kucukNot' }, 'Yanlış yaptıkların Tekrar listene eklendi.'),
+        dugme('Bir daha', function () { modalKapat(); sonsuzBaslat(dal); }),
+        dugme('Yola dön', function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
     }
   });
 }
