@@ -14,8 +14,18 @@ const DALLAR = {
   usul:  { ad: 'Usul',          ikon: '🥁', renk: 'var(--safran)',  uniteler: USUL_UNITELER },
   bati:  { ad: 'Batı Teorisi',  ikon: '🎹', renk: 'var(--mor)',     uniteler: BATI_UNITELER }
 };
-const DAL_SIRA = ['koma', 'perde', 'gocurme', 'cesni', 'makam', 'ahenk', 'usul', 'bati'];
-const TR_DALLAR = ['koma', 'perde', 'gocurme', 'cesni', 'makam', 'ahenk', 'usul'];
+// Pedagojik sıra: Koma → Perde → Usul → Dörtlü-Beşli → Göçürme → Makam → Ahenk → Batı
+const DAL_SIRA = ['koma', 'perde', 'usul', 'cesni', 'gocurme', 'makam', 'ahenk', 'bati'];
+const TR_DALLAR = ['koma', 'perde', 'usul', 'cesni', 'gocurme', 'makam', 'ahenk'];
+
+// Batı Teorisi'nin pedagojik sırası: tartımlar aralıkların arasına; tonlar en sona (TSM'de görülmeyebilir)
+const BATI_SIRA = ['b11', 'b1', 'b12', 'b2', 'b3', 'b13', 'b4', 'b14', 'b15', 'b16', 'b17', 'b18', 'b19', 'b20', 'sn-dikte', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'];
+(function () {
+  const L = BATI_SIRA.map(function (id) { return BATI_UNITELER.find(function (u) { return u.id === id; }); }).filter(Boolean);
+  BATI_UNITELER.forEach(function (u) { if (L.indexOf(u) < 0) L.push(u); });
+  BATI_UNITELER.length = 0;
+  L.forEach(function (u, i) { u.no = i + 1; BATI_UNITELER.push(u); });
+})();
 
 // ---------- Sonsuz Meşk: her Türk müziği dalının sonunda ucu açık bir ünite ----------
 // O dalın geçilmiş seviyelerinden karışık sorular; doğru bildikçe zor seviyeler ağırlaşır.
@@ -41,24 +51,21 @@ DAL_SIRA.forEach(function (d) {
   });
 });
 
-// Önerilen sıra (Meşk Yolu). Batı Teorisi isteğe bağlı olarak araya karışır.
-// Göçürme dörtlü-beşliler öğrenildikten sonra gelir; perde adları gerekmez
-const MESK_TR = ['km1', 'p1', 'km2', 'p2', 'km3', 'db1', 'db2', 'p3', 'db3', 'gc1', 'db4', 'gc2', 'mk1', 'p4', 'mk2', 'db5', 'mk3', 'gc3', 'gc4', 'p5',
-  'u1', 'a1', 'mk4', 'u2', 'db6', 'p6', 'u3', 'gc5', 'a2', 'u4', 'mk5', 'p7', 'u5', 'u6', 'u7'];
-const MESK_BATI_SONRA = { p1: 'b1', km2: 'b2', p2: 'b3', km3: 'b4', db1: 'b5', db2: 'b6', p3: 'b7', db3: 'b8', db4: 'b9', mk1: 'b10', p5: 'b11', u1: 'b12', u2: 'b13' };
+// Önerilen sıra (Meşk Yolu): dallar karışık, pedagojik sırayla. Batı üniteleri (b…) yalnızca
+// Ayarlar'da Batı açıksa görünür; Batı'nın ton konuları en sonda.
+const MESK_SIRA = ['km1', 'b11', 'p1', 'b1', 'km2', 'u1', 'p2', 'km3', 'b12', 'db1', 'u2', 'b2', 'db2', 'p3', 'b3', 'db3', 'b13',
+  'gc1', 'b4', 'db4', 'b14', 'gc2', 'b15', 'b16', 'b17', 'u3', 'mk1', 'p4', 'mk2', 'a1', 'mk3', 'gc3', 'u4', 'b18', 'db5', 'mk4', 'p5', 'gc4',
+  'u5', 'b19', 'p6', 'a2', 'db6', 'gc5', 'u6', 'b20', 'mk5', 'p7', 'u7', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'];
+const MESK_TR = MESK_SIRA.filter(function (id) { return id[0] !== 'b'; });
 function meskSirasi() {
-  const L = [];
-  MESK_TR.forEach(function (id) {
-    L.push(id);
-    if (DURUM.ayar.bati && MESK_BATI_SONRA[id]) L.push(MESK_BATI_SONRA[id]);
-  });
-  return L.map(function (id) { return UNITE[id]; });
+  return MESK_SIRA.filter(function (id) { return DURUM.ayar.bati || id[0] !== 'b'; }).map(function (id) { return UNITE[id]; }).filter(Boolean);
 }
 
 // ---------- Durum sorguları ----------
 function yildizOf(id) { return DURUM.yildiz[id] || 0; }
 function bittiMi(s) { return yildizOf(s.id) > 0; }
 function acikMi(s) {
+  if (bittiMi(s)) return true;   // daha önce geçilmiş seviye (sıra değişse de) açık kalır
   const L = DAL_SEVIYELERI[s.dal];
   const i = L.indexOf(s);
   return i <= 0 || bittiMi(L[i - 1]);
@@ -416,6 +423,7 @@ function diziCiz(alan, veri, q, kontrol) {
   const enCok = d.acik ? (d.enCok || d.havuz.length) : d.uzunluk;
   const tamamMi = function () { return d.acik ? secilen.length >= 1 : secilen.length === d.uzunluk; };
   const sonuc = [];   // kontrol sonrası kutu renkleri
+  const icerik = function (x) { return x.svg ? x.svg() : x.metin; };
   function ciz() {
     bosalt(slotlar);
     let kutu = d.acik ? secilen.length + (q.cevaplandi || secilen.length >= enCok ? 0 : 1) : d.uzunluk;
@@ -423,18 +431,18 @@ function diziCiz(alan, veri, q, kontrol) {
     for (let i = 0; i < kutu; i++) {
       if (d.acik && q.cevaplandi && i >= secilen.length) {
         const eks = d.havuz.find(function (y) { return y.key === d.beklenen[i]; });
-        slotlar.appendChild(h('button', { class: 'diziSlot yanlis eksikSlot', type: 'button', title: 'Eksik' }, eks ? eks.metin : '?'));
+        slotlar.appendChild(h('button', { class: 'diziSlot yanlis eksikSlot', type: 'button', title: 'Eksik' }, eks ? icerik(eks) : '?'));
         continue;
       }
       const x = secilen[i];
-      const s = h('button', { class: 'diziSlot' + (x ? ' dolu' : '') + (d.acik && !x ? ' acikSlot' : '') + (sonuc[i] ? ' ' + sonuc[i] : ''), type: 'button' }, x ? x.metin : (d.acik ? '…' : String(i + 1)));
+      const s = h('button', { class: 'diziSlot' + (x ? ' dolu' : '') + (d.svgli ? ' svgli' : '') + (d.acik && !x ? ' acikSlot' : '') + (sonuc[i] ? ' ' + sonuc[i] : ''), type: 'button' }, x ? icerik(x) : (d.acik ? '…' : String(i + 1)));
       s.onclick = function () { if (q.cevaplandi || !x) return; secilen.splice(i, 1); ciz(); };
       slotlar.appendChild(s);
     }
     bosalt(havuz);
     d.havuz.forEach(function (x) {
       const kullanildi = !d.tekrarli && secilen.indexOf(x) >= 0;
-      const b = h('button', { class: 'diziTas', type: 'button', disabled: kullanildi || q.cevaplandi || secilen.length >= enCok }, x.metin);
+      const b = h('button', { class: 'diziTas' + (d.svgli ? ' svgli' : ''), type: 'button', disabled: kullanildi || q.cevaplandi || secilen.length >= enCok }, icerik(x));
       b.onclick = function () { if (secilen.length < enCok) { secilen.push(x); ciz(); } };
       havuz.appendChild(b);
     });
@@ -447,12 +455,12 @@ function diziCiz(alan, veri, q, kontrol) {
     if (q.cevaplandi || !tamamMi()) return;
     const keys = secilen.map(function (x) { return x.key; });
     const kabul = d.kabul || [d.beklenen];
-    const dogru = kabul.some(function (k) { return k.join('|') === keys.join('|'); });
-    keys.forEach(function (key, i) { sonuc[i] = kabul.some(function (k) { return k[i] === key; }) ? 'dogru' : 'yanlis'; });
+    const dogru = d.dogruMu ? d.dogruMu(keys) : kabul.some(function (k) { return k.join('|') === keys.join('|'); });
+    keys.forEach(function (key, i) { sonuc[i] = dogru || kabul.some(function (k) { return k[i] === key; }) ? 'dogru' : 'yanlis'; });
     kontrol.hidden = true;
     q.cevaplandi = true;
     ciz();
-    cevapla(dogru);
+    cevapla(dogru, null, !dogru && veri.dogruGorsel ? veri.dogruGorsel() : null);
   };
 }
 
@@ -594,8 +602,11 @@ function turdanCik(sor) {
 // =====================================================
 // SEVİYE / ÖZEL TUR BAŞLATICILAR
 // =====================================================
+let SON_UNITE = null;   // quiz bitince Dallar'da vurgulanacak ünite
+function yolaDonMetni() { return YOL_FILTRE === null ? 'Meşk Yolu’na dön' : 'Dallar’a dön'; }
 function seviyeBaslat(s) {
-  if (s.tip === 'sonsuz') { sonsuzBaslat(s.dal); return; }
+  SON_UNITE = s.unite.id;
+  if (s.tip === 'sonsuz') { sonsuzBaslat(s.unite.sonsuzDal || s.dal); return; }
   const q = s.uret(s.soruSay);
   turBaslat({
     tip: s.tip, seviye: s, sorular: q, kalp: 3, joker: true, kayit: true, sure: s.sure || 0,
@@ -619,7 +630,7 @@ function seviyeSonucu(s, r) {
       h('p', null, r.dogru + ' doğru cevap verdin. Yanlış yaptıkların 🎯 Tekrar listene eklendi.'),
       kartSatiri(r),
       dugme('Tekrar dene', function () { modalKapat(); seviyeBaslat(s); }),
-      dugme('Yola dön', function () { modalKapat(); turdanCik(false); }, 'gri'));
+      dugme(yolaDonMetni(), function () { modalKapat(); turdanCik(false); }, 'gri'));
   } else {
     const fark = yildizOf(s.id) - eski;
     icerik.push(h('div', { class: 'sonucMaskot', html: bulbulSVG('mutlu') }),
@@ -630,11 +641,11 @@ function seviyeSonucu(s, r) {
       h('p', null, fark > 0 ? '⭐ +' + fark : 'Yıldız rekorunu geçmedin'),
       yeniUnvan !== oncekiUnvan ? h('div', { class: 'yeniUnvan' }, h('span', { class: 'unvanRozet buyuk', html: rozetSVG(unvan().renk) }),
         h('div', null, 'Yeni ünvan: ' + yeniUnvan + '!', h('small', null, unvan().anlam))) : null,
-      !uniteOnce && uniteBitti(s.unite) ? h('p', null, '🏆 Bu üniteyi altınlamak için Meşk Yolu’nda “Altınla” düğmesini dene.') : null,
+      !uniteOnce && uniteBitti(s.unite) ? h('p', null, '🏆 Bu üniteyi altınlamak için ünitenin üstündeki “Altınla” düğmesini dene.') : null,
       kartSatiri(r),
       sonraki && acikMi(sonraki) ? dugme('Sonraki: ' + sonraki.ad, function () { modalKapat(); seviyeGiris(sonraki); }) : null,
       dugme('Tekrar oyna', function () { modalKapat(); seviyeBaslat(s); }, 'gri'),
-      dugme('Yola dön', function () { modalKapat(); turdanCik(false); }, 'gri'));
+      dugme(yolaDonMetni(), function () { modalKapat(); turdanCik(false); }, 'gri'));
   }
   modalAc(h('div', { class: 'sonuc' }, icerik), { kapatilamaz: true });
 }
@@ -674,7 +685,7 @@ function sandikBaslat(u) {
         h('p', null, r.dogru + ' / ' + r.toplam + ' doğru'),
         odul ? h('p', null, odul) : h('p', { class: 'kucukNot' }, 'Sandığın ödülünü daha önce almıştın; bu tur pratikti.'),
         kartSatiri(r),
-        dugme('Yola dön', function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
+        dugme(yolaDonMetni(), function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
     }
   });
 }
@@ -693,7 +704,7 @@ function atlamaBaslat(u) {
         h('div', { class: 'sonucMaskot', html: bulbulSVG(r.basari ? 'mutlu' : 'uzgun') }),
         h('h2', null, r.basari ? '⏩ Ünite geçildi!' : 'Bu sefer olmadı'),
         h('p', null, r.basari ? 'Ünitenin bütün seviyeleri 1 ⭐ ile tamamlandı. İstersen dönüp yıldızlarını artırabilirsin.' : r.dogru + ' doğru verdin. Üniteyi baştan oynayarak ilerleyebilirsin.'),
-        dugme('Yola dön', function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
+        dugme(yolaDonMetni(), function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
     }
   });
 }
@@ -711,7 +722,7 @@ function altinBaslat(u) {
         h('h2', null, gecti ? '🏆 Ünite altınlandı!' : 'Altın için en fazla 2 hata'),
         h('p', null, r.dogru + ' doğru · ' + r.hata + ' hata'),
         not ? h('p', null, not) : null,
-        dugme('Yola dön', function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
+        dugme(yolaDonMetni(), function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
     }
   });
 }
@@ -760,11 +771,13 @@ function sonsuzHavuz(dal) {
   return L;
 }
 function sonsuzAcik(dal) {
+  if (dal === 'dikte') return acikMi(SEVIYE['sn-dikte']);
   if (dal === 'karisik') return TR_DALLAR.some(function (d) { return DAL_SEVIYELERI[d].some(function (s) { return s.tip !== 'sonsuz' && bittiMi(s); }); });
   return acikMi(SEVIYE['sn-' + dal]);
 }
 // seri arttıkça listenin sonundaki (zor) seviyeler ağırlaşır; zayıf öğeler araya karışır
 function sonsuzSorulari(dal, seri, n) {
+  if (dal === 'dikte') return sonsuzDikteSorulari(seri, n);
   const L = sonsuzHavuz(dal);
   const zor = Math.min(1, seri / 20);
   const zayif = zayiflar().filter(function (id) { return dal === 'karisik' || ogeDali(id) === dal; });
@@ -788,7 +801,7 @@ function sonsuzBaslat(dal) {
       let odul = 0;
       if (yeni && r.dogru >= 10) { odul = Math.floor(r.dogru / 10) - Math.floor(eski / 10); if (odul > 0) DURUM.bonus += odul; }
       kaydet();
-      const ad = dal === 'karisik' ? 'Her şey karışık' : DALLAR[dal].ikon + ' ' + DALLAR[dal].ad;
+      const ad = dal === 'karisik' ? 'Her şey karışık' : dal === 'dikte' ? '🎹 Sonsuz dikte' : DALLAR[dal].ikon + ' ' + DALLAR[dal].ad;
       modalAc(h('div', { class: 'sonuc' },
         h('div', { class: 'sonucMaskot', html: bulbulSVG(yeni ? 'mutlu' : 'normal') }),
         h('h2', null, '♾️ Sonsuz Meşk · ' + ad),
@@ -797,7 +810,7 @@ function sonsuzBaslat(dal) {
         odul > 0 ? h('p', null, '⭐ +' + odul) : h('p', { class: 'kucukNot' }, 'Rekorunu her 10 doğruda geçince ⭐ +1.'),
         h('p', { class: 'kucukNot' }, 'Yanlış yaptıkların Tekrar listene eklendi.'),
         dugme('Bir daha', function () { modalKapat(); sonsuzBaslat(dal); }),
-        dugme('Yola dön', function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
+        dugme(yolaDonMetni(), function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
     }
   });
 }
@@ -824,7 +837,7 @@ function isinmaBaslat(u, bitince) {
         h('h2', null, 'Hazırsın!'),
         h('p', null, 'Ders bitti. Şimdi ünitenin ilk seviyesini oynayabilirsin.'),
         dugme('İlk seviyeye başla', function () { modalKapat(); seviyeBaslat(ilk); }),
-        dugme('Yola dön', function () { modalKapat(); turdanCik(false); if (bitince) bitince(); }, 'gri')), { kapatilamaz: true });
+        dugme(yolaDonMetni(), function () { modalKapat(); turdanCik(false); if (bitince) bitince(); }, 'gri')), { kapatilamaz: true });
     }
   });
 }

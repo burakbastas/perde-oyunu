@@ -52,10 +52,14 @@ function ekranAc(id) {
   tamponYenile();
 }
 let SEKME = 'yol';
-let YOL_FILTRE = null;
+let YOL_FILTRE = 'dallar';   // ana sayfa Dallar
+let DAL_ACIK = null;          // Dallar'da açık olan dal
+let HEDEF_UNITE = null;       // yol açılınca kaydırılacak ünite
 function anaEkranaDon() {
   TUR = null;
   ekranAc('ekranAna');
+  // Ana sayfa Dallar: bir dalın yolundan girilen quiz bitince Dallar'a, o dal açık dönülür
+  if (SEKME === 'yol' && YOL_FILTRE && DALLAR[YOL_FILTRE]) { DAL_ACIK = YOL_FILTRE; YOL_FILTRE = 'dallar'; }
   sekmeAc(SEKME, true);
 }
 
@@ -87,8 +91,8 @@ function yolCiz(g, kaydir) {
   // Üst şerit: ünvan + görünüm seçici (seçici yapışkan)
   g.appendChild(unvanSeridi());
   const sec = h('div', { class: 'segment' },
-    h('button', { class: !YOL_FILTRE ? 'aktif' : '', type: 'button', onclick: function () { YOL_FILTRE = null; sekmeAc('yol'); } }, '🧭 Meşk Yolu'),
-    h('button', { class: YOL_FILTRE === 'dallar' ? 'aktif' : (YOL_FILTRE ? 'aktif' : ''), type: 'button', onclick: function () { YOL_FILTRE = 'dallar'; sekmeAc('yol'); } }, '🌿 Dallar'));
+    h('button', { class: YOL_FILTRE ? 'aktif' : '', type: 'button', onclick: function () { YOL_FILTRE = 'dallar'; sekmeAc('yol'); } }, '🌿 Dallar'),
+    h('button', { class: !YOL_FILTRE ? 'aktif' : '', type: 'button', onclick: function () { YOL_FILTRE = null; sekmeAc('yol'); } }, '🧭 Meşk Yolu'));
   const yapiskan = h('div', { class: 'yapiskan' }, sec);
   g.appendChild(yapiskan);
   if (kurBandiGerekli()) g.appendChild(kurBandi());
@@ -99,7 +103,7 @@ function yolCiz(g, kaydir) {
   if (YOL_FILTRE && DALLAR[YOL_FILTRE]) {
     const d = DALLAR[YOL_FILTRE];
     yapiskan.appendChild(h('div', { class: 'filtreBaslik', style: { '--dal': d.renk } },
-      h('button', { class: 'cip', type: 'button', onclick: function () { YOL_FILTRE = 'dallar'; sekmeAc('yol'); } }, '← Dallar'),
+      h('button', { class: 'cip', type: 'button', onclick: function () { DAL_ACIK = YOL_FILTRE; YOL_FILTRE = 'dallar'; sekmeAc('yol'); } }, '← Dallar'),
       h('b', null, d.ikon + ' ' + d.ad),
       YOL_FILTRE === 'usul' ? h('button', { class: 'cip', type: 'button', onclick: bendirSayfasi }, '🥁 Bendir') : null));
     uniteler = d.uniteler;
@@ -111,21 +115,23 @@ function yolCiz(g, kaydir) {
   uniteler.forEach(function (u) {
     const blok = uniteBlok(u);
     g.appendChild(blok);
-    if (!hedef && !u.sonsuz && !uniteBitti(u) && u.seviyeler.some(acikMi)) hedef = blok;
+    if (HEDEF_UNITE) { if (u.id === HEDEF_UNITE) hedef = blok; }
+    else if (!hedef && !u.sonsuz && !uniteBitti(u) && u.seviyeler.some(acikMi)) hedef = blok;
   });
+  HEDEF_UNITE = null;
   g.appendChild(h('div', { class: 'yolSon' }, h('span', { html: bulbulSVG('mutlu') }), h('p', null, 'Yolun sonu… şimdilik! Yeni üniteler yolda.')));
   if (kaydir && hedef) requestAnimationFrame(function () { g.scrollTop = Math.max(0, hedef.offsetTop - g.offsetTop - 64); });
 }
 
 function sonsuzBlok(u) {
   const d = DALLAR[u.dal], s = u.seviyeler[0], ac = acikMi(s);
-  const rekor = (DURUM.rekor || {})[u.dal] || 0;
+  const rekor = (DURUM.rekor || {})[u.sonsuzDal || u.dal] || 0;
   return h('section', { class: 'uniteBlok sonsuzBlok', style: { '--dal': d.renk }, 'data-unite': u.id },
     h('div', { class: 'uniteBas' + (ac ? '' : ' kilitli') },
       h('div', { class: 'uniteUst' }, h('span', null, d.ikon + ' ' + d.ad + ' · Sonsuz'), h('span', null, rekor ? '🏅 ' + rekor : '')),
-      h('h3', null, '♾️ Sonsuz Meşk'),
-      h('p', null, ac ? 'Bu dalın bütün seviyelerinden karışık, bitmeyen sorular. Doğru bildikçe zorlaşır; 3 kalbin bitince rekorun kaydedilir.' : '🔒 Bu dalın bütün ünitelerini bitirince açılır.'),
-      h('div', { class: 'uniteEylem' }, h('button', { class: 'dugme' + (ac ? '' : ' gri'), type: 'button', onclick: function () { sonsuzBaslat(u.dal); } }, ac ? '♾️ Başla' : '🔒 Kilitli'))));
+      h('h3', null, '♾️ ' + u.ad),
+      h('p', null, u.sonsuzDal ? (ac ? u.kisa + '. 3 kalbin bitince rekorun kaydedilir.' : '🔒 Önceki ünite bitince açılır.') : (ac ? 'Bu dalın bütün seviyelerinden karışık, bitmeyen sorular. Doğru bildikçe zorlaşır; 3 kalbin bitince rekorun kaydedilir.' : '🔒 Bu dalın bütün ünitelerini bitirince açılır.')),
+      h('div', { class: 'uniteEylem' }, h('button', { class: 'dugme' + (ac ? '' : ' gri'), type: 'button', onclick: function () { sonsuzBaslat(u.sonsuzDal || u.dal); } }, ac ? '♾️ Başla' : '🔒 Kilitli'))));
 }
 function uniteBlok(u) {
   if (u.sonsuz) return sonsuzBlok(u);
@@ -245,24 +251,62 @@ function kilitMesaji(s) {
 }
 
 function dallarCiz(g) {
-  g.appendChild(h('p', { class: 'yolAciklama' }, 'Her dal kendi sırasıyla ilerler. Bir dala dokun, sadece o dalın ünitelerini gör.'));
+  g.appendChild(h('p', { class: 'yolAciklama' }, 'Bir dala dokun, üniteleri altında açılsın; üniteye dokunup doğrudan oraya git.'));
   const kap = h('div', { class: 'dalKartlar' });
   DAL_SIRA.forEach(function (k) {
     const d = DALLAR[k];
     let biten = 0, yil = 0, top = 0;
-    const gercek = gercekUniteler ? d.uniteler.filter(function (u) { return !u.sonsuz; }) : d.uniteler;
+    const gercek = d.uniteler.filter(function (u) { return !u.sonsuz; });
     gercek.forEach(function (u) { if (uniteBitti(u)) biten++; u.seviyeler.forEach(function (s) { yil += yildizOf(s.id); top += 3; }); });
     const sira = siradakiSeviye(k);
-    kap.appendChild(h('button', { class: 'dalKart', type: 'button', style: { '--dal': d.renk }, onclick: function () { YOL_FILTRE = k; sekmeAc('yol'); } },
+    const acik = DAL_ACIK === k;
+    const kart = h('button', { class: 'dalKart' + (acik ? ' acikKart' : ''), type: 'button', style: { '--dal': d.renk }, 'aria-expanded': acik ? 'true' : 'false',
+      onclick: function () { DAL_ACIK = acik ? null : k; const y = g.scrollTop; sekmeAc('yol', false); $('sekme').scrollTop = y; } },
       h('div', { class: 'dalIkon' }, d.ikon),
       h('div', { class: 'dalMetin' },
         h('b', null, d.ad),
         h('span', null, biten + ' / ' + gercek.length + ' ünite · ⭐ ' + yil + '/' + top + ((DURUM.rekor || {})[k] ? ' · ♾️ ' + DURUM.rekor[k] : '')),
         h('small', null, sira ? (sira.tip === 'sonsuz' ? '🏆 Tamamlandı · ♾️ Sonsuz Meşk açık' : 'Sıradaki: ' + sira.unite.ad) : '🏆 Tamamlandı')),
-      h('div', { class: 'cubuk' }, h('div', { style: { width: (biten / gercek.length * 100) + '%' } }))));
+      h('div', { class: 'dalOk' }, acik ? '▴' : '▾'),
+      h('div', { class: 'cubuk' }, h('div', { style: { width: (biten / gercek.length * 100) + '%' } })));
+    kap.appendChild(kart);
+    if (acik) {
+      const liste = h('div', { class: 'dalUniteler', style: { '--dal': d.renk } });
+      let siradakiKondu = false;
+      d.uniteler.forEach(function (u) {
+        const il = uniteIlerleme(u);
+        let durum, alt;
+        if (u.sonsuz) {
+          const ac = acikMi(u.seviyeler[0]);
+          durum = ac ? 'acik' : 'kilit';
+          alt = ac ? ((DURUM.rekor || {})[u.sonsuzDal || k] ? 'Rekor: ' + DURUM.rekor[u.sonsuzDal || k] : (u.sonsuzDal ? u.kisa : 'Bitmeyen karışık sorular')) : 'Bütün üniteler bitince açılır';
+        } else if (uniteBitti(u)) {
+          durum = 'bitti';
+          alt = '⭐ ' + u.seviyeler.reduce(function (t, s) { return t + yildizOf(s.id); }, 0) + '/' + (u.seviyeler.length * 3) + (DURUM.altin[u.id] ? ' · 🏆 Altın' : '');
+        } else if (u.seviyeler.some(acikMi)) {
+          durum = siradakiKondu ? 'acik' : 'simdi'; siradakiKondu = true;
+          alt = (il.bitti ? il.bitti + '/' + il.toplam + ' seviye' : 'Başlanmadı') + (durum === 'simdi' ? ' · sıradaki' : '');
+        } else {
+          durum = 'kilit';
+          alt = 'Kilitli: önceki ünitenin finalini 👑 geç';
+        }
+        const isaret = u.sonsuz ? '♾️' : durum === 'bitti' ? '✔' : durum === 'kilit' ? '🔒' : durum === 'simdi' ? '▶' : String(u.no);
+        liste.appendChild(h('button', { class: 'dalUnite ' + durum + (u.id === SON_UNITE ? ' sonOynanan' : ''), 'data-unite': u.id, type: 'button', onclick: function () {
+          if (u.sonsuz) { if (durum === 'kilit') { toast(u.ad + ', önceki ünite bitince açılır'); return; } SON_UNITE = u.id; sonsuzBaslat(u.sonsuzDal || k); return; }
+          YOL_FILTRE = k; HEDEF_UNITE = u.id; sekmeAc('yol'); } },
+          h('span', { class: 'duNo' }, isaret),
+          h('span', { class: 'duMetin' }, h('b', null, u.sonsuz ? u.ad : u.no + '. ' + u.ad), h('small', null, alt)),
+          h('span', { class: 'duOk' }, '›')));
+      });
+      if (k === 'usul') liste.appendChild(h('button', { class: 'dalUnite acik', type: 'button', onclick: bendirSayfasi },
+        h('span', { class: 'duNo' }, '🥁'), h('span', { class: 'duMetin' }, h('b', null, 'Bendir'), h('small', null, 'Usul çalar: çalışırken istediğin usulü çalar')), h('span', { class: 'duOk' }, '›')));
+      kap.appendChild(liste);
+    }
   });
   g.appendChild(kap);
-  if (!DURUM.ayar.bati) g.appendChild(h('p', { class: 'kucukNot ortala' }, '🎹 Batı Teorisi Meşk Yolu’nda gösterilmiyor. Profil → Ayarlar’dan açabilirsin.'));
+  if (!DURUM.ayar.bati) g.appendChild(h('p', { class: 'kucukNot ortala' }, '🎹 Batı Teorisi Meşk Yolu’nda gösterilmiyor. Profil → Ayarlar’dan ekleyebilirsin.'));
+  const son = kap.querySelector('.sonOynanan');
+  if (son) requestAnimationFrame(function () { g.scrollTop = Math.max(0, son.offsetTop - g.offsetTop - g.clientHeight / 3); setTimeout(function () { son.classList.remove('sonOynanan'); }, 2200); });
 }
 
 // ---------- Seviye girişi ----------
@@ -345,7 +389,7 @@ function modulAc(m) {
       h('div', { class: 'sonucMaskot', html: bulbulSVG('mutlu') }),
       h('h2', null, 'Modül tamam!'),
       u ? h('p', null, 'Bunu oyunda denemek için: ' + DALLAR[u.dal].ikon + ' ' + u.ad) : null,
-      u ? dugme('Üniteye git', function () { modalKapat(); YOL_FILTRE = null; sekmeAc('yol', false); uniteyeKaydir(u); }) : null,
+      u ? dugme('Üniteye git', function () { modalKapat(); YOL_FILTRE = u.dal; sekmeAc('yol', false); uniteyeKaydir(u); }) : null,
       dugme('Öğren’e dön', modalKapat, 'gri')));
   }, 'Bitir');
 }
@@ -548,7 +592,7 @@ function arkaPlanlar() {
 }
 function nasilOynanir() {
   sayfa('❓ Nasıl oynanır', h('div', { class: 'metinSayfa', html:
-    '<p>🧭 <b>Meşk Yolu</b>: Koma, Perde, Göçürme, Dörtlü-Beşli ve Makam dallarının üniteleri önerilen sırayla dizilir. <b>Dallar</b> görünümünden istediğin dala geçebilirsin; dallar birbirini kilitlemez.</p>' +
+    '<p>🌿 <b>Dallar</b>: açılış sayfası. Bir dala dokununca üniteleri altında açılır; istediğin üniteye doğrudan gidebilirsin. Dallar birbirini kilitlemez.</p><p>🧭 <b>Meşk Yolu</b>: bütün dalların üniteleri önerilen öğrenme sırasıyla tek yolda.</p>' +
     '<p>📖 <b>Ders</b>: her ünite kısa bir dersle ve ipuçlu bir ısınma turuyla başlar. Dersi atlayabilirsin ama önerilmez.</p>' +
     '<p>🔢 <b>Seviyeler</b>: tanıma soruları. ✍️ <b>Yerleştirme</b>: cevabı porteye kendin yazarsın ya da harfleri, parçaları sırayla dizersin. 👑 <b>Final</b>: geçince o dalda sonraki ünite açılır. 🎁 <b>Sandık</b>: ünitenin karışık tekrarı.</p>' +
     '<p>⏩ Doğru cevaptan sonra oyun kısa bir süre bekleyip <b>kendiliğinden geçer</b>; açıklamayı okumak istersen kaydır ya da bir terime dokun, geçiş durur. Yanlış cevapta açıklama bekler: <b>ekranın herhangi bir yerine dokunarak</b> devam edebilirsin. Ayarlar’dan kapatılabilir.</p>' +
@@ -559,7 +603,7 @@ function nasilOynanir() {
     '<p>🎖️ <b>Ünvanlar</b> biten Türk müziği ünitelerine göre verilir: Mübtedî, Heveskâr, Mutavassıt, Mûsikişinas, Müntehî, Muallim, Üstad-ı Kâmil ve Hâce. Yol’un üstündeki şeride dokunursan bütün basamakları görürsün.</p>' +
     '<p>♾️ <b>Sonsuz Meşk</b>: bir dalın bütün ünitelerini bitirince o dalın sonunda bitmeyen bir ünite açılır. Doğru bildikçe zorlaşır; rekorunu geçmeye çalış. Tekrar sekmesinde de var.</p>' +
     '<p>🥁 <b>Usul</b> ve 🎹 tartım ünitelerinde ses var: 🔊 ile dinler, ✍️ seviyelerinde usulü ekrana vurursun (sapı yukarı olan notalar sağ el, aşağı olanlar sol el; bilgisayarda J ve F tuşları). Öğren sekmesindeki <b>Bendir</b> aracı, çalışırken arkada istediğin usulü istediğin hızda çalar.</p>' +
-    '<p>🎹 <b>Batı Teorisi</b> ayrı bir dal: aralıklar, tonlar, donanım ve minör türleri. Dallar’dan oynayabilir, istersen Ayarlar’dan Meşk Yolu’na ekleyebilirsin.</p>' }));
+    '<p>🎹 <b>Batı Teorisi</b> ayrı bir dal: tartım ve ritim diktesi, aralıklar, tonlar, donanım ve minör türleri. Dallar’dan oynayabilir, istersen Ayarlar’dan Meşk Yolu’na ekleyebilirsin.</p>' }));
 }
 function hakkinda() {
   sayfa('ℹ️ Hakkında', h('div', { class: 'metinSayfa', html:
@@ -572,6 +616,20 @@ function hakkinda() {
 }
 function yenilikler() {
   sayfa('🆕 Yenilikler', h('div', { class: 'metinSayfa', html:
+    '<h3>Sürüm 2.7</h3><ul>' +
+    '<li>🎹 <b>Tartım üniteleri baştan yazıldı</b>: 3 yerine 10 ünite ve ♾️ Sonsuz dikte. Temel tartımlardan noktalılara, suslara, bağ ve senkopa, <b>üçlemeye</b>, <b>6/8</b>’e, <b>aksak ölçülere</b> (5/8, 7/8, 9/8) ve dört ölçülük uzun dikteye.</li>' +
+    '<li>👂 Odak artık dikte ve deşifre: duyduğun ritmin notasını seç, kalıp kartlarını sırayla diz, 🔎 yazılan ile çalınan arasındaki farkı bul, eksik vuruşu tamamla, notayı okuyup vur. Son ünitede dinlemeden okuyup vurma.</li>' +
+    '<li>🥁 Mertebe soruları: şıklarda ölçü rakamı yok; yeni “hangi mertebede yazılmış?”, “bir zaman hangi nota?” ve <b>Ağır Aksak, Sengin Semai, Ağır Düyek</b> gibi mertebe adları.</li>' +
+    '<li>🌿 Bir seviyeyi bitirince “Dallar’a dön” seni o dal açık hâlde ana sayfaya götürür; Meşk Yolu’ndan girdiysen Meşk Yolu’na.</li></ul>' +
+    '<h3>Sürüm 2.6</h3><ul>' +
+    '<li>🌿 Ana sayfa artık <b>Dallar</b>: bir dala dokun, üniteleri altında açılsın; istediğin üniteye doğrudan git. Meşk Yolu yan sekmede.</li>' +
+    '<li>🧭 Dallar ve Meşk Yolu <b>öğrenme sırasına</b> göre yeniden dizildi: Koma, Perde, Usul, Dörtlü-Beşli, Göçürme, Makam, Ahenk. Meşk Yolu’nda üniteler dallar arasında karışık, adım adım gelir.</li>' +
+    '<li>🎼 Koma: <b>perde adından işaret</b>. Perde adı verilir, nota porteye hazır konur; sen işaretini seçersin. İki yazımlı perdelerde hem diyezli hem bemollü yazımı. İşaret düğmeleri isimsiz ve her soruda karışık.</li>' +
+    '<li>🎵 Nota adlarında oktav numarası kalktı (Re5 yerine Re); oktavı porte ve perde adı gösteriyor.</li>' +
+    '<li>🥁 <b>Vurma soruları</b> yenilendi: tempo düştü, uygulama sana eşlik etmiyor. Birkaç tık hızı verir, sonra kendin vurursun; vuruşlarının arasındaki oranlar ölçülür. Biraz yavaş vurmak da doğru sayılır (uyarıyla).</li>' +
+    '<li>🥁 Usul soruları: heceler, eller, heceleri sıraya dizme ve <b>mertebe</b> (ör. Sofyan 4/8 → 4/4) soruları eklendi; tek vuruşun sesini sorma kaldırıldı.</li>' +
+    '<li>🎹 Batı Teorisi yeni sırada: tartımlar aralıkların arasında, tonlar en sonda.</li>' +
+    '<li>İlerlemen olduğu gibi duruyor; geçtiğin seviyeler sıra değişse de açık kalır.</li></ul>' +
     '<h3>Sürüm 2.5</h3><ul>' +
     '<li>♾️ <b>Sonsuz Meşk</b>: her Türk müziği dalının sonunda ucu açık bir ünite. Bitirdiğin seviyelerden karışık ve bitmeyen sorular, doğru bildikçe zorlaşır. Tekrar sekmesinde “Her şey karışık” da var.</li>' +
     '<li>🥁 Yeni <b>Usul</b> dalı: 10 zamana kadar 20 usul, 7 ünite. Kalıptan ve sesten usul tanıma, eksik vuruşu bulma, usulü ekrana vurma, <b>mertebeler</b> ve büyük usullerin küçük usullerden nasıl kurulduğu.</li>' +
@@ -755,7 +813,7 @@ function ilkAcilis() {
     modalAc(h('div', { class: 'karsilama' },
       h('div', { class: 'karsilamaMaskot', html: bulbulSVG('normal') }),
       h('h2', null, 'Batı Teorisi de çalışalım mı?'),
-      h('p', null, 'Aralıklar (Tam Dörtlü, Eksik Beşli…), tonlar, donanım ve minör türleri için ayrı bir dal var. Meşk Yolu’na eklersem Türk müziği üniteleriyle sırayla karışık gelir.'),
+      h('p', null, 'Tartım ve ritim diktesi, aralıklar (Tam Dörtlü, Eksik Beşli…), tonlar, donanım ve minör türleri için ayrı bir dal var. Meşk Yolu’na eklersem Türk müziği üniteleriyle sırayla karışık gelir.'),
       h('p', { class: 'soluk' }, 'Eklemesen de Dallar’dan her zaman oynayabilirsin.'),
       dugme('Evet, yola ekle', function () { bitir(seviye, true); }),
       dugme('Şimdilik hayır', function () { bitir(seviye, false); }, 'gri')), { kapatilamaz: true });
@@ -805,7 +863,7 @@ GERI_ISLEYICI = function () {
   if ($('ekranOyun').classList.contains('acik')) { turdanCik(true); return true; }
   if ($('ekranDers').classList.contains('acik')) { DERS = null; anaEkranaDon(); return true; }
   if (SEKME !== 'yol') { sekmeAc('yol'); return true; }
-  if (YOL_FILTRE) { YOL_FILTRE = null; sekmeAc('yol'); return true; }
+  if (YOL_FILTRE !== 'dallar') { if (YOL_FILTRE && DALLAR[YOL_FILTRE]) DAL_ACIK = YOL_FILTRE; YOL_FILTRE = 'dallar'; sekmeAc('yol'); return true; }
   return false;
 };
 

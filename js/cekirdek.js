@@ -3,7 +3,7 @@
 // =====================================================
 'use strict';
 
-const SURUM = '2.5.0';
+const SURUM = '2.7.0';
 const WHATSAPP_NO = '905307302798';
 const UYGULAMA_ADRESI = 'https://burakbastas.github.io/perde-oyunu/';
 const ANAHTAR = 'perdeMacerasiV2';

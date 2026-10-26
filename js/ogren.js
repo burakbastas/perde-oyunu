@@ -105,7 +105,7 @@ function kesfetPorte() {
       const n = y && y.deger()[0];
       if (!n) return;
       const p = PERDELER.find(function (x) { return x.tam && notaEsit(x.parcalar[0], n); });
-      ad.innerHTML = '<b>' + HARF_AD[n.h] + n.o + '</b>' + (p ? ' · perde adı: <b>' + p.ad + '</b>' : '');
+      ad.innerHTML = '<b>' + HARF_AD[n.h] + '</b>' + (p ? ' · perde adı: <b>' + p.ad + '</b>' : '');
     }
   });
   kap.appendChild(y.el);
@@ -136,7 +136,7 @@ const OGREN_MODULLERI = [
   { id: 'oktav', ikon: '↕️', ad: 'Oktav, pest ve tiz', baglanti: 'p1', kartlar: [
     { baslik: 'Oktav', cizim: function () { return h('div', { class: 'kartPorte' }, porteSVG({ notalar: [{ h: 4, o: 4 }, { h: 4, o: 5 }], aralik: 60, etiketler: ['Rast', 'Gerdâniye'] })); },
       metin: '<p>Aynı adlı iki notanın arasındaki uzaklık <b>oktav</b>dır. Batı’da ikisi de Sol; Türk müziğinde pestteki <b>Rast</b>, tizdeki <b>Gerdâniye</b> adını alır.</p>' },
-    { baslik: 'Ek çizgiler', cizim: function () { return h('div', { class: 'kartPorte' }, porteSVG({ notalar: [{ h: 0, o: 4 }, { h: 1, o: 4 }, { h: 5, o: 5 }, { h: 0, o: 6 }], aralik: 44, etiketler: ['Do4', 'Re4', 'La5', 'Do6'] })); },
+    { baslik: 'Ek çizgiler', cizim: function () { return h('div', { class: 'kartPorte' }, porteSVG({ notalar: [{ h: 0, o: 4 }, { h: 1, o: 4 }, { h: 5, o: 5 }, { h: 0, o: 6 }], aralik: 44, etiketler: ['Do', 'Re', 'La', 'Do'] })); },
       metin: '<p>Porteye sığmayan notalar için kısa <b>ek çizgiler</b> çizilir. Alttaki Do, bir ek çizgi üzerindedir.</p>' },
     { baslik: 'Kaba ve Tiz', metin: '<p>Perde adlarında <b>Kaba</b> bir oktav pest, <b>Tiz</b> bir oktav tiz demektir: Çargâh → <b>Kaba Çargâh</b> ve <b>Tiz Çargâh</b>.</p>',
       deneme: { soru: 'Tiz Bûselik, Bûselik’e göre nerede?', siklar: ['Bir oktav tizde', 'Bir oktav pestte', 'Aynı yerde'], dogru: 'Bir oktav tizde', aciklama: 'Tiz öneki bir oktav yukarısı demektir.' } }

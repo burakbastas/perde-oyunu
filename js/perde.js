@@ -372,9 +372,9 @@ PERDE_UNITELER[0].ders = function () {
       }, metin: '<p>Dizinin merkezi <b>Rast</b> (Sol) perdesidir. Rast’tan başlayarak: <b>Rast, Dügâh, Bûselik, Çargâh, Neva, Hüseyni, Acem, Gerdâniye, Muhayyer</b>.</p>' +
       '<p>Gerdâniye, Rast’ın bir oktav tizidir; Muhayyer de Dügâh’ın.</p>' },
     { baslik: 'Kaba, Tiz ve Aşiran', metin:
-      '<p><b>Kaba</b> bir oktav pest, <b>Tiz</b> bir oktav tiz demektir: <b>Kaba Çargâh</b> (Do4), <b>Tiz Bûselik</b> (Si5), <b>Tiz Çargâh</b> (Do6).</p>' +
-      '<p>Neva’nın pest oktavının özel bir adı vardır: <b>Yegâh</b> (Re4).</p>' +
-      '<p><b>Aşiran</b> da pest oktav için kullanılır: <b>Hüseyni Aşiran</b> (Mi4) ve <b>Acem Aşiran</b> (Fa4).</p>' }
+      '<p><b>Kaba</b> bir oktav pest, <b>Tiz</b> bir oktav tiz demektir: <b>Kaba Çargâh</b> (Çargâh’ın bir oktav pesti), <b>Tiz Bûselik</b> ve <b>Tiz Çargâh</b> (Bûselik ve Çargâh’ın bir oktav tizi).</p>' +
+      '<p>Neva’nın pest oktavının özel bir adı vardır: <b>Yegâh</b> (porte altındaki Re).</p>' +
+      '<p><b>Aşiran</b> da pest oktav için kullanılır: <b>Hüseyni Aşiran</b> (Hüseyni’nin pesti, alt çizgideki Mi) ve <b>Acem Aşiran</b> (Acem’in pesti, ilk aralıktaki Fa).</p>' }
   ].concat(perdeler(PAKET[0]).map(perdeKarti));
 };
 PERDE_UNITELER[1].ders = function () {

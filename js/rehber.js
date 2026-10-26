@@ -5,9 +5,8 @@
 
 const REHBER_ADIMLAR = [
   { hedef: null, baslik: 'Merhaba, ben Bülbül!', metin: 'Sana Seyir’i 30 saniyede gezdireyim. İstediğin an “Geç” diyebilirsin.' },
-  { hedef: '.dugum.simdi', baslik: 'Buradan başla', metin: 'Zıplayan karo sıradaki seviyen. Her ünite 📖 dersle başlar, sonra seviyeler, ✍️ porteye yazma ve 👑 final gelir.' },
-  { hedef: '.uniteEylem', baslik: 'Ders ve Biliyorum', metin: '📖 Ders: kısa anlatım ve ısınma turu. ⏩ Biliyorum: konuyu zaten biliyorsan kısa bir sınavla üniteyi geç.' },
-  { hedef: '.segment', baslik: 'Meşk Yolu ve Dallar', metin: 'Meşk Yolu üniteleri önerilen sırayla gösterir. Dallar’dan Koma, Perde, Göçürme, Dörtlü-Beşli, Makam ya da Batı Teorisi’ne doğrudan geçebilirsin.' },
+  { hedef: '.dalKart', baslik: 'Dallar', metin: 'Her dal bir konu: Koma, Perde, Usul, Makam… Bir dala dokun, üniteleri altında açılsın; istediğin üniteye doğrudan git. Her ünitede 📖 ders, seviyeler, ✍️ porteye yazma ve 👑 final var. Bildiğin üniteyi ⏩ Biliyorum ile geçebilirsin.' },
+  { hedef: '.segment', baslik: 'Meşk Yolu', metin: 'Sırayı sana bırakmak istersen Meşk Yolu’na geç: bütün dalların üniteleri önerilen öğrenme sırasıyla tek yolda.' },
   { hedef: '.unvanSerit', baslik: 'Ünvanın', metin: 'Ünite bitirdikçe Mübtedî’den Üstad-ı Kâmil’e yükselirsin. Dokunursan bütün basamakları görürsün.' },
   { hedef: '#ustYildiz', baslik: 'Yıldızların', metin: 'Seviyelerden yıldız kazanırsın. Zorlandığında %50, ipucu, atla ve +kalp jokerlerine harcayabilirsin.' },
   { hedef: '[data-sekme="ogren"]', baslik: 'Öğren', metin: 'Hiç nota bilmiyorsan buradan başla: porte, koma, perde, makam… Bir de sözlük var.' },

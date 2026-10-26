@@ -198,7 +198,7 @@ TARTIMLAR.forEach(function (t) { TARTIM[t.id] = t; });
 const T_TEMEL = ['van', 'izmir', 'gelibolu', 'ankara', 'karaman'];
 const T_NOKTALI = ['terazi', 'bursa', 'sahur', 'istanbul'];
 const T_IKIDORT = T_TEMEL.concat(['terazi', 'bursa', 'sahur']);   // 2/4 ölçüye girenler
-const TARTIM_TEMPO = 80;   // dörtlük / dakika
+const TARTIM_TEMPO = 60;   // dörtlük / dakika
 function tartimSVG(L, ek) {
   let olaylar = [];
   L.forEach(function (t) { olaylar = olaylar.concat(t.olaylar); });
@@ -218,12 +218,16 @@ function usulSiklar(u, havuz, ayni) {
   if (ayni) dis = karistir(dis.slice(0, 3)).concat(dis.slice(3));
   return [u].concat(dis.slice(0, 3));
 }
+// Kendi adı olan mertebeler (Adana Musiki Derneği usul sayfaları)
+const MERTEBE_ADLARI = [
+  { u: 'yuruksemai', p: 8, ad: 'Yürük Semai' }, { u: 'yuruksemai', p: 4, ad: 'Sengin Semai' },
+  { u: 'duyek', p: 4, ad: 'Ağır Düyek' }, { u: 'aksak', p: 4, ad: 'Ağır Aksak' }, { u: 'aksaksemai', p: 4, ad: 'Ağır Aksak Semai' }
+];
+function heceMetni(u) { return u.olaylar.map(function (e) { return e.hece; }).join(' '); }
 function usulAciklama(u) {
   return '<b>' + u.ad + '</b> · ' + u.zaman + ' zamanlı (' + u.olcu + ') · ' + u.olaylar.map(function (e) { return e.hece; }).join(' ');
 }
 const USUL_BILGI = [
-  { s: 'Derinin ortasına vurulan tok ve pes vuruş hangisi?', d: 'Düm', y: ['Tek', 'Ke', 'Te'] },
-  { s: 'Kenara yakın vurulan kuru ve tiz vuruş hangisi?', d: 'Tek', y: ['Düm', 'Düüm', 'Zaman'] },
   { s: 'Bir vuruşun hangi elle vurulacağını ne gösterir?', d: 'Notanın sapının yönü', y: ['Hecenin uzunluğu', 'Vuruşun düm ya da tek olması', 'Notanın süresi'] },
   { s: 'Sofyan’daki “te” (sapı yukarı) hangi elle vurulur?', d: 'Sağ el', y: ['Sol el', 'İki el birden', 'Fark etmez'] },
   { s: 'Sofyan’daki “ke” (sapı aşağı) hangi elle vurulur?', d: 'Sol el', y: ['Sağ el', 'İki el birden', 'Fark etmez'] },
@@ -279,13 +283,94 @@ function usulSoru(tip, u, havuz) {
     q.siklar = usulSiklar(u, havuz, ayniZaman).map(function (x) { return { key: x.id, metin: x.ad }; });
     q.dogru = u.id; q.dogruMetin = u.ad; q.ipucu = u.zaman + ' zamanlı. Dümlerin yerine dikkat et.';
     q.aciklama = usulAciklama(u);
-  } else if (tip === 'dinleVurus') {
-    const s = rastgele(['D', 'T', 'K']);
-    q.soru = {}; q.alt = 'Duyduğun vuruş hangisi?';
-    q.dinle = { olaylar: [{ s: s, u: 4 }, { s: s, u: 4 }], onaltilikSn: 60 / 70 / 4, devir: 1 };
-    q.siklar = ['D', 'T', 'K'].map(function (x) { return { key: x, metin: VURUS_AD[x] }; });
-    q.dogru = s; q.dogruMetin = VURUS_AD[s];
-    q.aciklama = '<b>Düm</b>: tok ve pes · <b>Tek</b>: kuru ve tiz · <b>Ke</b>: tek gibi ama daha hafif (sol el).'; q.ipucu = null;
+  } else if (tip === 'gorDinleAd') {
+    // notayı gör, sesini dinle, adını bul
+    q.soru = { svg: function () { return usulSVG(u); } }; q.alt = 'Bu hangi usul?';
+    q.dinle = { olaylar: u.olaylar, onaltilikSn: usulOnaltilikSn(u), devir: 2, otomatik: true };
+    q.siklar = usulSiklar(u, havuz, ayniZaman).map(function (x) { return { key: x.id, metin: x.ad }; });
+    q.dogru = u.id; q.dogruMetin = u.ad;
+  } else if (tip === 'hece') {
+    const hm = heceMetni(u);
+    const dis = benzersiz(karistir(havuz.concat(USULLER).filter(function (x) { return heceMetni(x) !== hm; }))
+      .sort(function (a, b) { return (a.zaman === u.zaman ? 0 : 1) - (b.zaman === u.zaman ? 0 : 1); }).map(heceMetni)).slice(0, 3);
+    q.soru = { metin: u.ad }; q.alt = 'Vuruş heceleri hangisi?';
+    q.siklar = [hm].concat(karistir(dis)).map(function (x) { return { key: x, metin: x }; });
+    q.dogru = hm; q.dogruMetin = hm;
+  } else if (tip === 'heceNota') {
+    const hm = heceMetni(u);
+    q.soru = { metin: hm, kucuk: true }; q.alt = 'Bu hecelerin notası hangisi?';
+    q.siklar = usulSiklar(u, havuz.filter(function (x) { return heceMetni(x) !== hm; }), true).map(function (x) { return svgSik(x.id, function () { return usulSVG(x, { olcu: null, heceYok: true }); }); });
+    q.dogru = u.id; q.dogruMetin = u.ad + ': ' + hm;
+  } else if (tip === 'heceDizi') {
+    const L = u.olaylar.map(function (e) { return e.hece; });
+    const ek = karistir(['düm', 'tek', 'te', 'ke', 'teek', 'düüm', 'kaa'].filter(function (x) { return L.indexOf(x) < 0; })).slice(0, 2);
+    q.tip = 'dizi';
+    q.soru = { metin: u.ad + ' · ' + u.olcu, kucuk: true, svg: function () { return usulSVG(u, { heceYok: true }); } };
+    q.alt = 'Heceleri sırayla diz';
+    q.dizi = { havuz: karistir(benzersiz(L).concat(ek)).map(function (x) { return { key: x, metin: x }; }), uzunluk: L.length, beklenen: L, tekrarli: true };
+    q.dogruMetin = L.join(' '); q.ipucu = 'Uzun notalar uzatılarak söylenir: düüm, teek.';
+  } else if (tip === 'el') {
+    const i = Math.floor(Math.random() * u.olaylar.length), e = u.olaylar[i];
+    q.soru = { metin: u.ad, kucuk: true, svg: function () { return usulSVG(u, { vurgu: i }); } };
+    q.alt = 'Kırmızı vuruş hangi elle vurulur?';
+    q.siklar = [{ key: 'u', metin: 'Sağ el' }, { key: 'd', metin: 'Sol el' }];
+    q.dogru = e.sap; q.dogruMetin = (e.sap === 'u' ? 'Sağ el' : 'Sol el') + ' (' + e.hece + ')';
+    q.aciklama = 'Sapı <b>yukarı</b> olan vuruş <b>sağ el</b>, sapı <b>aşağı</b> olan <b>sol el</b> ile vurulur. ' + usulAciklama(u);
+    q.ipucu = 'Notanın sapına bak.';
+  } else if (tip === 'mertebeEs') {
+    // bir mertebede gör ve dinle; öbür mertebedeki yazımını bul
+    const ms = u.mertebeler.slice();
+    const p1 = ms.indexOf(u.payda) >= 0 ? u.payda : ms[0];
+    const p2 = rastgele(ms.filter(function (x) { return x !== p1; }));
+    const m1 = usulMertebe(u, p1), m2 = usulMertebe(u, p2);
+    const adaylar = [];
+    [2, 4, 8, 16].forEach(function (x) { if (x !== p2 && u.olaylar.every(function (e) { return (e.u * u.payda / x) % 1 === 0; })) adaylar.push({ key: 'm' + x, u: usulMertebe(u, x), olcu: true }); });
+    havuz.concat(USULLER).filter(function (x) { return x !== u && x.zaman === u.zaman && !ayniGorunur(x, u, p2); }).forEach(function (x) {
+      if (x.olaylar.every(function (e) { return (e.u * x.payda / p2) % 1 === 0; }) && !adaylar.some(function (a) { return a.key === x.id; })) adaylar.push({ key: x.id, u: usulMertebe(x, p2) });
+    });
+    const imza = function (m) { return m.payda + '|' + m.olaylar.map(function (e) { return e.s + e.u + e.sap; }).join(','); };
+    const gor = {}; gor[imza(m2)] = 1;
+    const dis = karistir(adaylar).filter(function (a) { const k = imza(a.u); if (gor[k]) return false; gor[k] = 1; return true; }).slice(0, 3);
+    q.soru = { svg: function () { return usulSVG(m1); } };
+    q.dinle = { olaylar: m1.olaylar, onaltilikSn: usulOnaltilikSn(m1), devir: 1 };
+    q.alt = u.ad + ' ' + m1.olcu + ' yazılmış. ' + m2.olcu + ' mertebesindeki yazımı hangisi?';
+    q.siklar = [{ key: 'd', svg: function () { return usulSVG(m2, { olcu: null }); } }].concat(dis.map(function (x) { return svgSik(x.key, function () { return usulSVG(x.u, { olcu: null }); }); }));
+    q.dogru = 'd'; q.dogruMetin = m2.olcu + ': ' + m2.olaylar.map(function (e) { return e.hece; }).join(' ');
+    q.aciklama = '<b>' + u.ad + '</b>: mertebe değişince vuruşlar ve heceler aynı kalır, yalnızca nota birimi değişir. ' + m1.olcu + ' → ' + m2.olcu + ': her nota ' + (p2 > p1 ? (p2 / p1) + ' kat kısalır' : (p1 / p2) + ' kat uzar') + '.';
+    q.ipucu = 'Düm ve teklerin sırası aynı kalmalı; toplam ' + u.zaman + ' tane ' + usulBirimAd(m2) + '.';
+  } else if (tip === 'mertebeBul') {
+    // ölçü rakamı yok: nota değerlerinden mertebeyi bul
+    const p = rastgele(u.mertebeler), m = usulMertebe(u, p);
+    q.soru = { metin: u.ad, kucuk: true, svg: function () { return usulSVG(m, { olcu: null }); } };
+    q.alt = 'Bu yazım hangi mertebede?';
+    q.siklar = [2, 4, 8, 16].map(function (x) { return { key: 'm' + x, metin: u.zaman + '/' + x }; });
+    q.dogru = 'm' + p; q.dogruMetin = m.olcu;
+    q.aciklama = '<b>' + u.ad + '</b> ' + m.olcu + ': bir zaman = bir ' + usulBirimAd(m) + '; toplam ' + u.zaman + ' zaman.';
+    q.ipucu = 'Notaların sürelerini topla; ' + u.zaman + ' eşit parçaya böl.';
+  } else if (tip === 'birim') {
+    const p = rastgele(u.mertebeler), m = usulMertebe(u, p);
+    q.soru = { metin: u.ad + ' · ' + m.olcu, kucuk: true }; q.alt = 'Bu mertebede bir zaman hangi nota?';
+    const AD = { 2: 'İkilik', 4: 'Dörtlük', 8: 'Sekizlik', 16: 'Onaltılık' };
+    q.siklar = [2, 4, 8, 16].map(function (x) { return { key: 'b' + x, metin: AD[x] }; });
+    q.dogru = 'b' + p; q.dogruMetin = AD[p];
+    q.aciklama = 'Ölçü rakamının paydası birimi verir: ' + m.olcu + ' → bir zaman = bir ' + usulBirimAd(m) + '.'; q.ipucu = 'Paydaya bak.';
+  } else if (tip === 'mertebeAdi') {
+    const L = MERTEBE_ADLARI.filter(function (x) { return x.u === u.id; });
+    const x = rastgele(L.length ? L : MERTEBE_ADLARI);
+    const uu = USUL[x.u], olcu = uu.zaman + '/' + x.p;
+    if (Math.random() < 0.5) {
+      q.soru = { metin: uu.ad + ' · ' + olcu, kucuk: true }; q.alt = 'Bu mertebenin adı ne?';
+      const dis = karistir(MERTEBE_ADLARI.filter(function (y) { return y.ad !== x.ad; }).map(function (y) { return y.ad; })).slice(0, 3);
+      q.siklar = [x.ad].concat(dis).map(function (y) { return { key: y, metin: y }; }); q.dogru = x.ad;
+    } else {
+      q.soru = { metin: x.ad }; q.alt = 'Hangi usulün hangi mertebesi?';
+      const ad = function (y) { return USUL[y.u].ad + ' ' + USUL[y.u].zaman + '/' + y.p; };
+      const dis = benzersiz(karistir(MERTEBE_ADLARI.filter(function (y) { return y !== x; }).map(ad).concat([uu.ad + ' ' + uu.zaman + '/' + (x.p === 4 ? 8 : 4)]))).filter(function (y) { return y !== ad(x); }).slice(0, 3);
+      q.siklar = [ad(x)].concat(dis).map(function (y) { return { key: y, metin: y }; }); q.dogru = ad(x);
+    }
+    q.dogruMetin = x.ad + ' = ' + uu.ad + ' ' + olcu;
+    q.aciklama = 'Bazı mertebelerin kendi adı vardır: ' + MERTEBE_ADLARI.map(function (y) { return '<b>' + y.ad + '</b> (' + USUL[y.u].ad + ' ' + USUL[y.u].zaman + '/' + y.p + ')'; }).join(', ') + '.';
+    q.ipucu = '“Ağır” adı genellikle dörtlüklü (yavaş) mertebeye verilir.';
   } else if (tip === 'vur') {
     return usulVurSorusu(u);
   } else if (tip === 'mertebeAd') {
@@ -333,10 +418,11 @@ function usulSoru(tip, u, havuz) {
 // Birleşimi başka bir usulle aynı olanlar "birleşimden ada" sorusunda kullanılmaz (Aksak / Evfer gibi)
 function birlesimTek(u) { return u.birlesim && USULLER.filter(function (x) { return birlesimMetni(x) === birlesimMetni(u); }).length === 1; }
 function usulVurSorusu(u) {
-  const devir = u.zaman <= 4 ? 2 : 1;
+  const devir = 1;
+  const sn = usulOnaltilikSn(u) * 1.25;   // vurarken biraz daha yavaş
   return {
-    oge: null, tip: 'vur', soru: { metin: u.ad, kucuk: true }, alt: 'Usulü vur: sapı yukarı olan notalar sağ el, aşağı olanlar sol el',
-    vur: { gorsel: function (ek) { return usulSVG(u, ek); }, olaylar: u.olaylar, onaltilikSn: usulOnaltilikSn(u), devir: devir,
+    oge: null, tip: 'vur', soru: { metin: u.ad, kucuk: true }, alt: 'Usulü kendi başına vur: sapı yukarı sağ el, aşağı sol el',
+    vur: { gorsel: function (ek) { return usulSVG(u, ek); }, olaylar: u.olaylar, onaltilikSn: sn, devir: devir,
       sayim: { vurus: u.zaman, u: u.birim }, tik: u.birim, ikiTus: true, dinle: { olaylar: u.olaylar, onaltilikSn: usulOnaltilikSn(u), devir: 1 } },
     dogruMetin: u.olaylar.map(function (e) { return e.hece; }).join(' '), aciklama: usulAciklama(u), ipucu: 'Önce dinle, sonra hecelerle içinden söyleyerek vur.'
   };
@@ -353,7 +439,9 @@ function usulUretici(havuzIds, tipler, yeniIds, yeniOran) {
       let tip = tipler[i % tipler.length];
       if ((tip === 'birlesim' || tip === 'birlesimAd') && !u.birlesim) tip = 'mertebeAd';
       if (tip === 'birlesimAd' && !birlesimTek(u)) tip = 'birlesim';
-      if ((tip === 'mertebeAd' || tip === 'mertebeNota') && u.mertebeler.length < 2) tip = u.birlesim ? 'birlesim' : 'notaAd';
+      if ((tip === 'mertebeAd' || tip === 'mertebeNota' || tip === 'mertebeEs' || tip === 'mertebeBul') && u.mertebeler.length < 2) tip = u.birlesim ? 'birlesim' : 'hece';
+      if (tip === 'heceDizi' && u.olaylar.length > 8) tip = 'hece';
+      if (tip === 'dinleVurus') tip = 'gorDinleAd';
       L.push(usulSoru(tip, u, havuz));
     }
     return karistir(L);
@@ -390,8 +478,8 @@ function tartimVurSorusu(havuzIds) {
   const L = [TARTIM[rastgele(havuzIds)], TARTIM[rastgele(havuzIds)]];
   let olaylar = []; L.forEach(function (t) { olaylar = olaylar.concat(t.olaylar); });
   return {
-    oge: null, tip: 'vur', soru: { metin: L.map(function (t) { return t.ad; }).join(' + '), kucuk: true }, alt: 'Tartımı vur (2/4, iki ölçü)',
-    vur: { gorsel: function (ek) { return tartimSVG(L, ek); }, olaylar: olaylar, onaltilikSn: 60 / TARTIM_TEMPO / 4, devir: 2,
+    oge: null, tip: 'vur', soru: { metin: L.map(function (t) { return t.ad; }).join(' + '), kucuk: true }, alt: 'Tartımı kendi başına vur (2/4, bir ölçü)',
+    vur: { gorsel: function (ek) { return tartimSVG(L, ek); }, olaylar: olaylar, onaltilikSn: 60 / TARTIM_TEMPO / 4, devir: 1,
       sayim: { vurus: 2, u: 4 }, tik: 4, ikiTus: false, dinle: { olaylar: olaylar.map(function (e) { return Object.assign({}, e); }), onaltilikSn: 60 / TARTIM_TEMPO / 4, devir: 1, sayim: { vurus: 2, u: 4 }, tik: 4 } },
     dogruMetin: L.map(function (t) { return t.ad; }).join(' + '), aciklama: L.map(function (t) { return '<b>' + t.ad + '</b>: ' + t.tarif; }).join('<br>'),
     ipucu: 'Heceleri içinden söyle: ' + L.map(function (t) { return t.olaylar.map(function (e) { return e.hece; }).join('-'); }).join(' · ')
@@ -432,54 +520,58 @@ function tartimUretici(havuzIds, tipler) {
 // ÜNİTELER
 // =====================================================
 function uUnite(id, no, ad, kisa, seviyeler) { return { id: id, dal: 'usul', no: no, ad: ad, kisa: kisa, ogeler: [], seviyeler: seviyeler }; }
+const MERTEBELI = function (L) { return L.filter(function (i) { return USUL[i].mertebeler.length > 1; }); };
 const USUL_UNITELER = [
-  uUnite('u1', 1, 'Vuruşlar ve zaman', 'Düm, tek, ke; eller ve usul yazımı', [
-    { id: 'u1-1', tip: 'seviye', ad: 'Vuruşlar ve eller', soruSay: 8, uret: function (n) { const L = []; for (let i = 0; i < n; i++) L.push(i % 2 ? usulSoru('dinleVurus', USUL.nimsofyan, []) : bilgiSoru(USUL_BILGI.slice(0, 10))); return karistir(L); } },
-    { id: 'u1-2', tip: 'seviye', ad: 'Zamanları say', soruSay: 6, uret: usulUretici(U_TEMEL, ['notaZaman']) },
+  uUnite('u1', 1, 'İlk usuller: Nim Sofyan ve Semai', 'İki ve üç zamanlı basit usuller; vuruş heceleri, eller ve zaman', [
+    { id: 'u1-1', tip: 'seviye', ad: 'Gör, dinle, tanı', soruSay: 8, uret: usulUretici(['nimsofyan', 'semai'], ['gorDinleAd', 'hece', 'el', 'bilgi']) },
+    { id: 'u1-2', tip: 'seviye', ad: 'Zaman ve heceler', soruSay: 6, uret: usulUretici(['nimsofyan', 'semai'], ['notaZaman', 'heceDizi', 'zaman']) },
     { id: 'u1-yer', tip: 'yer', ad: 'İlk vuruşların: Nim Sofyan ve Semai', soruSay: 4, uret: usulUretici(['nimsofyan', 'semai'], ['vur']) },
-    { id: 'u1-boss', tip: 'boss', ad: 'Vuruşlar finali', soruSay: 8, uret: function (n) { return karistir(usulUretici(U_TEMEL, ['notaZaman', 'eksik'])(Math.ceil(n / 2)).concat(usulUretici(['nimsofyan', 'semai'], ['bilgi', 'dinleVurus'])(Math.floor(n / 2)))); } }
+    { id: 'u1-boss', tip: 'boss', ad: 'İlk usuller finali', soruSay: 8, uret: usulUretici(['nimsofyan', 'semai'], ['gorDinleAd', 'heceDizi', 'el', 'eksik', 'notaZaman', 'mertebeEs', 'bilgi']) }
   ]),
   uUnite('u2', 2, 'Temel usuller', 'Nim Sofyan, Semai, Sofyan, Türk Aksağı', [
-    { id: 'u2-1', tip: 'seviye', ad: 'Kalıptan ada, addan kalıba', soruSay: 8, uret: usulUretici(U_TEMEL, ['notaAd', 'adNota']) },
-    { id: 'u2-2', tip: 'seviye', ad: 'Zaman ve eksik vuruş', soruSay: 8, uret: usulUretici(U_TEMEL, ['zaman', 'eksik']) },
+    { id: 'u2-1', tip: 'seviye', ad: 'Kalıptan ada, addan kalıba', soruSay: 8, uret: usulUretici(U_TEMEL, ['gorDinleAd', 'adNota', 'notaAd']) },
+    { id: 'u2-2', tip: 'seviye', ad: 'Heceler, eller ve eksik vuruş', soruSay: 8, uret: usulUretici(U_TEMEL, ['hece', 'heceNota', 'el', 'eksik', 'heceDizi']) },
+    { id: 'u2-m', tip: 'seviye', ad: 'Mertebeler', soruSay: 8, uret: usulUretici(MERTEBELI(U_TEMEL), ['mertebeEs', 'birim', 'mertebeBul', 'mertebeAd']) },
     { id: 'u2-3', tip: 'seviye', ad: '🔊 Dinle, usulü bul', soruSay: 6, uret: usulUretici(U_TEMEL, ['dinleAd']) },
     { id: 'u2-yer', tip: 'yer', ad: 'Usulü vur', soruSay: 4, uret: usulUretici(U_TEMEL, ['vur']) },
-    { id: 'u2-boss', tip: 'boss', ad: 'Temel usuller finali', soruSay: 10, uret: usulUretici(U_TEMEL, ['notaAd', 'adNota', 'eksik', 'dinleAd', 'zaman']) }
+    { id: 'u2-boss', tip: 'boss', ad: 'Temel usuller finali', soruSay: 10, uret: usulUretici(U_TEMEL, ['notaAd', 'adNota', 'hece', 'eksik', 'mertebeEs', 'dinleAd', 'el', 'zaman']) }
   ]),
   uUnite('u3', 3, 'Aksak usuller', 'Devr-i Hindî, Devr-i Turan, Aksak, Evfer, Oynak, Raks Aksağı', [
-    { id: 'u3-1', tip: 'seviye', ad: 'Kalıptan ada, addan kalıba', soruSay: 8, uret: usulUretici(U_TEMEL.concat(U_AKSAK), ['notaAd', 'adNota'], U_AKSAK) },
-    { id: 'u3-2', tip: 'seviye', ad: 'Zaman ve eksik vuruş', soruSay: 8, uret: usulUretici(U_TEMEL.concat(U_AKSAK), ['zaman', 'eksik', 'notaZaman'], U_AKSAK) },
+    { id: 'u3-1', tip: 'seviye', ad: 'Kalıptan ada, addan kalıba', soruSay: 8, uret: usulUretici(U_TEMEL.concat(U_AKSAK), ['gorDinleAd', 'notaAd', 'adNota'], U_AKSAK) },
+    { id: 'u3-2', tip: 'seviye', ad: 'Heceler, zaman ve eksik vuruş', soruSay: 8, uret: usulUretici(U_TEMEL.concat(U_AKSAK), ['hece', 'zaman', 'heceNota', 'eksik', 'heceDizi', 'el'], U_AKSAK) },
+    { id: 'u3-m', tip: 'seviye', ad: 'Mertebeler', soruSay: 8, uret: usulUretici(MERTEBELI(U_AKSAK), ['mertebeEs', 'mertebeBul', 'birim', 'mertebeAd', 'mertebeAdi'], ['aksak']) },
     { id: 'u3-3', tip: 'seviye', ad: '🔊 Dinle, usulü bul', soruSay: 6, uret: usulUretici(U_TEMEL.concat(U_AKSAK), ['dinleAd'], U_AKSAK) },
     { id: 'u3-yer', tip: 'yer', ad: 'Usulü vur', soruSay: 4, uret: usulUretici(U_AKSAK, ['vur']) },
-    { id: 'u3-boss', tip: 'boss', ad: 'Aksak usuller finali', soruSay: 10, uret: usulUretici(U_TEMEL.concat(U_AKSAK), ['notaAd', 'adNota', 'eksik', 'dinleAd', 'zaman'], U_AKSAK) }
+    { id: 'u3-boss', tip: 'boss', ad: 'Aksak usuller finali', soruSay: 10, uret: usulUretici(U_TEMEL.concat(U_AKSAK), ['notaAd', 'adNota', 'hece', 'eksik', 'mertebeEs', 'dinleAd', 'zaman'], U_AKSAK) }
   ]),
   uUnite('u4', 4, 'Altı, sekiz ve on zamanlılar', 'Yürük Semai, Düyek, Müsemmen, Curcuna, Aksak Semai', [
-    { id: 'u4-1', tip: 'seviye', ad: 'Kalıptan ada, addan kalıba', soruSay: 8, uret: usulUretici(U_TUM, ['notaAd', 'adNota'], U_UZUN) },
-    { id: 'u4-2', tip: 'seviye', ad: 'Zaman ve eksik vuruş', soruSay: 8, uret: usulUretici(U_TUM, ['zaman', 'eksik', 'notaZaman'], U_UZUN) },
+    { id: 'u4-1', tip: 'seviye', ad: 'Kalıptan ada, addan kalıba', soruSay: 8, uret: usulUretici(U_TUM, ['gorDinleAd', 'notaAd', 'adNota'], U_UZUN) },
+    { id: 'u4-2', tip: 'seviye', ad: 'Heceler, zaman ve eksik vuruş', soruSay: 8, uret: usulUretici(U_TUM, ['hece', 'zaman', 'heceNota', 'eksik', 'notaZaman', 'el'], U_UZUN) },
+    { id: 'u4-m', tip: 'seviye', ad: 'Mertebeler ve adları', soruSay: 8, uret: usulUretici(MERTEBELI(U_UZUN), ['mertebeEs', 'mertebeBul', 'mertebeAdi', 'mertebeAd', 'birim'], ['yuruksemai', 'duyek', 'aksaksemai']) },
     { id: 'u4-3', tip: 'seviye', ad: '🔊 Dinle, usulü bul', soruSay: 6, uret: usulUretici(U_TUM, ['dinleAd'], U_UZUN) },
     { id: 'u4-yer', tip: 'yer', ad: 'Usulü vur', soruSay: 4, uret: usulUretici(U_UZUN, ['vur']) },
-    { id: 'u4-boss', tip: 'boss', ad: 'Usuller finali', soruSay: 10, uret: usulUretici(U_TUM, ['notaAd', 'adNota', 'eksik', 'dinleAd', 'zaman', 'bilgi'], U_UZUN) }
+    { id: 'u4-boss', tip: 'boss', ad: 'Usuller finali', soruSay: 10, uret: usulUretici(U_TUM, ['notaAd', 'adNota', 'hece', 'eksik', 'mertebeEs', 'dinleAd', 'zaman', 'bilgi'], U_UZUN) }
   ]),
   uUnite('u5', 5, 'Usul kulağı', 'Aynı zamanlı usulleri ayırt et', [
-    { id: 'u5-1', tip: 'seviye', ad: 'Aynı zamanlılar: kalıp', soruSay: 8, uret: usulUretici(U_TUM, ['notaAdAyni', 'adNotaAyni']) },
+    { id: 'u5-1', tip: 'seviye', ad: 'Aynı zamanlılar: kalıp', soruSay: 8, uret: usulUretici(U_TUM, ['notaAdAyni', 'adNotaAyni', 'heceAyni']) },
     { id: 'u5-2', tip: 'seviye', ad: '🔊 Aynı zamanlılar: dinle', soruSay: 8, uret: usulUretici(U_TUM, ['dinleAdAyni']) },
     { id: 'u5-yer', tip: 'yer', ad: 'Her usulü vur', soruSay: 5, uret: usulUretici(U_TUM, ['vur']) },
-    { id: 'u5-boss', tip: 'boss', ad: 'Usul büyük finali', soruSay: 12, uret: usulUretici(U_TUM, ['dinleAdAyni', 'notaAdAyni', 'eksik', 'adNotaAyni', 'vur', 'dinleAdAyni']) }
+    { id: 'u5-boss', tip: 'boss', ad: 'Usul büyük finali', soruSay: 12, uret: usulUretici(U_TUM, ['dinleAdAyni', 'notaAdAyni', 'eksik', 'adNotaAyni', 'vur', 'mertebeEs', 'hece']) }
   ])
 ];
 USUL_UNITELER.push(
   uUnite('u6', 6, 'Mertebe ve birleşim', 'Aynı usul, farklı nota birimi; büyük usuller küçüklerden', [
     { id: 'u6-1', tip: 'seviye', ad: 'Küçük usullerin birleşimi', soruSay: 8, uret: usulUretici(U_TUM.filter(function (i) { return USUL[i].birlesim; }), ['birlesim', 'birlesimAd']) },
-    { id: 'u6-2', tip: 'seviye', ad: 'Başka mertebede tanı', soruSay: 8, uret: usulUretici(U_TUM.filter(function (i) { return USUL[i].mertebeler.length > 1; }), ['mertebeAd']) },
-    { id: 'u6-3', tip: 'seviye', ad: 'Mertebedeki doğru yazım', soruSay: 6, uret: usulUretici(U_TUM.filter(function (i) { return USUL[i].mertebeler.length > 1; }), ['mertebeNota']) },
-    { id: 'u6-boss', tip: 'boss', ad: 'Mertebe ve birleşim finali', soruSay: 10, uret: usulUretici(U_TUM, ['birlesim', 'mertebeAd', 'birlesimAd', 'mertebeNota']) }
+    { id: 'u6-2', tip: 'seviye', ad: 'Başka mertebede tanı', soruSay: 8, uret: usulUretici(MERTEBELI(U_TUM), ['mertebeAd', 'mertebeEs', 'mertebeBul', 'mertebeAdi']) },
+    { id: 'u6-3', tip: 'seviye', ad: 'Mertebedeki doğru yazım', soruSay: 6, uret: usulUretici(MERTEBELI(U_TUM), ['mertebeNota', 'mertebeEs']) },
+    { id: 'u6-boss', tip: 'boss', ad: 'Mertebe ve birleşim finali', soruSay: 10, uret: usulUretici(U_TUM, ['birlesim', 'mertebeAd', 'birlesimAd', 'mertebeNota', 'mertebeEs']) }
   ]),
   uUnite('u7', 7, 'Beş usul daha', 'Mürekkeb Nim Sofyan, Mürekkeb Semai, Kapalı Curcuna, Lenk Fâhte, Çeng-i Harbî', [
-    { id: 'u7-1', tip: 'seviye', ad: 'Kalıptan ada, addan kalıba', soruSay: 8, uret: usulUretici(U_HEPSI, ['notaAd', 'adNota'], U_EK, 0.75) },
-    { id: 'u7-2', tip: 'seviye', ad: 'Zaman, birleşim, eksik vuruş', soruSay: 8, uret: usulUretici(U_HEPSI, ['zaman', 'birlesim', 'eksik'], U_EK, 0.75) },
+    { id: 'u7-1', tip: 'seviye', ad: 'Kalıptan ada, addan kalıba', soruSay: 8, uret: usulUretici(U_HEPSI, ['gorDinleAd', 'notaAd', 'adNota'], U_EK, 0.75) },
+    { id: 'u7-2', tip: 'seviye', ad: 'Heceler, zaman, birleşim', soruSay: 8, uret: usulUretici(U_HEPSI, ['hece', 'zaman', 'birlesim', 'eksik', 'heceNota'], U_EK, 0.75) },
     { id: 'u7-3', tip: 'seviye', ad: '🔊 Dinle, usulü bul', soruSay: 6, uret: usulUretici(U_HEPSI, ['dinleAdAyni'], U_EK, 0.7) },
     { id: 'u7-yer', tip: 'yer', ad: 'Usulü vur', soruSay: 4, uret: usulUretici(U_EK, ['vur']) },
-    { id: 'u7-boss', tip: 'boss', ad: 'Bütün usuller: büyük final', soruSay: 12, uret: usulUretici(U_HEPSI, ['notaAdAyni', 'dinleAdAyni', 'birlesim', 'mertebeAd', 'eksik', 'adNotaAyni'], U_EK, 0.4) }
+    { id: 'u7-boss', tip: 'boss', ad: 'Bütün usuller: büyük final', soruSay: 12, uret: usulUretici(U_HEPSI, ['notaAdAyni', 'dinleAdAyni', 'birlesim', 'mertebeAd', 'eksik', 'adNotaAyni', 'hece', 'mertebeEs'], U_EK, 0.4) }
   ])
 );
 USUL_UNITELER[5].ders = function () {
@@ -511,15 +603,17 @@ USUL_UNITELER[0].ders = function () {
     { baslik: 'Usul nedir?', metin:
       '<p><b>Usul</b>, Türk müziğinde eserin ritmini düzenleyen, kuvvetli ve zayıf vuruşların belli bir sırayla tekrarlandığı kalıptır. Kudüm, bendir ya da dizlere vurularak çalınır.</p>' +
       '<p>Usulün her vuruş birimine <b>zaman</b> denir: Semai 3 zamanlı, Aksak 9 zamanlıdır. Usulün baştan sona bir kez vurulmasına <b>devir</b> denir.</p>' },
-    { baslik: 'Düm, tek, ke', metin:
-      '<p><b>Düm</b>: derinin ortasına; tok ve pes.<br><b>Tek</b>: kenara yakın; kuru ve tiz.<br><b>Te-ke</b>: iki hafif vuruş.</p>' +
+    { baslik: 'Düm, tek, te, ke', metin:
+      '<p>Usulün vuruşları hecelerle söylenir: <b>düm</b> kuvvetli vuruş, <b>tek</b> hafif vuruş; <b>te-ke</b> iki hafif vuruş, <b>kâ</b> da hafif bir vuruştur. Usulü önce hecelerini söyleyerek öğren.</p>' +
       '<p>Hangi elle vurulacağını notanın <b>sapı</b> gösterir: sap <b>yukarı</b> ise <b>sağ el</b>, <b>aşağı</b> ise <b>sol el</b>. Örneğin Sofyan’da düm sağ, te sağ, ke sol elle vurulur.</p>' },
     { baslik: 'Usul nasıl yazılır?', cizim: function () { return h('div', { class: 'ritimKutu' }, usulSVG(USUL.semai)); }, metin:
       '<p>Usul tek çizgili porteye yazılır. <b>Sapı yukarı</b> olan nota <b>sağ el</b>, <b>sapı aşağı</b> olan nota <b>sol el</b>le vurulur.</p>' +
       '<p>Hecedeki uzatma süreyi gösterir: <b>düm</b> kısa, <b>düüm</b> iki kat, <b>düüüm</b> üç kat.</p>' },
     { baslik: 'İlk iki usul', cizim: function () { return h('div', null, h('div', { class: 'ritimKutu' }, usulSVG(USUL.nimsofyan)), h('div', { class: 'ritimKutu' }, usulSVG(USUL.semai))); }, metin:
       '<p><b>Nim Sofyan</b> (2/4): düm tek<br><b>Semai</b> (3/4): düm tek tek</p>' +
-      '<p>✍️ seviyelerinde usulü ekrana vuracaksın: sapı yukarı olan notalar için sağ yarıya (<b>sağ el</b>), aşağı olanlar için sol yarıya (<b>sol el</b>). Önce bir devir tık sayılır, sonra sen vurursun.</p>' }
+      '<p>✍️ seviyelerinde usulü ekrana vuracaksın: sapı yukarı olan notalar için sağ yarıya (<b>sağ el</b>), aşağı olanlar için sol yarıya (<b>sol el</b>). Önce birkaç tık hızı verir; sonra <b>kendi başına</b> vurursun, uygulama sana eşlik etmez. Vuruşların arasındaki oranlar doğruysa geçersin; biraz yavaş vurman sorun değil.</p>' },
+    { baslik: 'Mertebe', cizim: function () { return h('div', null, h('div', { class: 'ritimKutu' }, usulSVG(usulMertebe(USUL.semai, 4))), h('div', { class: 'ritimKutu' }, usulSVG(usulMertebe(USUL.semai, 8)))); }, metin:
+      '<p>Aynı usul farklı nota birimleriyle yazılabilir: Semai <b>3/4</b> ya da <b>3/8</b>. Buna <b>mertebe</b> denir. Vuruşlar ve heceler aynı kalır, yalnızca nota birimi değişir.</p>' }
   ];
 };
 USUL_UNITELER[1].ders = function () {
@@ -531,7 +625,8 @@ USUL_UNITELER[2].ders = function () {
     .concat(usuller(U_AKSAK).map(usulKarti));
 };
 USUL_UNITELER[3].ders = function () {
-  return [{ baslik: 'Uzun küçük usuller', metin: '<p><b>Yürük Semai</b> (6) iki semaiden oluşur. <b>Düyek</b> ve <b>Müsemmen</b> 8, <b>Curcuna</b> ve <b>Aksak Semai</b> 10 zamanlıdır.</p><p>Curcuna onaltılık, Aksak Semai sekizlik birimle yazılır: kalıpları benzer, hızları farklıdır.</p>' }]
+  return [{ baslik: 'Uzun küçük usuller', metin: '<p><b>Yürük Semai</b> (6) iki semaiden oluşur. <b>Düyek</b> ve <b>Müsemmen</b> 8, <b>Curcuna</b> ve <b>Aksak Semai</b> 10 zamanlıdır.</p><p>Curcuna onaltılık, Aksak Semai sekizlik birimle yazılır: kalıpları benzer, hızları farklıdır.</p>' },
+    { baslik: 'Adı olan mertebeler', metin: '<p>Bazı mertebelerin kendi adı vardır. Genellikle dörtlüklü, ağır mertebeye <b>Ağır</b> denir:</p><p><b>Yürük Semai</b> 6/8 · <b>Sengin Semai</b> 6/4<br><b>Ağır Düyek</b> 8/4<br><b>Ağır Aksak</b> 9/4<br><b>Ağır Aksak Semai</b> 10/4</p>' }]
     .concat(usuller(U_UZUN).map(usulKarti));
 };
 USUL_UNITELER[4].ders = function () {
@@ -539,42 +634,12 @@ USUL_UNITELER[4].ders = function () {
 };
 
 // ---- Batı Teorisi: tartım üniteleri ----
-BATI_UNITELER.push(
-  bUnite('b11', 11, 'Temel tartımlar', 'Van, İzmir, Gelibolu, Ankara, Karaman', [
-    { id: 'b11-1', tip: 'seviye', ad: 'Tartımın adı', soruSay: 8, uret: tartimUretici(T_TEMEL, ['notaAd', 'adNota']) },
-    { id: 'b11-2', tip: 'seviye', ad: '🔊 Dinle, tartımı bul', soruSay: 6, uret: tartimUretici(T_TEMEL, ['dinleAd']) },
-    { id: 'b11-yer', tip: 'yer', ad: 'Tartımı vur', soruSay: 4, uret: tartimUretici(T_TEMEL, ['vur']) },
-    { id: 'b11-boss', tip: 'boss', ad: 'Temel tartımlar finali', soruSay: 10, uret: tartimUretici(T_TEMEL, ['notaAd', 'adNota', 'dinleAd', 'olcu']) }
-  ]),
-  bUnite('b12', 12, 'Noktalı ve senkoplu tartımlar', 'Bursa, Sahur, Terazi, İstanbul', [
-    { id: 'b12-1', tip: 'seviye', ad: 'Tartımın adı', soruSay: 8, uret: tartimUretici(T_TEMEL.concat(T_NOKTALI), ['notaAd', 'adNota']) },
-    { id: 'b12-2', tip: 'seviye', ad: 'Ölçü sayısı ve dinleme', soruSay: 8, uret: tartimUretici(T_IKIDORT, ['olcu', 'dinleAd']) },
-    { id: 'b12-yer', tip: 'yer', ad: 'Tartımı vur', soruSay: 4, uret: tartimUretici(T_IKIDORT, ['vur']) },
-    { id: 'b12-boss', tip: 'boss', ad: 'Tartımlar finali', soruSay: 10, uret: tartimUretici(T_TEMEL.concat(T_NOKTALI), ['notaAd', 'adNota', 'dinleAd', 'olcu']) }
-  ]),
-  bUnite('b13', 13, 'Tartım diktesi', 'Dinle, yaz, vur', [
-    { id: 'b13-1', tip: 'seviye', ad: '🔊 Dinle, tartımı bul', soruSay: 8, uret: tartimUretici(T_IKIDORT, ['dinleAd']) },
-    { id: 'b13-yer', tip: 'yer', ad: 'İki ölçülük dikte', soruSay: 5, uret: tartimUretici(T_IKIDORT, ['dikte']) },
-    { id: 'b13-boss', tip: 'boss', ad: 'Dikte finali', soruSay: 8, uret: tartimUretici(T_IKIDORT, ['dikte', 'vur', 'dinleAd']) }
-  ])
-);
 function tartimKarti(t) {
   return { baslik: t.ad, cizim: function () {
     return h('div', null, h('div', { class: 'ritimKutu' }, tartimSVG([t], { enAz: 140 })),
       dugme('🔊 Dinle', function () { ritimCal({ olaylar: t.olaylar, onaltilikSn: function () { return 60 / TARTIM_TEMPO / 4; }, devir: 4, sayim: { vurus: 2, u: t.grup }, tik: t.grup }); }, 'ince'));
   }, metin: '<p><b>' + t.ad + '</b>: ' + t.tarif + '</p>' };
 }
-BATI_UNITELER[10].ders = function () {
-  return [{ baslik: 'Tartım kalıpları', metin: '<p>Bir vuruşun (dörtlük) içindeki ritim kalıplarına <b>tartım</b> denir. Akılda kalsın diye hece sayısı ve vurgusu kalıba uyan kelimelerle anılır: <b>Van</b> tek ses, <b>İz-mir</b> iki eşit ses, <b>Ge-li-bo-lu</b> dört eşit ses.</p>' }]
-    .concat(T_TEMEL.map(function (i) { return tartimKarti(TARTIM[i]); }));
-};
-BATI_UNITELER[11].ders = function () {
-  return [{ baslik: 'Noktalı ve senkoplu', metin: '<p><b>Bur-sa</b>: uzun-kısa (noktalı sekizlik + onaltılık). <b>Sa-hur</b>: tersi, kısa-uzun. <b>Te-ra-zi</b>: ortadaki ses uzun, vurgu kayar (senkop).</p><p><b>İs-tan-bul</b> 6/8’de bir vuruşu (noktalı dörtlük) üç eşit sekizliğe böler.</p>' }]
-    .concat(T_NOKTALI.map(function (i) { return tartimKarti(TARTIM[i]); }));
-};
-BATI_UNITELER[12].ders = function () {
-  return [{ baslik: 'Tartım diktesi', metin: '<p>Önce iki tık sayılır, sonra iki ölçü (dört vuruş) çalınır ve bir kez daha tekrarlanır. Her vuruşu ayrı dinle, kelimeyi içinden söyle, sonra taşları sırayla diz.</p><p>🔊 düğmesiyle istediğin kadar tekrar dinleyebilirsin.</p>' }];
-};
 
 // =====================================================
 // SORU EKRANI: DİNLE DÜĞMESİ ve VUR (ekrana vurma) SORUSU
@@ -594,30 +659,32 @@ function dinleDugmesi(d, otomatik) {
 function vurCiz(alan, veri, q) {
   const v = veri.vur;
   const gorsel = h('div', { class: 'ritimKutu' }, v.gorsel({}));
-  const durum = h('div', { class: 'vurDurum' }, 'Hazır olunca “Başla”ya bas. Önce ' + (v.sayim ? v.sayim.vurus : 0) + ' tık sayılır.');
+  const durum = h('div', { class: 'vurDurum' }, '“Başla”ya basınca ' + (v.sayim ? v.sayim.vurus : 0) + ' tık hızı verir; sonra kendin vurursun.');
   const tuslar = h('div', { class: 'vurTuslar' + (v.ikiTus ? '' : ' tek') });
   const tusSol = v.ikiTus ? h('button', { class: 'vurTus sol', type: 'button' }, h('b', null, 'SOL EL'), h('small', null, 'sap aşağı · F')) : null;
   const tusSag = h('button', { class: 'vurTus sag', type: 'button' }, h('b', null, v.ikiTus ? 'SAĞ EL' : 'VUR'), h('small', null, v.ikiTus ? 'sap yukarı · J' : 'boşluk'));
   if (tusSol) tuslar.appendChild(tusSol);
   tuslar.appendChild(tusSag);
   const basla = dugme('▶ Başla', function () { baslat(); }, '');
-  const dinle = dinleDugmesi(v.dinle, false);
+  const dinle = v.dinle ? dinleDugmesi(v.dinle, false) : null;
   alan.appendChild(gorsel);
-  alan.appendChild(h('div', { class: 'vurDugmeler' }, dinle, basla));
+  alan.appendChild(h('div', { class: 'vurDugmeler' + (dinle ? '' : ' tekDugme') }, dinle, basla));
   alan.appendChild(durum);
   alan.appendChild(tuslar);
   const V = q.vur = { beklenen: [], vuruslar: [], aktif: false, bitis: 0 };
   function tus(pad) {
     if (!V.aktif) return;
-    const z = duyulanZaman();
+    const z = SES.ctx.currentTime;
+    if (z < V.sayimBitis - 0.25) return;            // sayım tıklarına vurulanları sayma
     V.vuruslar.push({ z: z, pad: pad });
-    // vuruşa en yakın beklenen sesi çal (sağ el te'yi de vurabilir)
-    let ses = pad === 'D' ? 'D' : 'T';
-    if (!v.ikiTus) ses = 'ton';
-    else { let ed = 1e9; V.beklenen.forEach(function (b) { const dd = Math.abs(b.z - z); if (b.pad === pad && dd < ed) { ed = dd; ses = b.s; } }); }
-    vurusCal(ses, SES.ctx.currentTime, 0.8);
+    // sıradaki beklenen vuruşun sesini çal (iki elde)
+    let ses = 'ton';
+    if (v.ikiTus) { const b = V.beklenen[V.vuruslar.length - 1]; ses = b && b.pad === pad ? b.s : (pad === 'D' ? 'D' : 'T'); }
+    vurusCal(ses, z, 0.8);
     const el = pad === 'D' ? tusSag : tusSol;
     if (el) { el.classList.add('basildi'); setTimeout(function () { el.classList.remove('basildi'); }, 90); }
+    if (V.vuruslar.length === 1) durum.textContent = '🥁 Devam…';
+    zamanlayiciKur();
   }
   V.tap = tus;
   tusSag.addEventListener('pointerdown', function (e) { e.preventDefault(); tus('D'); });
@@ -628,62 +695,94 @@ function vurCiz(alan, veri, q) {
     else if (k === ' ' || k === 'j' || k === 'J' || k === 'f' || k === 'F') { tus('D'); return true; }
     return false;
   };
+  // Değerlendirme zamanı: bütün vuruşlar gelince kısa bir bekleme; hiç gelmezse ya da yarım kalırsa süre dolunca
+  function zamanlayiciKur() {
+    clearTimeout(V.t);
+    const n = V.vuruslar.length, N = V.beklenen.length;
+    const toplam = V.beklenen.length ? V.beklenenSure : 0;     // 16'lık birimde
+    let ms;
+    if (!n) ms = (V.sayimBitis - SES.ctx.currentTime) * 1000 + 7000;
+    else if (n >= N) ms = 700;
+    else ms = Math.max(2500, toplam * V.sn * 2.6 * 1000 / Math.max(1, N) * 2 + 1200);   // takılıp kaldıysa
+    V.t = setTimeout(degerlendir, ms);
+  }
   function baslat() {
     if (q.cevaplandi) return;
     otoIptal();
-    basla.disabled = true; dinle.disabled = true;
+    ritimDur();
+    const c = sesBaglam();
+    if (!c) { toast('Bu tarayıcı ses çalamıyor'); return; }
+    sesHazirla();
+    basla.disabled = true; if (dinle) dinle.disabled = true;
     V.vuruslar = []; V.beklenen = [];
-    const sn = v.onaltilikSn;
-    const r = ritimCal({
-      olaylar: v.olaylar.map(function (e) { return { s: null, u: e.u }; }), onaltilikSn: function () { return sn; }, devir: v.devir,
-      sayim: v.sayim, tik: v.tik,
-      vurusta: function (i) {
-        gorsel.querySelectorAll('.ritimNota').forEach(function (g) { g.classList.toggle('calan', +g.dataset.i === i); });
-      },
-      bitince: function () { setTimeout(degerlendir, 50); }
-    });
-    if (!r) return;
-    durum.textContent = 'Say: ' + (v.sayim ? v.sayim.vurus : 0) + ' tık… sonra vur!';
-    // beklenen zamanlar: sayımdan sonra
-    const bas = r.baslangic + (v.sayim ? v.sayim.vurus * v.sayim.u * sn : 0);
-    let t = bas;
-    for (let d = 0; d < v.devir; d++) v.olaylar.forEach(function (e) { V.beklenen.push({ z: t, s: e.s, pad: !v.ikiTus || e.sap !== 'd' ? 'D' : 'T' }); t += e.u * sn; });
-    const enKisa = Math.min.apply(null, v.olaylar.map(function (e) { return e.u; })) * sn;
-    V.tolerans = Math.max(0.09, Math.min(0.17, enKisa * 0.45));
+    const sn = V.sn = v.onaltilikSn;
+    let t = 0;
+    for (let d = 0; d < v.devir; d++) v.olaylar.forEach(function (e, ei) { if (e.s === null) { t += e.u; return; } V.beklenen.push({ e: t, s: e.s, pad: !v.ikiTus || e.sap !== 'd' ? 'D' : 'T', i: ei }); t += e.u; });
+    V.beklenenSure = t;
+    // yalnızca sayım tıkları; sonra sessizlik: öğrenci kendi vurur
+    const sayi = v.sayim ? v.sayim.vurus : 4, birim = v.sayim ? v.sayim.u : 4;
+    const bas = c.currentTime + 0.15;
+    for (let k = 0; k < sayi; k++) vurusCal(k === 0 ? 'tikV' : 'tik', bas + k * birim * sn, 1);
+    V.sayimBitis = bas + sayi * birim * sn;
+    durum.textContent = 'Dinle: ' + sayi + ' tık bu hızı veriyor… sonra kendin vur';
+    setTimeout(function () { if (!q.cevaplandi && !V.vuruslar.length) durum.textContent = '🥁 Şimdi vur! (aynı hızda)'; }, Math.max(0, (V.sayimBitis - c.currentTime) * 1000 - 120));
     V.aktif = true;
-    V.bitis = t;
-    setTimeout(function () { if (!q.cevaplandi) durum.textContent = '🥁 Vur!'; }, Math.max(0, (bas - SES.ctx.currentTime) * 1000 - 100));
+    zamanlayiciKur();
   }
+  // Senkron değil, aralık ölçümü: vuruşlara en uygun hız (doğrusal uydurma) bulunur;
+  // her vuruş bu hıza göre beklenen yerine yakın mı ona bakılır. Gecikme ve başlama anı önemsizdir.
   function degerlendir() {
-    if (q.cevaplandi) return;
+    clearTimeout(V.t);
+    if (q.cevaplandi || !TUR || TUR.q !== q) { V.aktif = false; return; }
     V.aktif = false;
-    const kullan = V.vuruslar.map(function () { return false; });
-    let isabet = 0, yanlisEl = 0;
-    const sonuc = V.beklenen.map(function (b) {
-      let en = -1, ed = 1e9;
-      V.vuruslar.forEach(function (x, j) { if (kullan[j]) return; const dd = Math.abs(x.z - b.z); if (dd < ed) { ed = dd; en = j; } });
-      if (en >= 0 && ed <= V.tolerans) {
-        kullan[en] = true;
-        if (V.vuruslar[en].pad === b.pad) { isabet++; return 'dogru'; }
-        yanlisEl++; return 'el';
+    const B = V.beklenen, N = B.length, T = V.vuruslar;
+    const n = Math.min(T.length, N), fazla = Math.max(0, T.length - N);
+    const sonuc = B.map(function () { return 'kacti'; });
+    const not = [];
+    let tempoMetin = '', dogru = false, yavas = false, hizli = false;
+    const hedefTempo = Math.round(60 / (V.sn * (v.sayim ? v.sayim.u : 4)));
+    if (n >= 2) {
+      // T_i ≈ a + k·E_i
+      const E = B.slice(0, n).map(function (b) { return b.e; }), X = T.slice(0, n).map(function (x) { return x.z - T[0].z; });
+      const me = E.reduce(function (s, x) { return s + x; }, 0) / n, mx = X.reduce(function (s, x) { return s + x; }, 0) / n;
+      let pay = 0, payda = 0;
+      for (let i = 0; i < n; i++) { pay += (E[i] - me) * (X[i] - mx); payda += (E[i] - me) * (E[i] - me); }
+      const k = payda > 0 ? pay / payda : V.sn, a0 = mx - k * me;
+      const enKisa = Math.min.apply(null, v.olaylar.filter(function (e) { return e.s !== null; }).map(function (e) { return e.u; }));
+      const tol = Math.max(0.06, Math.min(0.25, 0.38 * k * enKisa));
+      for (let i = 0; i < n; i++) {
+        const fark = X[i] - (a0 + k * E[i]);
+        if (Math.abs(fark) > tol) { sonuc[i] = 'zaman'; not.push((B[i].i + 1) + '. vuruş ' + (fark < 0 ? 'erken' : 'geç')); }
+        else if (T[i].pad !== B[i].pad) { sonuc[i] = 'el'; not.push((B[i].i + 1) + '. vuruş öbür elle'); }
+        else sonuc[i] = 'dogru';
       }
-      return 'kacti';
-    });
-    const fazla = kullan.filter(function (k) { return !k; }).length;
-    const dogru = isabet === V.beklenen.length && fazla <= 1;
-    // görsel: ilk devrin sonuçları renkli
-    const n = v.olaylar.length;
+      const tempo = Math.round(60 / (k * (v.sayim ? v.sayim.u : 4)));
+      const oran = tempo / hedefTempo;
+      tempoMetin = 'Tempon ' + tempo + ' (hedef ' + hedefTempo + ')';
+      hizli = oran > 1.4; yavas = oran < 0.8;
+    }
+    const isabet = sonuc.filter(function (x) { return x === 'dogru'; }).length;
+    dogru = isabet === N && fazla <= 1 && !hizli;
+    // görsel: renkler
     const renk = v.olaylar.map(function (_, i) {
       let iyi = true;
-      for (let d = 0; d < v.devir; d++) if (sonuc[d * n + i] !== 'dogru') iyi = false;
+      B.forEach(function (b, j) { if (b.i === i && sonuc[j] !== 'dogru') iyi = false; });
       return iyi ? 'var(--dogru)' : 'var(--yanlis)';
     });
     bosalt(gorsel).appendChild(v.gorsel({}));
-    gorsel.querySelectorAll('.ritimNota').forEach(function (g, i) { g.setAttribute('style', 'color:' + renk[i]); });
-    const mesaj = dogru ? '🥁 ' + isabet + ' / ' + V.beklenen.length + ' vuruş yerinde!' :
-      'İsabet: ' + isabet + ' / ' + V.beklenen.length + (yanlisEl ? ' · ' + yanlisEl + ' yanlış el' : '') + (fazla ? ' · ' + fazla + ' fazla vuruş' : '');
+    gorsel.querySelectorAll('.ritimNota').forEach(function (g) { const r = renk[+g.dataset.i]; if (r) g.setAttribute('style', 'color:' + r); });
+    let mesaj;
+    if (dogru) mesaj = '🥁 ' + N + ' / ' + N + ' vuruş yerinde!' + (yavas ? ' Ama hızın yavaştı.' : '');
+    else if (T.length < N) mesaj = 'Vuruş eksik: ' + T.length + ' / ' + N;
+    else if (hizli) mesaj = 'Aralıklar ' + (isabet === N ? 'doğru' : isabet + ' / ' + N) + ' ama çok hızlı vurdun';
+    else mesaj = 'Yerinde: ' + isabet + ' / ' + N + (fazla ? ' · ' + fazla + ' fazla vuruş' : '');
+    const ek = [];
+    if (tempoMetin) ek.push(tempoMetin + (yavas ? ': yavaş vurdun, verilen hıza yaklaşmaya çalış.' : hizli ? ': çok hızlı.' : '.'));
+    if (not.length && !dogru) ek.push(not.slice(0, 4).join(', ') + '.');
+    if (!dogru && T.length < N) ek.push('Bütün notaları vur; ilk vuruşunla süre başlar, sonra aynı hızda devam et.');
+    if (!dogru && T.length >= N) ek.push(v.dinle ? 'Önce 🔊 ile dinle, içinden söyleyerek vur.' : 'Önce ölçüyü ve vuruşları say, sonra her vuruşun içini söyleyerek vur.');
     q.cevaplandi = true;
-    cevapla(dogru, mesaj, null, dogru ? null : '<p>Kırmızı notalarda zamanlama ya da el kaydı. Önce 🔊 ile dinleyip hecelerle içinden saymayı dene.</p>');
+    cevapla(dogru, mesaj, null, ek.length ? '<p>' + ek.join('<br>') + '</p>' : null);
   }
   q.vurDegerlendir = degerlendir;
 }

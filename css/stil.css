@@ -1,9 +1,9 @@
 /* =====================================================
    PERDE MACERASI · çini / İznik teması
    ===================================================== */
-@font-face { font-family: SeyirNota; src: url(../fonts/seyir-nota.woff?v=2.5.0) format("woff"); font-display: block; }
-@font-face { font-family: Nunito; src: url(../fonts/nunito.woff?v=2.5.0) format("woff"); font-weight: 200 1000; font-display: swap; }
-@font-face { font-family: "Baloo 2"; src: url(../fonts/baloo2.woff?v=2.5.0) format("woff"); font-weight: 400 800; font-display: swap; }
+@font-face { font-family: SeyirNota; src: url(../fonts/seyir-nota.woff?v=2.7.0) format("woff"); font-display: block; }
+@font-face { font-family: Nunito; src: url(../fonts/nunito.woff?v=2.7.0) format("woff"); font-weight: 200 1000; font-display: swap; }
+@font-face { font-family: "Baloo 2"; src: url(../fonts/baloo2.woff?v=2.7.0) format("woff"); font-weight: 400 800; font-display: swap; }
 
 :root {
   --zemin: #fbf5ea;
@@ -240,7 +240,7 @@ ol.hesap li { margin: 3px 0; }
 .yolSon { text-align: center; color: var(--soluk); margin: 20px 0 10px; }
 .yolSon span svg { width: 70px; height: 70px; }
 .dalKartlar { display: grid; gap: 10px; }
-.dalKart { display: grid; grid-template-columns: 52px 1fr; gap: 4px 12px; align-items: center; text-align: left; border: 0; cursor: pointer;
+.dalKart { display: grid; grid-template-columns: 52px 1fr 18px; gap: 4px 12px; align-items: center; text-align: left; border: 0; cursor: pointer;
   background: var(--kart); border-left: 6px solid var(--dal); border-radius: 16px; padding: 12px; box-shadow: var(--golge); }
 .dalIkon { grid-row: span 2; font-size: 32px; width: 52px; height: 52px; display: flex; align-items: center; justify-content: center;
   background: color-mix(in srgb, var(--dal) 16%, transparent); border-radius: 14px; }
@@ -248,6 +248,22 @@ ol.hesap li { margin: 3px 0; }
 .dalMetin b { font-family: "Baloo 2"; font-size: 18px; color: var(--dal); }
 .dalMetin span { font-size: 13px; font-weight: 700; }
 .dalMetin small { font-size: 12.5px; color: var(--soluk); }
+.dalOk { grid-row: span 2; font-size: 18px; color: var(--dal); font-weight: 900; text-align: center; }
+.dalKart.acikKart { border-bottom-left-radius: 6px; border-bottom-right-radius: 6px; }
+.dalUniteler { margin: -6px 0 2px 14px; background: var(--kart); border-left: 3px solid var(--dal); border-radius: 0 0 14px 14px; padding: 4px 8px 6px; box-shadow: var(--golge); }
+.dalUnite { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--cizgi); padding: 8px 2px; cursor: pointer; color: var(--metin); font: inherit; }
+.dalUnite:last-child { border-bottom: 0; }
+.duNo { flex: none; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 13px;
+  background: color-mix(in srgb, var(--dal) 14%, transparent); color: var(--dal); }
+.dalUnite.bitti .duNo { background: var(--dal); color: #fff; }
+.dalUnite.simdi .duNo { background: var(--safran); color: #1d2440; }
+.dalUnite.kilit .duNo { background: var(--kilit); color: var(--soluk); font-size: 12px; }
+.duMetin { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.duMetin b { font-size: 14.5px; font-weight: 800; line-height: 1.2; }
+.duMetin small { font-size: 12px; color: var(--soluk); font-weight: 700; }
+.dalUnite.kilit .duMetin b { opacity: .7; }
+.dalUnite.sonOynanan { background: color-mix(in srgb, var(--safran) 22%, transparent); border-radius: 10px; transition: background 1.2s; }
+.duOk { flex: none; color: var(--soluk); font-size: 20px; font-weight: 800; }
 .kurBandi { display: flex; align-items: center; gap: 8px; background: var(--altinAcik); color: #3b2a00; border-radius: 14px; padding: 8px 10px; font-size: 13px; font-weight: 700; margin: 8px 0; }
 .kurBandi span { flex: 1; }
 .kapatX { border: 0; background: none; font-size: 16px; cursor: pointer; color: inherit; }
@@ -709,3 +725,11 @@ svg.ritim { display: block; width: 100%; height: auto; max-height: 130px; color:
 .ahenkTablo th { color: var(--soluk); font-size: 12px; }
 .mertebeCipler { display: flex; gap: 6px; align-items: center; justify-content: center; flex-wrap: wrap; margin: 4px 0 6px; }
 .mertebeCipler .cip.aktif { background: var(--safran); color: #1d2440; border-color: var(--safran); }
+
+/* Tartım 2: notalı dikte kartları */
+.diziTas.svgli, .diziSlot.svgli { padding: 0 2px; min-width: 76px; }
+.diziTas.svgli svg, .diziSlot.svgli svg { height: 68px; width: auto; max-width: 150px; display: block; margin: -6px 0 -10px; }
+.diziHavuz:has(.svgli) { gap: 6px; }
+.diziSlot.svgli:not(.dolu) { min-width: 56px; }
+svg.ritim.tartim2 { max-height: 110px; }
+.vurDugmeler.tekDugme { grid-template-columns: 1fr; }
