@@ -6,7 +6,7 @@ Türk müziği öğrencilerinin Arel-Ezgi-Uzdilek sistemindeki komaları, perdel
 
 <p align="center"><a href="https://burakbastas.github.io/perde-oyunu/"><b>▶ Hemen oyna: burakbastas.github.io/perde-oyunu</b></a></p>
 
-Ücretsizdir, üyelik istemez, reklam yoktur. Telefonda, tablette ve bilgisayarda çalışır; bir kez açıldıktan sonra internetsiz de oynanır.
+Telefonda, tablette ve bilgisayarda çalışır; bir kez açıldıktan sonra internetsiz de oynanır.
 
 ## Neler var?
 
