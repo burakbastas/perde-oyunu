@@ -359,29 +359,55 @@ function sandikSor(u) {
 // =====================================================
 // ÖĞREN
 // =====================================================
+let OGREN_TEMEL_ACIK = false;
 function ogrenCiz(g) {
+  if (ORTAK_ACIK && ORTAK[ORTAK_ACIK] && ortakGorunur()) { ortakDersCiz(g, ORTAK[ORTAK_ACIK]); return; }
+  ORTAK_ACIK = null;
   g.appendChild(h('div', { class: 'sayfaBas' },
     h('span', { class: 'sayfaMaskot', html: bulbulSVG('anlat') }),
     h('div', null, h('h2', null, '📚 Öğren'), h('p', null, 'Hiç nota bilmesen de buradan başlayabilirsin. Her modül birkaç dakika sürer.'))));
-  const liste = h('div', { class: 'modulListe' });
-  OGREN_MODULLERI.forEach(function (m, i) {
-    const bitti = !!DURUM.ogren[m.id];
-    liste.appendChild(h('button', { class: 'modul' + (bitti ? ' bitti' : ''), type: 'button', onclick: function () { modulAc(m); } },
-      h('span', { class: 'modulNo' }, bitti ? '✓' : String(i + 1)),
-      h('span', { class: 'modulAd' }, m.ikon + ' ' + m.ad),
-      h('span', { class: 'modulOk' }, '›')));
-  });
-  g.appendChild(liste);
-  g.appendChild(h('button', { class: 'modul sozluk', type: 'button', onclick: sozlukAc },
-    h('span', { class: 'modulNo' }, '📖'), h('span', { class: 'modulAd' }, 'Sözlük'), h('span', { class: 'modulOk' }, '›')));
-  g.appendChild(h('button', { class: 'modul sozluk', type: 'button', onclick: bendirSayfasi },
-    h('span', { class: 'modulNo' }, '🥁'), h('span', { class: 'modulAd' }, 'Bendir: istediğin usulde ve hızda çalsın'), h('span', { class: 'modulOk' }, '›')));
-  g.appendChild(h('button', { class: 'modul sozluk', type: 'button', onclick: arkaPlanlar },
-    h('span', { class: 'modulNo' }, '🖼️'), h('span', { class: 'modulAd' }, 'Arka planlar: koma tablosu, perdeler'), h('span', { class: 'modulOk' }, '›')));
+  // Temel bilgiler: tek kart, ilerleme ve sıradaki modül; dokununca liste açılır
+  const M = OGREN_MODULLERI, biten = M.filter(function (m) { return DURUM.ogren[m.id]; }).length;
+  const sirada = M.find(function (m) { return !DURUM.ogren[m.id]; });
+  const kart = h('div', { class: 'oTemel' + (OGREN_TEMEL_ACIK ? ' acik' : ''), role: 'button', tabindex: 0, onclick: function () { OGREN_TEMEL_ACIK = !OGREN_TEMEL_ACIK; sekmeAc('ogren'); } },
+    h('div', { class: 'ust' }, h('b', null, '🎼 Temel bilgiler'), h('span', { class: 'say' }, biten + ' / ' + M.length)),
+    h('div', { class: 'cub' }, h('div', { style: 'width:' + Math.round(100 * biten / M.length) + '%' })),
+    h('div', { class: 'sira' },
+      h('span', null, sirada ? 'Sıradaki: ' + sirada.ikon + ' ' + sirada.ad : 'Hepsi tamam 🎉 Dilediğini tekrar aç'),
+      h('button', { class: 'devamCip', type: 'button', onclick: function (e) { e.stopPropagation(); if (sirada) modulAc(sirada); else { OGREN_TEMEL_ACIK = !OGREN_TEMEL_ACIK; sekmeAc('ogren'); } } },
+        sirada ? 'Devam ▶' : (OGREN_TEMEL_ACIK ? '▴' : '▾'))));
+  kart.onkeydown = function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); kart.click(); } };
+  g.appendChild(kart);
+  if (OGREN_TEMEL_ACIK) {
+    const liste = h('div', { class: 'oListe' });
+    M.forEach(function (m, i) {
+      const bitti = !!DURUM.ogren[m.id];
+      liste.appendChild(h('button', { class: 'oSatir' + (bitti ? ' b' : m === sirada ? ' s' : ''), type: 'button', onclick: function () { modulAc(m); } },
+        h('i', null, bitti ? '✓' : String(i + 1)), h('span', null, m.ikon + ' ' + m.ad), h('span', { class: 'ok' }, '›')));
+    });
+    g.appendChild(liste);
+  }
+  // Araçlar
+  g.appendChild(h('div', { class: 'oBolum' }, 'Araçlar'));
+  const B = DURUM.bendir, bu = B && USUL[B.usul];
+  let bendirAlt = 'İstediğin usulde ve hızda çalsın';
+  if (bu) {
+    const mer = (B.mertebe && B.mertebe[bu.id]) || bu.payda, u2 = usulMertebe(bu, mer);
+    bendirAlt = 'Son: ' + bu.ad + ' ' + u2.olcu + ' · ' + ((B.tempo && B.tempo[bu.id + '/' + u2.payda]) || u2.tempo);
+  }
+  const kutu = function (renk, ik, ad, alt, f) {
+    return h('button', { class: 'oKutu', type: 'button', style: '--r:' + renk, onclick: f }, h('span', { class: 'ik' }, ik), h('b', null, ad), h('small', null, alt));
+  };
+  g.appendChild(h('div', { class: 'oIzgara' },
+    kutu('var(--safran)', '🥁', 'Bendir', bendirAlt, bendirSayfasi),
+    kutu('var(--kobalt)', '📖', 'Sözlük', 'Terimler ve anlamları', sozlukAc),
+    kutu('var(--turkuaz)', '📏', 'Hızlı bakış', 'Koma, perde, makam, usul tabloları', function () { hizliBakis(); }),
+    kutu('var(--mor)', '🖼️', 'Arka planlar', 'Telefon ve bilgisayar duvar kâğıdı', arkaPlanlar)));
   g.appendChild(h('p', { class: 'kucukNot ortala' }, 'İpucu: derslerde ve açıklamalarda altı noktalı terimlere dokunursan sözlük açılır.'));
+  ortakBolumCiz(g);
 }
 function modulAc(m) {
-  dersGoster(m.ikon + ' ' + m.ad, m.kartlar, function () {
+  dersGoster(m.ikon + ' ' + m.ad, modulKartlari(m), function () {
     DURUM.ogren[m.id] = true; kaydet();
     const u = m.baglanti && UNITE[m.baglanti];
     ekranAc('ekranAna'); sekmeAc('ogren');
@@ -616,6 +642,15 @@ function hakkinda() {
 }
 function yenilikler() {
   sayfa('🆕 Yenilikler', h('div', { class: 'metinSayfa', html:
+    '<h3>Sürüm 2.8</h3><ul>' +
+    '<li>📚 <b>Öğren sekmesi yenilendi</b>: temel bilgiler tek kartta, ilerlemen ve sıradaki modül görünüyor; dokununca bütün modüller açılır.</li>' +
+    '<li>🥁 Üç yeni modül: <b>Usul nedir?</b>, <b>Ahenk</b> ve <b>Tartım ve ritim</b>. Modüller Dallar ile aynı sırada.</li>' +
+    '<li>📏 Yeni <b>Hızlı bakış</b>: koma, perde, dörtlü-beşli, makam, usul (▶ ile dinle) ve ahenk tabloları tek yerde.</li>' +
+    '<li>🧰 Bendir, Sözlük ve Arka planlar yeni “Araçlar” ızgarasında; Bendir kutusu en son çaldığın usulü ve hızı gösterir.</li>' +
+    '<li>🎓 Öğren’in altında yeni <b>Ortak dersler</b>: konservatuvar 1. sınıf ortak dersleri (Türk Dili 1, Atatürk İlkeleri ve İnkılap Tarihi 1, İngilizce 1) için ünite özetleri, testler, vize ve final denemeleri. İstemezsen Ayarlar’dan gizleyebilirsin.</li></ul>' +
+    '<h3>Sürüm 2.7.1</h3><ul>' +
+    '<li>📱 iPhone’da ses bittikten sonra kilit ekranında kalan boş “Şimdi Çalıyor” kartı artık kayboluyor; uygulama arka plana geçince ses duruyor.</li>' +
+    '<li>🥁 Usul: “hangi elle vurulur?” bilgi soruları kaldırıldı; el, notanın üzerinde işaretli vuruşla soruluyor.</li></ul>' +
     '<h3>Sürüm 2.7</h3><ul>' +
     '<li>🎹 <b>Tartım üniteleri baştan yazıldı</b>: 3 yerine 10 ünite ve ♾️ Sonsuz dikte. Temel tartımlardan noktalılara, suslara, bağ ve senkopa, <b>üçlemeye</b>, <b>6/8</b>’e, <b>aksak ölçülere</b> (5/8, 7/8, 9/8) ve dört ölçülük uzun dikteye.</li>' +
     '<li>👂 Odak artık dikte ve deşifre: duyduğun ritmin notasını seç, kalıp kartlarını sırayla diz, 🔎 yazılan ile çalınan arasındaki farkı bul, eksik vuruşu tamamla, notayı okuyup vur. Son ünitede dinlemeden okuyup vurma.</li>' +
@@ -724,6 +759,9 @@ function ayarlar() {
   const oto = h('label', { class: 'anahtar' },
     h('input', { type: 'checkbox', checked: DURUM.ayar.otoGec !== false, onchange: function (e) { DURUM.ayar.otoGec = e.target.checked; kaydet(); } }),
     h('span', null, '⏩ Doğru cevaplarda otomatik geç'));
+  const ortak = h('label', { class: 'anahtar' },
+    h('input', { type: 'checkbox', checked: !DURUM.ayar.ortakGizli, onchange: function (e) { DURUM.ayar.ortakGizli = !e.target.checked; if (!e.target.checked) ORTAK_ACIK = null; kaydet(); } }),
+    h('span', null, '🎓 Ortak dersleri Öğren sekmesinde göster'));
   modalAc(h('div', null,
     h('h2', null, '⚙️ Ayarlar'),
     iletisimKarti(),
@@ -731,6 +769,8 @@ function ayarlar() {
     h('h3', null, 'Oyun'), oto,
     h('p', { class: 'kucukNot' }, 'Doğru cevaptan sonra kısa bir süre bekleyip sonraki soruya geçer. Yanlış cevapta açıklama her zaman bekler; ekranın herhangi bir yerine dokunarak geçebilirsin.'),
     h('h3', null, 'Meşk Yolu'), bati,
+    h('h3', null, 'Ortak dersler'), ortak,
+    h('p', { class: 'kucukNot' }, 'Konservatuvar 1. sınıf ortak dersleri (Türk Dili 1, Atatürk İlkeleri ve İnkılap Tarihi 1, İngilizce 1) için özetler, ünite testleri ve sınav denemeleri. İşareti kaldırırsan bölüm Öğren’den gizlenir; ilerlemen silinmez. Meşk Yolu’nu ve ünvanları etkilemez.'),
     h('h3', null, 'İlerleme'),
     h('p', { class: 'kucukNot' }, 'Sıfırlarsan bütün oyunlardaki yıldızlar, kartlar, tekrar listesi ve seri silinir. Önce yedek almanı öneririz.'),
     dugme('İlerlemeyi sıfırla', function () {

@@ -21,9 +21,39 @@ function sesBaglam() {
     SES.ana.gain.value = SES.seviye;
     SES.ana.connect(SES.ctx.destination);
   }
-  if (SES.ctx.state === 'suspended') { try { SES.ctx.resume(); } catch (e) {} }
+  if (SES.ctx.state !== 'running') {
+    try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+    try { SES.ctx.resume(); } catch (e) {}
+  }
+  oynatmaBilgisi();
+  sesUyku();
   return SES.ctx;
 }
+// ---- Ses boştayken bağlamı uyut: iPhone kilit ekranındaki "Şimdi Çalıyor" kartı kalmasın ----
+// Çalan ritim ya da süren bir vurma sorusu yoksa ve son sesin üstünden 2,5 sn geçtiyse kapatılır;
+// bir sonraki seste sesBaglam() yeniden açar.
+function vurmaSuruyor() { return typeof TUR !== 'undefined' && TUR && TUR.q && TUR.q.vur && TUR.q.vur.aktif; }
+function sesUyku(hemen) {
+  clearTimeout(SES.uykuT);
+  SES.uykuT = setTimeout(function () {
+    const c = SES.ctx;
+    if (!c || c.state !== 'running') return;
+    if (!hemen && (CALAN || vurmaSuruyor() || c.currentTime < (SES.sonSes || 0) + 1.5)) { sesUyku(); return; }
+    if (hemen) ritimDur();
+    try { c.suspend(); } catch (e) {}
+    try { if (navigator.audioSession) navigator.audioSession.type = 'auto'; } catch (e) {}
+    try { if (navigator.mediaSession) navigator.mediaSession.playbackState = 'none'; } catch (e) {}
+  }, hemen ? 0 : 2500);
+}
+function oynatmaBilgisi() {
+  try {
+    if (!navigator.mediaSession || SES.medyaKuruldu) return;
+    SES.medyaKuruldu = true;
+    if (window.MediaMetadata) navigator.mediaSession.metadata = new MediaMetadata({ title: 'Seyir', artist: 'Bendir ve ritim', artwork: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' }] });
+    ['pause', 'stop'].forEach(function (a) { try { navigator.mediaSession.setActionHandler(a, function () { sesUyku(true); }); } catch (e) {} });
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden') sesUyku(true); });
 function sesSeviye(v) { SES.seviye = v; if (SES.ana) SES.ana.gain.value = v; }
 
 // ---- Yedek (sentetik) sesler ----
@@ -80,7 +110,10 @@ function vurusCal(s, zaman, kazanc) {
   src.buffer = b;
   g.gain.value = kazanc == null ? 1 : kazanc;
   src.connect(g); g.connect(SES.ana);
-  try { src.start(Math.max(zaman, c.currentTime)); } catch (e) {}
+  const bas = Math.max(zaman, c.currentTime);
+  try { src.start(bas); } catch (e) {}
+  SES.sonSes = Math.max(SES.sonSes || 0, bas + b.duration);
+  sesUyku();
 }
 // Şu an duyulan anın ses saatindeki karşılığı (çıkış gecikmesi düşülmüş)
 function duyulanZaman() {
@@ -153,7 +186,7 @@ function ritimCal(o) {
   CALAN = r;
   return r;
 }
-function ritimDur() { if (CALAN) { const r = CALAN; CALAN = null; r.dur(); } }
+function ritimDur() { if (CALAN) { const r = CALAN; CALAN = null; r.dur(); } sesUyku(); }
 
 // ---- Ekran kararmasın (bendir çalarken) ----
 function ekranUyanik() {

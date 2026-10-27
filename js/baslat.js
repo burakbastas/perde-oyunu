@@ -5,13 +5,21 @@
 
 (function () {
   const durum = durumYukle();
+  // ?ortak bağlantısı: Öğren sekmesindeki Ortak dersler bölümünü açar
+  let ortakLink = false;
+  try {
+    if (new URLSearchParams(location.search).has('ortak')) {
+      DURUM.ayar.ortakGizli = false; kaydet(); ortakLink = true;
+      history.replaceState(null, '', location.pathname + location.hash);
+    }
+  } catch (e) {}
   temaUygula();
   kaliciDepolamaIste();
   geriTusuKur();
   document.querySelector('.logoMaskot').innerHTML = bulbulSVG('normal');
 
   document.querySelectorAll('#altMenu button').forEach(function (b) {
-    b.addEventListener('click', function () { if (b.dataset.sekme === 'yol' && SEKME === 'yol') YOL_FILTRE = 'dallar'; sekmeAc(b.dataset.sekme); });
+    b.addEventListener('click', function () { if (b.dataset.sekme === 'yol' && SEKME === 'yol') YOL_FILTRE = 'dallar'; if (b.dataset.sekme === 'ogren' && SEKME === 'ogren') ORTAK_ACIK = null; sekmeAc(b.dataset.sekme); });
   });
   ekranaDokunKur();
   $('oyCik').addEventListener('click', function () { turdanCik(TUR && TUR.tip !== 'rehber' && TUR.tip !== 'deneme'); });
@@ -35,7 +43,8 @@
     document.body.classList.remove('yukleniyor');
     // Nota yazı tipi yüklenemediyse (eski önbellek vb.) kullanıcıya söyle
     try { if (document.fonts && !document.fonts.check('40px SeyirNota')) toast('Nota işaretleri yüklenemediyse sayfayı yenile', 4000); } catch (e) {}
-    sekmeAc('yol');
+    sekmeAc(ortakLink && DURUM.ayar.kurulum ? 'ogren' : 'yol');
+    if (ortakLink) toast('🎓 Ortak dersler: Öğren sekmesinin en altında', 3500);
     if (durum === 'yeni' || !DURUM.ayar.kurulum) ilkAcilis();
     else if (DURUM.tasima && !DURUM.tasima.gosterildi) tasimaBildir();
     else if (!DURUM.ayar.rehber) rehberBaslat();

@@ -3,7 +3,7 @@
 // =====================================================
 'use strict';
 
-const SURUM = '2.7.0';
+const SURUM = '2.8.0';
 const WHATSAPP_NO = '905307302798';
 const UYGULAMA_ADRESI = 'https://burakbastas.github.io/perde-oyunu/';
 const ANAHTAR = 'perdeMacerasiV2';
@@ -75,9 +75,10 @@ function varsayilanDurum() {
     tekrar: {},      // ogeId -> {k, t, d, y}  (Leitner)
     kart: {},        // ogeId -> 1 (koleksiyon kartı açık)
     ogren: {},       // modulId -> true
+    ortak: {},       // ortak dersler: dersId -> { u: { no: { oz, en } }, vize, final, kron }
     bonus: 0, harcanan: 0,
     seri: { son: '', sayi: 0 },
-    ayar: { tema: 'oto', bati: false, kurulum: false, otoGec: true },
+    ayar: { tema: 'oto', bati: false, kurulum: false, otoGec: true, ortakGizli: false },
     tasima: null     // eski kayıttan taşındıysa özet
   };
 }

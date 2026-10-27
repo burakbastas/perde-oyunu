@@ -170,4 +170,62 @@ const OGREN_MODULLERI = [
   ] },
   { id: 'gocurme', ikon: '🔁', ad: 'Göçürme', baglanti: null, kartlar: null }   // kartları göçürme dersinden alır
 ];
-OGREN_MODULLERI[7].kartlar = gocurmeTemelDersi();
+OGREN_MODULLERI.push(
+  { id: 'usul', ikon: '🥁', ad: 'Usul nedir?', baglanti: 'u1', kartlar: function () { return USUL_UNITELER[0].ders(); } },
+  { id: 'ahenk', ikon: '🎚️', ad: 'Ahenk', baglanti: 'a1', kartlar: function () { return AHENK_UNITELER[0].ders(); } },
+  { id: 'tartim', ikon: '🎵', ad: 'Tartım ve ritim', baglanti: 'b11', kartlar: function () { return T2_DERS.b11.concat(T2_DERS.b12.slice(0, 1), T2_DERS.b13.slice(0, 1), T2_DERS.b15.slice(0, 1)); } }
+);
+OGREN_MODULLERI.find(function (m) { return m.id === 'gocurme'; }).kartlar = gocurmeTemelDersi;
+// Pedagojik sıra (Dallar ile aynı): koma → perde → usul → çeşni → göçürme → makam → ahenk → tartım
+(function () {
+  const sira = ['nota', 'oktav', 'aralik', 'isaret', 'perde', 'usul', 'cesni', 'gocurme', 'makam', 'ahenk', 'tartim'];
+  OGREN_MODULLERI.sort(function (a, b) { return sira.indexOf(a.id) - sira.indexOf(b.id); });
+})();
+function modulKartlari(m) { return typeof m.kartlar === 'function' ? m.kartlar() : m.kartlar; }
+
+// =====================================================
+// HIZLI BAKIŞ: başvuru tabloları
+// =====================================================
+function hizliBakis(baslangic) {
+  let sekme = baslangic || 'koma';
+  const cipler = h('div', { class: 'hbCipler' });
+  const govde = h('div', { class: 'hbGovde' });
+  const SEK = [['koma', 'Koma'], ['perde', 'Perdeler'], ['cesni', 'Dörtlü-beşli'], ['makam', 'Makamlar'], ['usul', 'Usuller'], ['ahenk', 'Ahenkler']];
+  function tablo(basliklar, satirlar) {
+    return h('table', { class: 'hbTablo' }, h('thead', null, h('tr', null, basliklar.map(function (b) { return h('th', null, b); }))),
+      h('tbody', null, satirlar.map(function (r) { return h('tr', null, r.map(function (x) { return h('td', null, x); })); })));
+  }
+  function ciz() {
+    if (typeof ritimDur === 'function') ritimDur();
+    bosalt(cipler);
+    SEK.forEach(function (x) { cipler.appendChild(h('button', { type: 'button', class: 'cip' + (x[0] === sekme ? ' aktif' : ''), onclick: function () { sekme = x[0]; ciz(); } }, x[1])); });
+    bosalt(govde);
+    if (sekme === 'koma') {
+      govde.appendChild(h('div', { class: 'hbCizim' }, komaCetveliSVG()));
+      govde.appendChild(tablo(['Aralık', 'Koma', 'Harf'], [['Koma', '1', 'F'], ['Bakiye', '4', 'B'], ['Küçük mücenneb', '5', 'S'], ['Büyük mücenneb', '8', 'K'], ['Tanini', '9', 'T'], ['Artık ikili', '12–13', 'A']]));
+      govde.appendChild(h('p', { class: 'kucukNot' }, 'Bir oktav 53 koma. Diyez (sol) ve bemol (sağ) işaretleri:'));
+      govde.appendChild(aeuIsaretTablosu());
+    } else if (sekme === 'perde') {
+      govde.appendChild(tablo(['Perde', 'Yazım'], PERDELER.map(function (p) { return [p.tam ? h('b', null, p.ad) : p.ad, p.parcalar.map(notaKisa).join(' = ')]; })));
+    } else if (sekme === 'cesni') {
+      govde.appendChild(tablo(['Dörtlü / beşli', 'Aralıklar', 'Yeri'], CESNILER.map(function (c) { return [c.ad, formulGoster(c.formul), c.yer]; })));
+      govde.appendChild(h('p', { class: 'kucukNot' }, 'T tanini · K büyük mücenneb · S küçük mücenneb · B bakiye · A artık ikili'));
+    } else if (sekme === 'makam') {
+      govde.appendChild(tablo(['Makam', 'Karar', 'Güçlü', 'Yapı'], MAKAMLAR.map(function (m) { return [h('b', null, m.ad), m.karar, m.guclu, m.altAd + ' + ' + m.ustAd]; })));
+    } else if (sekme === 'usul') {
+      govde.appendChild(tablo(['Usul', 'Ölçü', 'Vuruşlar', ''], U_HEPSI.map(function (id) {
+        const u = USUL[id];
+        return [h('b', null, u.ad), u.olcu, u.olaylar.map(function (e) { return e.hece; }).join(' '),
+          h('button', { class: 'hbCal', type: 'button', 'aria-label': u.ad + ' çal', onclick: function () {
+            sesHazirla(); ritimCal({ olaylar: u.olaylar, onaltilikSn: function () { return usulOnaltilikSn(u); }, devir: 2 });
+          } }, '▶')];
+      })));
+      govde.appendChild(h('p', { class: 'kucukNot' }, '▶ usulü iki devir çalar. Hız ve mertebe seçmek için Bendir’i kullan.'));
+    } else if (sekme === 'ahenk') {
+      govde.appendChild(tablo(['Ahenk', 'Yeni adı', 'Rast’ın sesi'], AHENKLER.map(function (a) { return [h('b', null, a.ad), a.yeniTam, a.rast]; })));
+    }
+  }
+  ciz();
+  modalAc(h('div', null, h('h2', null, '📏 Hızlı bakış'), cipler, govde, dugme('Kapat', modalKapat, 'gri')),
+    { genis: true, kapaninca: function () { if (typeof ritimDur === 'function') ritimDur(); } });
+}

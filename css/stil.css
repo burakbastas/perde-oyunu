@@ -1,9 +1,9 @@
 /* =====================================================
    PERDE MACERASI · çini / İznik teması
    ===================================================== */
-@font-face { font-family: SeyirNota; src: url(../fonts/seyir-nota.woff?v=2.7.0) format("woff"); font-display: block; }
-@font-face { font-family: Nunito; src: url(../fonts/nunito.woff?v=2.7.0) format("woff"); font-weight: 200 1000; font-display: swap; }
-@font-face { font-family: "Baloo 2"; src: url(../fonts/baloo2.woff?v=2.7.0) format("woff"); font-weight: 400 800; font-display: swap; }
+@font-face { font-family: SeyirNota; src: url(../fonts/seyir-nota.woff?v=2.8.0) format("woff"); font-display: block; }
+@font-face { font-family: Nunito; src: url(../fonts/nunito.woff?v=2.8.0) format("woff"); font-weight: 200 1000; font-display: swap; }
+@font-face { font-family: "Baloo 2"; src: url(../fonts/baloo2.woff?v=2.8.0) format("woff"); font-weight: 400 800; font-display: swap; }
 
 :root {
   --zemin: #fbf5ea;
@@ -733,3 +733,77 @@ svg.ritim { display: block; width: 100%; height: auto; max-height: 130px; color:
 .diziSlot.svgli:not(.dolu) { min-width: 56px; }
 svg.ritim.tartim2 { max-height: 110px; }
 .vurDugmeler.tekDugme { grid-template-columns: 1fr; }
+
+/* ===== Öğren (2.8): temel bilgiler kartı, araçlar ızgarası, ortak dersler ===== */
+.oBolum { margin: 20px 2px 8px; font: 800 13px Nunito, sans-serif; letter-spacing: 1.2px; text-transform: uppercase; color: var(--soluk); }
+.oTemel { display: block; width: 100%; text-align: left; border-radius: 20px; padding: 16px; cursor: pointer; position: relative; z-index: 1;
+  background: linear-gradient(135deg, var(--ust), var(--kobalt)); color: #fff; box-shadow: var(--golge); font-family: Nunito, sans-serif; }
+.oTemel .ust { display: flex; justify-content: space-between; align-items: center; }
+.oTemel b { font: 800 20px "Baloo 2", sans-serif; }
+.oTemel .say { font-weight: 900; font-size: 14px; opacity: .9; }
+.oTemel .cub { height: 8px; border-radius: 4px; background: rgba(255,255,255,.25); margin: 10px 0 8px; }
+.oTemel .cub div { height: 100%; border-radius: 4px; background: var(--safran); transition: width .4s; }
+.oTemel .sira { display: flex; justify-content: space-between; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
+.oTemel .devamCip { flex: none; border: 0; background: #fff; color: var(--ust); border-radius: 12px; padding: 6px 12px; font: 900 14px Nunito, sans-serif; cursor: pointer; }
+.oListe { background: var(--kart); border-radius: 0 0 18px 18px; margin: -12px 6px 0; padding: 16px 10px 6px; box-shadow: var(--golge); }
+.oSatir { display: flex; align-items: center; gap: 10px; width: 100%; padding: 9px 2px; border: 0; border-bottom: 1px solid var(--cizgi); background: none; text-align: left;
+  font: 800 15px Nunito, sans-serif; color: var(--metin); cursor: pointer; }
+.oSatir:last-child { border-bottom: 0; }
+.oSatir i { font-style: normal; flex: none; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--zemin2); font-size: 13px; }
+.oSatir.b i { background: var(--dogru); color: #fff; }
+.oSatir.s i { background: var(--safran); color: #1a1a1a; }
+.oSatir .ok, .oUnite .yuzde { margin-left: auto; color: var(--soluk); font-weight: 900; }
+.oIzgara { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.oKutu { border: 0; text-align: left; border-radius: 20px; padding: 14px; min-height: 118px; display: flex; flex-direction: column; gap: 3px; cursor: pointer;
+  background: var(--kart); box-shadow: var(--golge); border-top: 5px solid var(--r); color: var(--metin); font-family: Nunito, sans-serif; }
+.oKutu .ik { font-size: 28px; width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--r) 16%, transparent); margin-bottom: 4px; }
+.oKutu b { font: 800 17px "Baloo 2", sans-serif; color: var(--r); line-height: 1.15; }
+.oKutu small { font-size: 12px; font-weight: 700; color: var(--soluk); line-height: 1.3; }
+.oKutu small.skor { margin-top: auto; padding-top: 4px; color: var(--metin); font-weight: 900; }
+.oOrtak { background: var(--kart); border-radius: 18px; box-shadow: var(--golge); padding: 2px 12px; }
+.oDers, .oUnite { display: flex; align-items: center; gap: 10px; width: 100%; padding: 11px 0; border: 0; border-bottom: 1px solid var(--cizgi); background: none;
+  text-align: left; color: var(--metin); font-family: Nunito, sans-serif; cursor: pointer; }
+.oDers:last-child, .oUnite:last-child { border-bottom: 0; }
+.oDers .ik { font-size: 22px; }
+.oDers .m, .oUnite .m { flex: 1; min-width: 0; }
+.oDers b, .oUnite b { display: block; font-size: 14.5px; font-weight: 800; }
+.oDers .c { display: block; height: 6px; border-radius: 3px; background: var(--zemin2); margin-top: 6px; }
+.oDers .c span { display: block; height: 100%; border-radius: 3px; background: var(--r); }
+.oDers small, .oUnite small { font-size: 12px; font-weight: 800; color: var(--soluk); }
+.oUnite i { font-style: normal; flex: none; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  background: var(--zemin2); font-weight: 900; font-size: 13px; }
+.oUnite.s i { background: color-mix(in srgb, var(--r) 22%, var(--kart)); }
+.oUnite.b i { background: var(--dogru); color: #fff; }
+.ortakBas { display: flex; align-items: center; gap: 10px; padding: 14px; margin-bottom: 14px; border-radius: 20px; background: var(--kart); box-shadow: var(--golge); border-left: 6px solid var(--r); }
+.ortakBas .ik { font-size: 32px; }
+.ortakBas h2 { margin: 0; font-size: 1.15rem; line-height: 1.2; }
+.ortakBas p { margin: 2px 0 0; font-size: 13px; font-weight: 700; color: var(--soluk); }
+.geriOk { flex: none; width: 36px; height: 36px; border-radius: 12px; border: 0; background: var(--zemin2); color: var(--metin); font: 900 24px/1 Nunito, sans-serif; cursor: pointer; }
+.ortakSkor { display: flex; flex-direction: column; align-items: center; margin: 4px 0 8px; }
+.ortakSkor b { font: 800 44px/1 "Baloo 2", sans-serif; color: var(--kobalt); }
+.ortakSkor span { font-weight: 800; color: var(--soluk); }
+.ortakYanlis { text-align: left; max-height: 40vh; overflow: auto; margin: 6px 0 12px; }
+.ortakYanlis h3 { margin: 6px 0; }
+.ortakYanlis .oyRow { padding: 8px 0; border-bottom: 1px solid var(--cizgi); font-size: 14px; }
+.ortakYanlis .oyRow p { margin: 0 0 3px; }
+.ortakYanlis .oyRow b { color: var(--dogru); }
+.kronListe { text-align: left; margin: 6px 0; padding-left: 22px; font-size: 14px; }
+.kronListe li { margin: 3px 0; }
+.zamanCizelge { margin: 10px 0 12px; max-height: 58vh; overflow: auto; text-align: left; }
+.zcYil { position: sticky; top: 0; background: var(--kart); font: 800 18px "Baloo 2", sans-serif; color: var(--kobalt); padding: 6px 0 2px; border-bottom: 2px solid var(--cizgi); }
+.zcSatir { display: flex; gap: 10px; align-items: baseline; padding: 6px 0 6px 4px; border-bottom: 1px solid var(--cizgi); font-size: 14px; }
+.zcTarih { flex: none; width: 92px; font-weight: 900; color: var(--soluk); font-size: 12.5px; }
+.zcOlay { flex: 1; font-weight: 700; }
+.zcNo { flex: none; font-size: 11px; font-weight: 900; color: var(--soluk); }
+.hbCipler { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 10px; }
+.hbGovde { max-height: 60vh; overflow: auto; text-align: left; }
+.hbCizim { overflow-x: auto; margin-bottom: 8px; }
+.hbCizim svg { max-width: 100%; height: auto; }
+.hbTablo { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.hbTablo th { position: sticky; top: 0; background: var(--kart); text-align: left; font-size: 12px; color: var(--soluk); padding: 6px 4px; border-bottom: 2px solid var(--cizgi); }
+.hbTablo td { padding: 6px 4px; border-bottom: 1px solid var(--cizgi); vertical-align: middle; }
+.hbCal { border: 0; width: 34px; height: 34px; border-radius: 50%; background: var(--safran); color: #1a1a1a; font-weight: 900; cursor: pointer; }
+.diziHavuz.genis .diziTas, .diziSlotlar.genis .diziSlot { font-size: 14px; line-height: 1.25; }
+.oBolum.ortakBaslik { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 8px; row-gap: 2px; }
+.oBolum.ortakBaslik small { font: 700 12px Nunito, sans-serif; letter-spacing: 0; text-transform: none; color: var(--soluk); }

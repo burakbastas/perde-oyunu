@@ -184,7 +184,7 @@ const JOKER_LIMIT = 3;
 // o: { tip, baslik, sorular, kalp (0: kalpsiz), joker, sure (sn/soru, 0: yok), kayit (Leitner'a yaz), ipucuAcik, bitince(sonuc) }
 function turBaslat(o) {
   if (!o.sorular || !o.sorular.length) { toast('Bu turda soru yok'); return; }
-  if (o.tip !== 'deneme' && o.tip !== 'rehber') seriGuncelle();
+  if (o.tip !== 'deneme' && o.tip !== 'rehber' && o.tip !== 'ortak') seriGuncelle();
   TUR = Object.assign({ k: 0, hata: 0, dogru: 0, atlanan: 0, ceza: 0, jokerSay: 0, jokerKullandi: false, yeniKart: [], q: null, zaman: null }, o);
   TUR.kalpVar = (o.kalp || 0) > 0;
   TUR.kalpMax = o.kalp || 0;
@@ -333,7 +333,7 @@ function secimCiz(alan, veri, q) {
   const porteli = siklar.some(function (x) { return x.porte || x.svg; });
   const genis = siklar.some(function (x) { return x.genis; });
   const glifli = siklar.some(function (x) { return x.glif; });
-  const kisa = !porteli && !glifli && siklar.every(function (x) { return String(x.metin).length <= 14; }) && siklar.length >= 4;
+  const kisa = !veri.liste && !porteli && !glifli && siklar.every(function (x) { return String(x.metin).length <= 14; }) && siklar.length >= 4;
   const kap = h('div', { class: 'siklar ' + (porteli ? (genis ? 'genisPortler' : 'portler') : glifli ? 'glifler' : kisa ? 'kisaAdlar' : 'adlar') });
   const dogrular = [].concat(veri.dogru);
   siklar.forEach(function (x) {
@@ -484,6 +484,7 @@ function cevapla(dogru, ozelMesaj, dogruGorsel, ekAciklama) {
   } else {
     TUR.hata++;
     if (TUR.kalpVar) TUR.kalpKalan--;
+    if (TUR.yanlislar) TUR.yanlislar.push(veri);
     if (TUR.kayit && veri.oge) ogeCevap(veri.oge, false);
   }
   if (TUR.tip !== 'deneme') kaydet();
@@ -501,7 +502,7 @@ function cevapla(dogru, ozelMesaj, dogruGorsel, ekAciklama) {
   if (veri.aciklama) {
     const batiMi = (TUR.seviye && TUR.seviye.dal === 'bati') || (veri.oge && veri.oge.indexOf('b:') === 0);
     const ac = h('div', { class: 'geriAciklama', html: veri.aciklama });
-    ic.appendChild(batiMi ? ac : terimBagla(ac));
+    ic.appendChild(batiMi || TUR.tip === 'ortak' ? ac : terimBagla(ac));
   }
   const devam = $('oyDevam');
   devam.textContent = 'Devam';

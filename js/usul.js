@@ -228,11 +228,6 @@ function usulAciklama(u) {
   return '<b>' + u.ad + '</b> · ' + u.zaman + ' zamanlı (' + u.olcu + ') · ' + u.olaylar.map(function (e) { return e.hece; }).join(' ');
 }
 const USUL_BILGI = [
-  { s: 'Bir vuruşun hangi elle vurulacağını ne gösterir?', d: 'Notanın sapının yönü', y: ['Hecenin uzunluğu', 'Vuruşun düm ya da tek olması', 'Notanın süresi'] },
-  { s: 'Sofyan’daki “te” (sapı yukarı) hangi elle vurulur?', d: 'Sağ el', y: ['Sol el', 'İki el birden', 'Fark etmez'] },
-  { s: 'Sofyan’daki “ke” (sapı aşağı) hangi elle vurulur?', d: 'Sol el', y: ['Sağ el', 'İki el birden', 'Fark etmez'] },
-  { s: 'Usul notasında sapı yukarı olan vuruş hangi elle vurulur?', d: 'Sağ el', y: ['Sol el', 'İki el birden', 'Fark etmez'] },
-  { s: 'Usul notasında sapı aşağı olan vuruş hangi elle vurulur?', d: 'Sol el', y: ['Sağ el', 'İki el birden', 'Fark etmez'] },
   { s: '“Düüm” yazılışındaki uzatma neyi gösterir?', d: 'Vuruşun daha uzun sürdüğünü', y: ['Daha güçlü vurulduğunu', 'Sol elle vurulduğunu', 'Tekrar edildiğini'] },
   { s: 'Usulün ölçü birimindeki her vuruş zamanına ne denir?', d: 'Zaman', y: ['Devir', 'Hane', 'Mertebe'] },
   { s: 'Bir usulün baştan sona bir kez vurulmasına ne denir?', d: 'Devir', y: ['Zaman', 'Ölçü birimi', 'Mertebe'] },
