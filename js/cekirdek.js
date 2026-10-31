@@ -3,10 +3,12 @@
 // =====================================================
 'use strict';
 
-const SURUM = '2.8.0';
+const SURUM = '3.0.5';
 const WHATSAPP_NO = '905307302798';
 const UYGULAMA_ADRESI = 'https://burakbastas.github.io/perde-oyunu/';
 const ANAHTAR = 'perdeMacerasiV2';
+// Test sürümünde ayrı anahtar kullanılır; ilk açılışta asıl kaydın KOPYASI alınır (asıl kayda yazılmaz)
+const KOPYA_KAYNAGI = null;
 
 // ---------- DOM ----------
 const $ = function (id) { return document.getElementById(id); };
@@ -79,7 +81,9 @@ function varsayilanDurum() {
     bonus: 0, harcanan: 0,
     seri: { son: '', sayi: 0 },
     ayar: { tema: 'oto', bati: false, kurulum: false, otoGec: true, ortakGizli: false },
-    tasima: null     // eski kayıttan taşındıysa özet
+    tasima: null,    // eski kayıttan taşındıysa özet
+    tv: 0,           // kayıt taşıma sürümü (motor.js'teki TASIMALAR)
+    unvanEn: 0       // ulaşılmış en yüksek ünvanın sırası; ünvan hiç düşmez
   };
 }
 
@@ -93,16 +97,31 @@ function kaydet() {
   }
 }
 
+// Taşımadan önce kaydın bir kopyası ayrı bir anahtarda saklanır; sorun çıkarsa geri dönülür
+function tasimaYedegi() {
+  try { localStorage.setItem(ANAHTAR + '_yedek', JSON.stringify({ surum: SURUM, tarih: bugun(), durum: DURUM })); } catch (e) {}
+}
+function tasimaYedeginiGeriYukle() {
+  const y = okuJSON(ANAHTAR + '_yedek');
+  if (!y || !y.durum || y.durum.v !== 2) return false;
+  DURUM = Object.assign(varsayilanDurum(), y.durum);
+  DURUM.ayar = Object.assign(varsayilanDurum().ayar, y.durum.ayar || {});
+  kaydet();
+  return true;
+}
+
 function okuJSON(anahtar) {
   try { return JSON.parse(localStorage.getItem(anahtar)); } catch (e) { return null; }
 }
 
 function durumYukle() {
-  const k = okuJSON(ANAHTAR);
+  let k = okuJSON(ANAHTAR);
+  if (!k && KOPYA_KAYNAGI) k = okuJSON(KOPYA_KAYNAGI);
   if (k && k.v === 2) {
     DURUM = Object.assign(varsayilanDurum(), k);
     DURUM.ayar = Object.assign(varsayilanDurum().ayar, k.ayar || {});
     if (typeof gocurmeTasi === 'function') gocurmeTasi();
+    if (typeof kayitTasi === 'function') kayitTasi();
     return 'v2';
   }
   const eski = okuJSON('perdeMacerasiV1'), km = okuJSON('komaMacerasiV1'), db = okuJSON('dortluBesliV1');
@@ -141,6 +160,7 @@ function yedekYukle(kod) {
   DURUM = Object.assign(varsayilanDurum(), veri);
   DURUM.ayar = Object.assign(varsayilanDurum().ayar, veri.ayar || {});
   if (typeof gocurmeTasi === 'function') gocurmeTasi();
+  if (typeof kayitTasi === 'function') kayitTasi();
   kaydet();
   return true;
 }

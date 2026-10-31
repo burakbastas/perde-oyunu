@@ -158,6 +158,7 @@ const OGREN_MODULLERI = [
     { baslik: 'Bir perde, iki yazım', cizim: function () { return h('div', { class: 'kartPorte' }, porteSVG({ notalar: PERDE['Segâh'].parcalar, aralik: 48, etiketler: ['diyezli', 'bemollü'] })); },
       metin: '<p>Ara perdeler hem diyezle hem bemolle yazılabilir. <b>Segâh</b> = La büyük mücenneb diyez = Si koma bemol. Oyunda ikisini birlikte göreceksin.</p>' }
   ] },
+  { id: 'merdiven', ikon: '🪜', ad: 'Perde merdivenleri', baglanti: 'p2', kartlar: function () { return merdivenKartlari(); } },
   { id: 'cesni', ikon: '🎻', ad: 'Dörtlü, beşli, çeşni', baglanti: 'db1', kartlar: [
     { baslik: 'Küçük yapı taşları', cizim: function () { return h('div', { class: 'kartPorte' }, porteSVG({ notalar: CESNI['d-rast'].notalar, aralik: 40, enAz: 240, etiketler: ['Rast', 'T', 'K', 'S'] })); },
       metin: '<p>Art arda dört sese <b>dörtlü</b>, beş sese <b>beşli</b> denir. Seslerin arasındaki aralıklar harflerle yazılır: Rast dörtlüsü <b>T K S</b>.</p><p>Bu küçük yapılar makamların yapı taşıdır; melodik renklerine <b>çeşni</b> denir.</p>' }
@@ -206,12 +207,18 @@ function hizliBakis(baslangic) {
       govde.appendChild(h('p', { class: 'kucukNot' }, 'Bir oktav 53 koma. Diyez (sol) ve bemol (sağ) işaretleri:'));
       govde.appendChild(aeuIsaretTablosu());
     } else if (sekme === 'perde') {
-      govde.appendChild(tablo(['Perde', 'Yazım'], PERDELER.map(function (p) { return [p.tam ? h('b', null, p.ad) : p.ad, p.parcalar.map(notaKisa).join(' = ')]; })));
+      // Sent: Rast'tan uzaklık (1 koma ≈ 22,6 sent); Batı farkı: eşit bölünmüş en yakın yarım sese göre sapma
+      const R0 = PERDE['Rast'].koma;
+      govde.appendChild(tablo(['Perde', 'Yazım', 'Koma', 'Sent', 'Batı farkı'], PERDELER.map(function (p) {
+        const k = p.koma - R0, sent = k * 1200 / 53, yarim = Math.round(sent / 100), sap = Math.round(sent - yarim * 100);
+        return [p.tam ? h('b', null, p.ad) : p.ad, p.parcalar.map(notaKisa).join(' = '), String(k), String(Math.round(sent)), (sap > 0 ? '+' : sap < 0 ? '−' : '±') + Math.abs(sap)];
+      })));
+      govde.appendChild(h('p', { class: 'kucukNot' }, 'Koma ve sent Rast’a göre (1 koma ≈ 22,6 sent). Batı farkı: piyanodaki en yakın sese göre kaç sent tiz (+) ya da pest (−).'));
     } else if (sekme === 'cesni') {
       govde.appendChild(tablo(['Dörtlü / beşli', 'Aralıklar', 'Yeri'], CESNILER.map(function (c) { return [c.ad, formulGoster(c.formul), c.yer]; })));
       govde.appendChild(h('p', { class: 'kucukNot' }, 'T tanini · K büyük mücenneb · S küçük mücenneb · B bakiye · A artık ikili'));
     } else if (sekme === 'makam') {
-      govde.appendChild(tablo(['Makam', 'Karar', 'Güçlü', 'Yapı'], MAKAMLAR.map(function (m) { return [h('b', null, m.ad), m.karar, m.guclu, m.altAd + ' + ' + m.ustAd]; })));
+      govde.appendChild(tablo(['Makam', 'Karar', 'Güçlü', 'Seyir', 'Yapı'], MAKAMLAR.map(function (m) { return [h('b', null, m.ad), m.karar, m.guclu, m.seyir || '', m.altAd + ' + ' + m.ustAd]; })));
     } else if (sekme === 'usul') {
       govde.appendChild(tablo(['Usul', 'Ölçü', 'Vuruşlar', ''], U_HEPSI.map(function (id) {
         const u = USUL[id];

@@ -133,7 +133,9 @@ function notaCiz(svg, n, nx, renk) {
 function porteSVG(spec) {
   spec = spec || {};
   const notalar = spec.notalar || [];
-  const aralik = spec.aralik || 40;
+  // Etiketler (notaların altındaki yazılar) birbirine girmesin: en uzun etikete göre notaları aç
+  const enUzun = spec.etiketler ? Math.max.apply(null, spec.etiketler.map(function (e) { return e ? String(e).length : 0; })) : 0;
+  const aralik = Math.max(spec.aralik || 40, Math.ceil(enUzun * 6.4 + 10));
   const svg = svgEl('svg', { class: 'porte', preserveAspectRatio: 'xMidYMid meet', role: 'img' });
   const x = 46 + (spec.donanim ? spec.donanim.length : 0) * 12;
   const basla = Math.max(spec.donanim && spec.donanim.length ? x + 26 : 74, 74);
@@ -252,7 +254,7 @@ function yerlestirici(cfg) {
       // en yakın sabit olmayan sütunu seç
       let en = -1, ed = 1e9;
       durum.forEach(function (d, i) {
-        if (d && d.sabit) return;
+        if (d && (d.sabit || d.kilit)) return;
         const dd = Math.abs(p.x - sx(i));
         if (dd < ed) { ed = dd; en = i; }
       });
@@ -260,7 +262,7 @@ function yerlestirici(cfg) {
       aktif = en;
       if (durum[aktif] && durum[aktif].konum) { ciz(); return; }
     }
-    if (durum[aktif] && durum[aktif].konum) return;
+    if (durum[aktif] && (durum[aktif].konum || durum[aktif].kilit)) return;
     let s = Math.round((ALT_CIZGI_Y - p.y) / 5) + 30;
     s = Math.max(smin, Math.min(smax, s));
     const eski = durum[aktif];
@@ -283,7 +285,8 @@ function yerlestirici(cfg) {
       if (kilitli) return;
       const d = durum[aktif];
       if (!d) { toast('Önce notayı porteye yerleştir'); return; }
-      d.a = kod;
+      if (d.kilit) return;
+      d.a = kod; delete d.renk;
       if (d.konum) {
         d.secildi = true;
         const sonraki = durum.findIndex(function (x, i) { return i !== aktif && x && x.konum && !x.secildi; });
@@ -323,6 +326,17 @@ function yerlestirici(cfg) {
     el: kap,
     tamamMi: function () { return durum.every(function (d) { return !!d && (!d.konum || d.secildi); }); },
     deger: function () { return durum.map(function (d) { return d ? adimdanNota(d.s, d.a) : null; }); },
+    // Kısmi puan: yanlış notalar kırmızı yanar ve düzeltilebilir, doğrular yeşil kilitlenir
+    isaretle: function (yanlisMi) {
+      let ilk = -1;
+      durum.forEach(function (d, i) {
+        if (!d || d.sabit) return;
+        if (yanlisMi[i]) { d.renk = 'var(--yanlis)'; if (d.konum) d.secildi = false; if (ilk < 0) ilk = i; }
+        else { d.renk = 'var(--dogru)'; d.kilit = true; }
+      });
+      if (ilk >= 0) aktif = ilk;
+      ciz();
+    },
     kilitle: function (dogrular) {
       kilitli = true;
       if (dogrular) {

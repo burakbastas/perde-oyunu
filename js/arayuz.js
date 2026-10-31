@@ -130,7 +130,7 @@ function sonsuzBlok(u) {
     h('div', { class: 'uniteBas' + (ac ? '' : ' kilitli') },
       h('div', { class: 'uniteUst' }, h('span', null, d.ikon + ' ' + d.ad + ' · Sonsuz'), h('span', null, rekor ? '🏅 ' + rekor : '')),
       h('h3', null, '♾️ ' + u.ad),
-      h('p', null, u.sonsuzDal ? (ac ? u.kisa + '. 3 kalbin bitince rekorun kaydedilir.' : '🔒 Önceki ünite bitince açılır.') : (ac ? 'Bu dalın bütün seviyelerinden karışık, bitmeyen sorular. Doğru bildikçe zorlaşır; 3 kalbin bitince rekorun kaydedilir.' : '🔒 Bu dalın bütün ünitelerini bitirince açılır.')),
+      h('p', null, u.sonsuzDal ? (ac ? u.kisa + '. 3 kalbin bitince rekorun kaydedilir.' : '🔒 Önceki ünite bitince açılır.') : (ac ? 'Meydan okuma: bu dalın zor sorularından bitmeyen bir tur. Kalfa, Usta ve Pîr katlarından geçersin; her katta sorular sertleşir, puan artar. Kalbin bitince rekorun kaydedilir.' : '🔒 Bu dalın bütün ünitelerini bitirince açılır.')),
       h('div', { class: 'uniteEylem' }, h('button', { class: 'dugme' + (ac ? '' : ' gri'), type: 'button', onclick: function () { sonsuzBaslat(u.sonsuzDal || u.dal); } }, ac ? '♾️ Başla' : '🔒 Kilitli'))));
 }
 function uniteBlok(u) {
@@ -179,13 +179,15 @@ function uniteBlok(u) {
       durum = DURUM.sandik[u.id] ? 'bitti' : ac ? 'acik' : 'kilit'; etiket = ac ? '🎁' : '🔒';
       tik = function () { if (!ac) { toast('Sandık, ünite finali 👑 geçilince açılır'); return; } sandikSor(u); };
     } else {
-      const s = x.s, ac = acikMi(s), bit = bittiMi(s);
+      const s = x.s, ac = acikMi(s), bit = bittiMi(s), ib = istegeBagliMi(s);
       durum = bit ? (DURUM.altin[u.id] ? 'altin' : 'bitti') : ac ? 'acik' : 'kilit';
-      etiket = !ac ? '🔒' : s.tip === 'boss' ? '👑' : s.tip === 'yer' ? '✍️' : String(u.seviyeler.filter(function (z) { return z.tip === 'seviye'; }).indexOf(s) + 1);
+      etiket = !ac ? '🔒' : ib ? '✚' : s.tip === 'boss' ? '👑' : s.tip === 'yer' ? '✍️' : String(u.seviyeler.filter(function (z) { return z.tip === 'seviye' && !istegeBagliMi(z); }).indexOf(s) + 1);
+      if (ib) boyut = 50;
       if (s.tip === 'boss') boyut = 72;
       if (bit) yildiz = yildizOf(s.id);
       tik = function () { if (!acikMi(s)) { kilitMesaji(s); return; } seviyeGiris(s); };
-      if (ac && !bit && !simdiKondu) { simdiKondu = true; durum += ' simdi'; }
+      if (ac && !bit && !ib && !simdiKondu) { simdiKondu = true; durum += ' simdi'; }
+      if (ib) durum += ' bonus';
     }
     const b = h('button', {
       class: 'dugum ' + durum + (x.s && x.s.tip === 'boss' ? ' boss' : ''), type: 'button',
@@ -215,29 +217,28 @@ function rozetSVG(renk, kapali) {
     (kapali ? '' : '<polygon points="' + KARO_IC + '" fill="#fff" opacity=".9"/>') + '</svg>';
 }
 function unvanSeridi() {
-  const u = unvan(), s = sonrakiUnvan(), n = bitenUniteSayisi(TR_DALLAR);
-  const oran = s ? (n - u.min) / (s.min - u.min) : 1;
+  const D = unvanDurum(), u = D.u, oran = D.oran;
   return h('button', { class: 'unvanSerit', type: 'button', onclick: unvanMerdiveni, 'aria-label': 'Ünvanlar' },
     h('span', { class: 'unvanRozet', html: rozetSVG(u.renk) }),
     h('span', { class: 'unvanMetin' },
       h('span', { class: 'unvanUst' }, h('b', null, u.ad), h('small', null, u.anlam)),
       h('span', { class: 'cubuk' }, h('span', { style: { width: Math.round(oran * 100) + '%', background: u.renk } })),
-      h('small', { class: 'unvanAlt' }, s ? s.yonelme + ' ' + (s.min - n) + ' ünite kaldı' : 'En yüksek ünvandasın!')),
+      h('small', { class: 'unvanAlt' }, D.metin || 'En yüksek ünvandasın!')),
     h('span', { class: 'modulOk' }, '›'));
 }
 function unvanMerdiveni() {
-  const n = bitenUniteSayisi(TR_DALLAR), su = unvan();
+  const n = bitenUniteSayisi(TR_DALLAR), si = unvanSira();
   const L = h('div', { class: 'merdiven' });
   UNVANLAR.slice().reverse().forEach(function (x) {
-    const kazanildi = n >= x.min, simdi = x === su;
+    const j = UNVANLAR.indexOf(x), kazanildi = j <= si, simdi = j === si;
     L.appendChild(h('div', { class: 'basamak' + (simdi ? ' simdi' : '') + (kazanildi ? '' : ' kapali') },
       h('span', { class: 'unvanRozet', html: rozetSVG(x.renk, !kazanildi) }),
       h('span', { class: 'basamakMetin' }, h('b', null, x.ad), h('small', null, x.anlam)),
-      h('span', { class: 'basamakSart' }, simdi ? 'şu an' : kazanildi ? '✓' : x.min + ' ünite')));
+      h('span', { class: 'basamakSart' }, simdi ? 'şu an' : kazanildi ? '✓' : unvanEsik(x) + ' ünite')));
   });
   modalAc(h('div', null,
     h('h2', null, 'Meşk basamakları'),
-    h('p', { class: 'kucukNot ortala' }, 'Ünvanlar, bitirdiğin Türk müziği ünitelerine göre verilir (Koma, Perde, Göçürme, Dörtlü-Beşli, Makam, Ahenk, Usul). Bir ünite, finali 👑 geçilince biter. Şu ana kadar: ' + n + ' / ' + TR_DALLAR.reduce(function (t, d) { return t + gercekUniteler(d).length; }, 0) + ' ünite.'),
+    h('p', { class: 'kucukNot ortala' }, 'Ünvanlar, bitirdiğin Türk müziği ünitelerine göre verilir (Koma, Perde, Göçürme, Dörtlü-Beşli, Makam, Ahenk, Usul). Bir ünite, finali 👑 geçilince biter. Şu ana kadar: ' + n + ' / ' + toplamTrUnite() + ' ünite. Eşikler toplam üniteye oranlıdır; yeni üniteler eklense de kazandığın ünvan düşmez.'),
     L,
     h('p', { class: 'kucukNot ortala' }, 'Mübtedî, mutavassıt ve müntehî; meşk geleneğinde yeni başlayan, orta ve ileri seviyedeki talebeye verilen adlardır.'),
     dugme('Kapat', modalKapat, 'gri')), { genis: true });
@@ -322,8 +323,9 @@ function seviyeGiris(s) {
   modalAc(h('div', { class: 'giris', style: { '--dal': d.renk } },
     h('div', { class: 'girisUst' }, d.ikon + ' ' + d.ad + ' · Ünite ' + u.no + ' · ' + u.ad),
     h('h2', null, (s.tip === 'boss' ? '👑 ' : s.tip === 'yer' ? '✍️ ' : '') + s.ad),
-    h('p', null, s.soruSay + ' soru · 3 kalp' + (s.sure ? ' · ⏱️ her soru için süre var' : '')),
+    h('p', null, s.soruSay + ' soru · ' + kalpTahmini(s) + ' kalp' + (s.sure ? ' · ⏱️ her soru için süre var' : '')),
     h('p', { class: 'soluk' }, TIP_ACIKLAMA[s.tip]),
+    istegeBagliMi(s) ? h('p', { class: 'kucukNot' }, s.bonus ? '✚ Köprü seviyesi: isteğe bağlı. Zor bir adımın öncesinde ara basamak; atlarsan sıradaki seviye kilitlenmez.' : '✚ Bu üniteyi önceden bitirdiğin için bu yeni seviye isteğe bağlı.') : null,
     yildizOf(s.id) ? h('p', null, 'Rekorun: ' + '★'.repeat(yildizOf(s.id)) + '☆'.repeat(3 - yildizOf(s.id))) : null,
     h('p', { class: 'kucukNot' }, '⭐ Cüzdanın: ' + cuzdan() + ' · Joker kullanırsan bu seviyeden en fazla 2 ⭐ alırsın.'),
     dersUyari ? h('div', { class: 'uyariKutu' }, '📖 Bu ünitenin dersini henüz görmedin. Önce dersi görmek ister misin?',
@@ -396,12 +398,17 @@ function ogrenCiz(g) {
     bendirAlt = 'Son: ' + bu.ad + ' ' + u2.olcu + ' · ' + ((B.tempo && B.tempo[bu.id + '/' + u2.payda]) || u2.tempo);
   }
   const kutu = function (renk, ik, ad, alt, f) {
-    return h('button', { class: 'oKutu', type: 'button', style: '--r:' + renk, onclick: f }, h('span', { class: 'ik' }, ik), h('b', null, ad), h('small', null, alt));
+    return h('button', { class: 'oKutu', type: 'button', style: '--r:' + renk, onclick: f, title: alt, 'aria-label': ad + ': ' + alt }, h('span', { class: 'ik' }, ik), h('b', null, ad), h('small', null, alt));
   };
-  g.appendChild(h('div', { class: 'oIzgara' },
-    kutu('var(--safran)', '🥁', 'Bendir', bendirAlt, bendirSayfasi),
-    kutu('var(--kobalt)', '📖', 'Sözlük', 'Terimler ve anlamları', sozlukAc),
+  g.appendChild(h('div', { class: 'oIzgara kucuk' },
+    kutu('var(--kobalt)', '🧠', 'Perde ezber', 'Günün 5 perdesi, eşleştir, çağrışım', perdeEzberAraci),
+    kutu('var(--turkuaz)', '🪜', 'Perde bul', 'Bir perdenin merdiveni ve yazımı', perdeBulAraci),
+    kutu('var(--mercan)', '⭕', 'Koma dairesi', 'Makam dizileri çember üzerinde', komaDairesiAraci),
+    kutu('var(--zumrut)', '⚖️', 'Makam karşılaştır', 'İki makamı yan yana', makamKarsilastirAraci),
     kutu('var(--turkuaz)', '📏', 'Hızlı bakış', 'Koma, perde, makam, usul tabloları', function () { hizliBakis(); }),
+    kutu('var(--kobalt)', '📖', 'Sözlük', 'Terimler ve anlamları', sozlukAc),
+    kutu('var(--safran)', '🥁', 'Bendir', bendirAlt, bendirSayfasi),
+    kutu('var(--kiremit)', '📜', 'Formlar', 'Genel kültür: peşrev, saz semaisi, şarkı, fasıl', formlarAc),
     kutu('var(--mor)', '🖼️', 'Arka planlar', 'Telefon ve bilgisayar duvar kâğıdı', arkaPlanlar)));
   g.appendChild(h('p', { class: 'kucukNot ortala' }, 'İpucu: derslerde ve açıklamalarda altı noktalı terimlere dokunursan sözlük açılır.'));
   ortakBolumCiz(g);
@@ -461,7 +468,7 @@ function tekrarCiz(g) {
 
   // Sonsuz Meşk
   g.appendChild(h('h3', { class: 'bolumBaslik' }, '♾️ Sonsuz Meşk'));
-  g.appendChild(h('p', { class: 'kucukNot' }, 'Bitmeyen karışık sorular; 3 kalbin bitince rekorun kaydedilir. Bir dalın Sonsuz Meşk’i, o dalın bütün üniteleri bitince açılır. “Her şey karışık” bitirdiğin bütün seviyelerden sorar.'));
+  g.appendChild(h('p', { class: 'kucukNot' }, 'Meydan okuma modu: zor sorular, Kalfa → Usta → Pîr katları, puanlı rekor. Usta katından sonra cezasız süre var (süre dolarsa o soru puana sayılmaz). Her 15 doğruda +1 kalp. Bir dalın Sonsuz Meşk’i, o dalın bütün üniteleri bitince açılır; “Her şey karışık” bitirdiğin bütün seviyelerden sorar.'));
   const sn = h('div', { class: 'antrenmanlar' });
   const rek = DURUM.rekor || {};
   sn.appendChild(h('button', { class: 'antKart' + (sonsuzAcik('karisik') ? '' : ' kilitli'), type: 'button', onclick: function () { sonsuzBaslat('karisik'); } }, '🌀', h('span', null, 'Her şey karışık' + (rek.karisik ? ' · 🏅 ' + rek.karisik : ''))));
@@ -541,14 +548,14 @@ function kartDetay(id) {
 // PROFİL
 // =====================================================
 function profilCiz(g) {
-  const u = unvan(), s = sonrakiUnvan();
+  const D = unvanDurum(), u = D.u;
   let altin = 0; for (const k in DURUM.altin) if (DURUM.altin[k]) altin++;
   const kart = Object.keys(DURUM.kart).length;
   g.appendChild(h('div', { class: 'icazet' },
     h('div', { class: 'icazetMaskot', html: bulbulSVG('mutlu') }),
     h('div', { class: 'icazetUst' }, 'MEŞK İCAZETNAMESİ'),
     h('button', { class: 'icazetUnvan', type: 'button', onclick: unvanMerdiveni }, h('span', { class: 'unvanRozet', html: rozetSVG(u.renk) }), u.ad),
-    h('div', { class: 'icazetAlt' }, u.anlam + ' · ' + (s ? s.yonelme + ' ' + (s.min - bitenUniteSayisi(TR_DALLAR)) + ' ünite kaldı' : 'En yüksek ünvana ulaştın!')),
+    h('div', { class: 'icazetAlt' }, u.anlam + ' · ' + (D.metin || 'En yüksek ünvana ulaştın!')),
     h('div', { class: 'istatistik' },
       istat('⭐', toplamYildiz(), 'toplam yıldız'), istat('👛', cuzdan(), 'cüzdan'),
       istat('🏁', bitenUniteSayisi(), 'biten ünite'), istat('🏆', altin, 'altın ünite'),
@@ -559,6 +566,7 @@ function profilCiz(g) {
     ['❓', 'Nasıl oynanır', nasilOynanir],
     ['ℹ️', 'Hakkında', hakkinda],
     ['🆕', 'Yenilikler', yenilikler],
+    ['📚', 'Kaynaklar ve lisanslar', kaynaklarSayfasi],
     ['💾', 'Yedekle / geri yükle', yedekSayfasi],
     ['⚙️', 'Ayarlar', ayarlar],
     ['🖼️', 'Arka planlar (duvar kâğıdı)', arkaPlanlar],
@@ -622,12 +630,13 @@ function nasilOynanir() {
     '<p>📖 <b>Ders</b>: her ünite kısa bir dersle ve ipuçlu bir ısınma turuyla başlar. Dersi atlayabilirsin ama önerilmez.</p>' +
     '<p>🔢 <b>Seviyeler</b>: tanıma soruları. ✍️ <b>Yerleştirme</b>: cevabı porteye kendin yazarsın ya da harfleri, parçaları sırayla dizersin. 👑 <b>Final</b>: geçince o dalda sonraki ünite açılır. 🎁 <b>Sandık</b>: ünitenin karışık tekrarı.</p>' +
     '<p>⏩ Doğru cevaptan sonra oyun kısa bir süre bekleyip <b>kendiliğinden geçer</b>; açıklamayı okumak istersen kaydır ya da bir terime dokun, geçiş durur. Yanlış cevapta açıklama bekler: <b>ekranın herhangi bir yerine dokunarak</b> devam edebilirsin. Ayarlar’dan kapatılabilir.</p>' +
-    '<p>❤️ Her seviyede 3 kalp var. 0 hata 3 ⭐, 1 hata 2 ⭐, daha fazlası 1 ⭐.</p>' +
+    '<p>❤️ Seviyenin uzunluğuna göre 3, 4 ya da 5 kalp var. 0 hata 3 ⭐, 1 hata 2 ⭐, daha fazlası 1 ⭐.</p>' +
+    '<p>✏️ Porteye yazma ve dizme sorularında yanlışların yarıdan azsa bir <b>düzeltme hakkın</b> olur: kırmızıları düzeltirsen yalnız yarım kalp gider.</p>' +
     '<p>🃏 <b>Jokerler</b>: yıldızlarınla %50, ipucu, atla ve +kalp alabilirsin. Joker kullanınca o seviyeden en fazla 2 ⭐ alırsın.</p>' +
     '<p>⏩ <b>Biliyorum</b>: bir üniteyi zaten biliyorsan kısa bir sınavla geçebilirsin. 🏆 <b>Altınla</b>: bitirdiğin bir üniteyi süreli bir ustalık turuyla altına çevir.</p>' +
     '<p>🎯 <b>Tekrar</b>: yanlış yaptıkların ve unutmaya başladıkların, bütün oyunlardan karışık olarak, aralıklı tekrar yöntemiyle karşına çıkar. Göçürme antrenmanı da orada.</p>' +
     '<p>🎖️ <b>Ünvanlar</b> biten Türk müziği ünitelerine göre verilir: Mübtedî, Heveskâr, Mutavassıt, Mûsikişinas, Müntehî, Muallim, Üstad-ı Kâmil ve Hâce. Yol’un üstündeki şeride dokunursan bütün basamakları görürsün.</p>' +
-    '<p>♾️ <b>Sonsuz Meşk</b>: bir dalın bütün ünitelerini bitirince o dalın sonunda bitmeyen bir ünite açılır. Doğru bildikçe zorlaşır; rekorunu geçmeye çalış. Tekrar sekmesinde de var.</p>' +
+    '<p>♾️ <b>Sonsuz Meşk</b>: bir dalın bütün ünitelerini bitirince o dalın sonunda bitmeyen bir ünite açılır. Meydan okuma modudur: zor sorular, Kalfa, Usta ve Pîr katları, puanlı rekor. Tekrar sekmesinde de var.</p>' +
     '<p>🥁 <b>Usul</b> ve 🎹 tartım ünitelerinde ses var: 🔊 ile dinler, ✍️ seviyelerinde usulü ekrana vurursun (sapı yukarı olan notalar sağ el, aşağı olanlar sol el; bilgisayarda J ve F tuşları). Öğren sekmesindeki <b>Bendir</b> aracı, çalışırken arkada istediğin usulü istediğin hızda çalar.</p>' +
     '<p>🎹 <b>Batı Teorisi</b> ayrı bir dal: tartım ve ritim diktesi, aralıklar, tonlar, donanım ve minör türleri. Dallar’dan oynayabilir, istersen Ayarlar’dan Meşk Yolu’na ekleyebilirsin.</p>' }));
 }
@@ -642,6 +651,26 @@ function hakkinda() {
 }
 function yenilikler() {
   sayfa('🆕 Yenilikler', h('div', { class: 'metinSayfa', html:
+    '<h3>Sürüm 3.0</h3><ul>' +
+    '<li>🏵️ <b>Yedi yeni makam</b>: Acemaşiran, Muhayyer, Muhayyerkürdi, Acemkürdi, Saba, Segâh ve Hüzzam (Makam dalında 6. ünite). Aynı diziyi paylaşan makamlar seyir ve güçlüleriyle ayrılır.</li>' +
+    '<li>🧭 <b>Seyir</b>: her makamın seyir türü (çıkıcı, inici, inici-çıkıcı) ve yeni “Seyri sırala” soruları.</li>' +
+    '<li>🆕 <b>Yeni soru tipleri</b>: eşleştir, sınıflandır, hatayı bul, doğru mu yanlış mı, farkı bul, eksiğini tamamla, adım adım kur, makamı kur (dört taş), ahenkte hesap.</li>' +
+    '<li>✚ <b>Köprü seviyeleri</b>: zor porteye yazma seviyelerinden önce, bir kısmı hazır gelen isteğe bağlı ara basamaklar.</li>' +
+    '<li>♾️ <b>Sonsuz Meşk artık meydan okuma</b>: zor sorular, Kalfa → Usta → Pîr katları, puanlı rekor, Usta’dan sonra cezasız süre, her 15 doğruda +1 kalp. Eski rekorların ayrıca saklanır.</li>' +
+    '<li>🎼 Koma’nın ilk dört seviyesi ikiye indi (yıldızların taşındı). Koma dalında amaç tabloyu ezberlemek: hesap sorusu yok.</li>' +
+    '<li>📚 Öğren’e yeni modüller: Perde adlarının kökeni, Perde ezberleme araçları (Günün 5 perdesi, eşleştir, kendi çağrışımın), Koma dairesi, Makam karşılaştırma, Genel kültür: formlar. Hızlı bakış’ta sent ve Batı farkı sütunları; Profil’de Kaynaklar ve lisanslar.</li>' +
+    '<li>Bir üniteyi önceden bitirdiysen o üniteye eklenen yeni seviyeler isteğe bağlıdır (✚); ilerlemen ve ünvanın korunur.</li></ul>' +
+    '<h3>Sürüm 2.9</h3><ul>' +
+    '<li>✏️ <b>Düzeltme hakkı</b>: porteye yazma ve dizme sorularında yanlışların yarıdan azsa kırmızı yanar, bir kez düzeltebilirsin. Düzeltirsen yalnız <b>yarım kalp</b> gider.</li>' +
+    '<li>❤️ Uzun seviyelerde daha çok kalp: seviyenin uzunluğuna göre 3, 4 ya da 5.</li>' +
+    '<li>🪜 <b>Yanlışta kart</b>: Perde sorusunda yanlış yapınca ilgili perde merdiveni, Koma sorusunda aralık kartı açılır. Yanlış yaptığın soru birkaç soru sonra bir kez daha gelir. Finallerde kartlar sonda topluca gösterilir.</li>' +
+    '<li>↩︎ Bir seviyede kalınca önce bir önceki seviyeyi ya da dersi tekrar etmen önerilir; ikinci kalışta <b>ipuçlu deneme</b> ücretsizdir.</li>' +
+    '<li>🎖️ Ünvanlar artık toplam üniteye oranla verilir ve <b>kazandığın ünvan hiç düşmez</b>; yeni üniteler eklense de olduğun yerden devam edersin.</li>' +
+    '<li>🥁 <b>Sengin Semai</b> de 6/8 yazılır; mertebe adı sorularından çıkarıldı.</li></ul>' +
+    '<p class="kucukNot">İlerlemen korunur. Güncellemeden önceki kaydın bir kopyası cihazında ayrıca saklanır.</p>' +
+    '<h3>Sürüm 2.8.1</h3><ul>' +
+    '<li>🪜 Öğren’de yeni modül: <b>Perde merdivenleri</b>. İki tam perde arasındaki ara perdeler, porte üzerinde notadan notaya çapraz koma çizgisiyle; her perdenin iki yazımı ve bir oktav tizdeki ya da pestteki eşi.</li>' +
+    '<li>🥁 <b>Sofyan</b> artık 4/4, <b>Yürük Semai</b> 6/8 olarak yazılıyor.</li></ul>' +
     '<h3>Sürüm 2.8</h3><ul>' +
     '<li>📚 <b>Öğren sekmesi yenilendi</b>: temel bilgiler tek kartta, ilerlemen ve sıradaki modül görünüyor; dokununca bütün modüller açılır.</li>' +
     '<li>🥁 Üç yeni modül: <b>Usul nedir?</b>, <b>Ahenk</b> ve <b>Tartım ve ritim</b>. Modüller Dallar ile aynı sırada.</li>' +

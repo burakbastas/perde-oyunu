@@ -23,11 +23,31 @@ const MAKAM_HAM = [
   { id: 'karcigar', ad: 'Karcığar',        alt: ['d-ussak', 'Dügâh'],   ust: ['b-hicaz', 'Neva'],       karar: 'Dügâh',  guclu: 'Neva',      yeden: 'Rast',        donanim: ['Si4-k', 'Mi5-bk', 'Fa5+bk'],
     not: 'Tiz bölgede Muhayyer’de Uşşak dörtlüsü (Tiz Segâh), inerken Kürdi dörtlüsü (Sünbüle) kullanılır. Seyri inici-çıkıcıdır.' },
   { id: 'suzinak',  ad: 'Sûzinâk',         alt: ['b-rast', 'Rast'],     ust: ['d-hicaz', 'Neva'],       karar: 'Rast',   guclu: 'Neva',      yeden: 'Irak',        donanim: ['Si4-k', 'Mi5-bk', 'Fa5+bk'],
-    not: 'Rast beşlisinin üstüne Neva’da Hicaz dörtlüsü. Dizinin Dügâh’tan başlayan kısmı Karcığar’ı verir.' }
+    not: 'Rast beşlisinin üstüne Neva’da Hicaz dörtlüsü. Dizinin Dügâh’tan başlayan kısmı Karcığar’ı verir.' },
+  // 3.0: yedi makam (TDV İslâm Ansiklopedisi maddeleri). kes: alt çeşninin son kaç aralığı üst çeşniyle örtüşür.
+  { id: 'acemasiran', ad: 'Acemaşiran',  alt: ['b-cargah', 'Acem Aşiran'], ust: ['d-cargah', 'Çargâh'], karar: 'Acem Aşiran', guclu: 'Çargâh', yeden: 'Hüseyni Aşiran', donanim: ['Si4-km'], seyir: 'inici',
+    not: 'Acem makamı icra edildikten sonra Çargâh dörtlüsüyle Acem Aşiran’da karar verilir. TDV, Acem ve Dügâh’ı da güçlü olarak sayar. Meyan geçkisi çoğunlukla Saba’ya yapılır.' },
+  { id: 'muhayyer', ad: 'Muhayyer',      alt: ['b-huseyni', 'Dügâh'], ust: ['d-ussak', 'Hüseyni'],  karar: 'Dügâh',  guclu: 'Muhayyer', yeden: 'Rast', donanim: ['Si4-k', 'Fa5+bk'], seyir: 'inici', gucluFarkli: true,
+    not: 'Hüseyni makamının inici şekli; dizisi Hüseyni ile aynıdır. Tiz durak Muhayyer çevresinden başlanır, Muhayyer’de yarım karar yapılır (ikinci güçlü Hüseyni).' },
+  { id: 'muhayyerkurdi', ad: 'Muhayyerkürdi', alt: ['d-kurdi', 'Dügâh'], ust: ['b-buselik', 'Neva'], karar: 'Dügâh', guclu: 'Muhayyer', yeden: 'Rast', donanim: ['Si4-k', 'Fa5+bk'], seyir: 'inici', gucluFarkli: true, donanimFarkli: true,
+    not: 'Önce Muhayyer makamı bütün gerekleriyle icra edilir, sonra Kürdi’ye geçilip Dügâh’ta Kürdi ile karar verilir. Gösterilen dizi kararın (Kürdi) dizisidir; donanım Muhayyer’inki gibi yazılır.' },
+  { id: 'acemkurdi', ad: 'Acemkürdi',    alt: ['d-kurdi', 'Dügâh'], ust: ['b-buselik', 'Neva'], karar: 'Dügâh', guclu: 'Acem', yeden: 'Rast', donanim: ['Si4-km'], seyir: 'inici', gucluFarkli: true,
+    not: 'Güçlüleri Acem ve Çargâh’tır. İnici seyirle Acem bölgesinden inilir; Kürdi nağmeleriyle, çoğu zaman Nim Hisar da kullanılarak Dügâh’ta karar verilir.' },
+  { id: 'saba', ad: 'Saba',              alt: ['d-saba', 'Dügâh'], ust: ['d-hicaz', 'Çargâh'], kes: 1, karar: 'Dügâh', guclu: 'Çargâh', yeden: 'Rast', donanim: ['Si4-k', 'Re5-bk'], seyir: 'çıkıcı', donanimFarkli: true,
+    not: 'Dügâh’taki Saba dörtlüsü (K S S, eksik dörtlü) Çargâh’taki Hicaz çeşnisiyle iç içedir. Çargâh’ta yarım karar yapılır. Genişletilmemiş bir makamdır; donanıma yalnız Si koma ve Re bakiye bemolü yazılır.' },
+  { id: 'segah', ad: 'Segâh',            alt: ['b-segah', 'Segâh'], ust: ['d-ussak', 'Neva'], kes: 2, karar: 'Segâh', guclu: 'Neva', yeden: 'Kürdi', donanim: ['Si4-k', 'Mi5-k', 'Fa5+bk'], seyir: 'çıkıcı', donanimFarkli: true,
+    not: 'Segâh’ta Segâh çeşnisi, Neva’da Uşşak; Neva’da yarım karar yapılır. Evç’te Hicaz dörtlüsü nadirdir, yerine çoğu zaman Acem gelir. Sonunda Segâh’ta genellikle yedenli tam karar verilir.' },
+  { id: 'huzzam', ad: 'Hüzzam',          alt: ['b-huzzam', 'Segâh'], ust: ['d-hicaz', 'Neva'], kes: 2, karar: 'Segâh', guclu: 'Neva', yeden: 'Kürdi', donanim: ['Si4-k', 'Mi5-bk', 'Fa5+bk'], seyir: 'inici-çıkıcı',
+    not: 'Segâh’taki Hüzzam beşlisi Neva’daki Hicaz dörtlüsüyle iç içedir. Durak ya da güçlü civarından başlanır, Neva’da Hicaz ile yarım karar yapılır, Segâh’ta yedenli tam karar verilir. Pest tarafa genişler.' }
 ];
+// 2.12: seyir türleri (TDV ve MEB programı)
+const MAKAM_SEYIR = { cargah: 'çıkıcı', rast: 'çıkıcı', ussak: 'çıkıcı', kurdi: 'çıkıcı', huseyni: 'inici-çıkıcı', buselik: 'çıkıcı', hicaz: 'inici-çıkıcı',
+  humayun: 'inici-çıkıcı', uzzal: 'inici-çıkıcı', zirguleli: 'inici-çıkıcı', karcigar: 'inici-çıkıcı', suzinak: 'inici-çıkıcı' };
+MAKAM_HAM.forEach(function (m) { if (!m.seyir) m.seyir = MAKAM_SEYIR[m.id]; });
+const MK_YENI7 = ['acemasiran', 'muhayyer', 'muhayyerkurdi', 'acemkurdi', 'saba', 'segah', 'huzzam'];
 const MK_ILK10 = ['cargah', 'rast', 'ussak', 'kurdi', 'huseyni', 'buselik', 'hicaz', 'humayun', 'uzzal', 'zirguleli'];
 const MK_TUM12 = MK_ILK10.concat(['karcigar', 'suzinak']);
-const MAKAM_PERDE_SECENEK = ['Rast', 'Dügâh', 'Segâh', 'Bûselik', 'Çargâh', 'Neva', 'Hüseyni', 'Gerdâniye', 'Irak', 'Nim Zirgüle', 'Acem', 'Evç', 'Yegâh', 'Geveşt', 'Acem Aşiran'];
+const MAKAM_PERDE_SECENEK = ['Rast', 'Dügâh', 'Segâh', 'Bûselik', 'Çargâh', 'Neva', 'Hüseyni', 'Gerdâniye', 'Irak', 'Nim Zirgüle', 'Acem', 'Evç', 'Yegâh', 'Geveşt', 'Acem Aşiran', 'Muhayyer', 'Kürdi', 'Hüseyni Aşiran'];
 
 // ---- Göçürme motoru ----
 // Aralıkları (koma) verilen bir yapıyı, verilen ilk notadan başlayarak yazar.
@@ -62,21 +82,21 @@ function gocurPerde(araliklar, perde, smin, smax) {
 }
 
 const MAKAMLAR = MAKAM_HAM.map(function (m) {
-  const alt = CESNI[m.alt[0]], ust = CESNI[m.ust[0]];
-  const dizi = gocurPerde(alt.araliklar.concat(ust.araliklar), PERDE[m.karar], 20, 50);
+  const alt = CESNI[m.alt[0]], ust = CESNI[m.ust[0]], kes = m.kes || 0;
+  const dizi = gocurPerde(alt.araliklar.slice(0, alt.araliklar.length - kes).concat(ust.araliklar), PERDE[m.karar], 20, 50);
   const o = Object.assign({}, m, {
     oge: 'm:' + m.id,
     altC: alt, ustC: ust,
     altAd: alt.ad + ' (' + m.alt[1] + ')', ustAd: ust.ad + ' (' + m.ust[1] + ')',
-    dizi: dizi, gucluIdx: alt.notalar.length - 1,
+    dizi: dizi, gucluIdx: alt.notalar.length - 1 - kes,
     donanimNota: m.donanim.map(function (x) { return notaOku(x); })
   });
   if (!dizi) console.warn('Makam dizisi yazılamadı: ' + m.ad);
   // denetim: güçlü perde dizideki birleşme sesi mi?
-  if (dizi && KOMADAN_PERDE[komaOf(dizi[o.gucluIdx])] !== PERDE[m.guclu] && KOMADAN_PERDE[komaOf(dizi[o.gucluIdx])].ad !== m.ust[1]) console.warn(m.ad + ': güçlü uyuşmuyor');
+  if (dizi && !m.gucluFarkli && KOMADAN_PERDE[komaOf(dizi[o.gucluIdx])] !== PERDE[m.guclu] && KOMADAN_PERDE[komaOf(dizi[o.gucluIdx])].ad !== m.ust[1]) console.warn(m.ad + ': güçlü uyuşmuyor');
   if (dizi && KOMADAN_PERDE[komaOf(dizi[o.gucluIdx])].ad !== m.ust[1]) console.warn(m.ad + ': üst parça yeri uyuşmuyor');
   // denetim: donanım dizideki işaretlerle tutarlı mı?
-  if (dizi && !m.donanimYazilmaz) {
+  if (dizi && !m.donanimYazilmaz && !m.donanimFarkli) {
     const d1 = benzersiz(dizi.filter(function (n) { return n.a; }).map(function (n) { return n.h + n.a; })).sort().join();
     const d2 = benzersiz(o.donanimNota.map(function (n) { return n.h + n.a; })).sort().join();
     if (d1 !== d2) console.warn(m.ad + ': donanım dizi ile tutarsız ' + d1 + ' / ' + d2);
@@ -119,7 +139,7 @@ function makamSoru(tip, m, havuz) {
     const dis = karistir(MAKAM_PERDE_SECENEK.filter(function (x) { return x !== dogru; })).slice(0, 3);
     q.siklar = [dogru].concat(dis).map(function (x) { return { key: x, metin: x }; });
     q.dogru = dogru; q.dogruMetin = dogru;
-    q.ipucu = tip === 'guclu' ? 'Güçlü, alt ve üst parçanın birleştiği perdedir: ' + m.ustAd : tip === 'karar' ? 'Alt parçanın yeri' : 'Kararın hemen altındaki ses';
+    q.ipucu = tip === 'guclu' ? (m.gucluFarkli ? 'Bu makamın güçlüsü iki parçanın birleştiği ses değil; seyrine göre belirlenir.' : 'Güçlü, alt ve üst parçanın birleştiği perdedir: ' + m.ustAd) : tip === 'karar' ? 'Alt parçanın yeri' : 'Kararın hemen altındaki ses';
   } else if (tip === 'donanimMakam') {
     q.soru = { porte: { notalar: [], donanim: m.donanimNota, enAz: 160 } }; q.alt = 'Bu donanım hangi makamın?';
     q.siklar = adSik([m].concat(makamCeldirici(m, havuz.filter(function (x) { return !x.donanimYazilmaz; }), 3, donanimAnahtar)));
@@ -169,6 +189,7 @@ function makamSoru(tip, m, havuz) {
     q.yer = { slotlar: m.dizi.map(function (n, i) { return i === 0 ? { sabit: n } : {}; }), palet: 'aeu', beklenen: m.dizi, harfSirali: true, smin: 24, smax: 45 };
     q.dogruMetin = m.dizi.map(perdeAdiNota).join(' – ');
     q.ipucu = m.altAd + ' + ' + m.ustAd;
+    q.formul = formulMetni(m.dizi.slice(1).map(function (n, i) { return komaOf(n) - komaOf(m.dizi[i]); }));
   } else if (tip === 'makamKur') {
     q.tip = 'dizi';
     q.soru = { metin: m.ad }; q.alt = 'Makamın dizisini kur: önce alt parça, sonra üst parça';
@@ -417,12 +438,13 @@ function yanlisYazim(notalar) {
 function gocurmeSorusu(asama, tip, perdesiz) {
   if (Array.isArray(asama)) asama = rastgele(asama);
   let yapi, ad, yer, gucluIdx = null, oge = null;
+  const sabit = GOCURME_SABIT; GOCURME_SABIT = null;
   if (asama === 'makam') {
-    const m = rastgele(MAKAMLAR);
-    yapi = m.altC.araliklar.concat(m.ustC.araliklar); ad = m.ad + ' makamı dizisi'; yer = m.karar; gucluIdx = m.gucluIdx;
+    const m = sabit && MAKAM[sabit.slice(2)] ? MAKAM[sabit.slice(2)] : rastgele(MAKAMLAR.filter(function (x) { return x.dizi && MK_TUM12.indexOf(x.id) >= 0; }));
+    yapi = m.dizi.slice(1).map(function (n, i) { return komaOf(n) - komaOf(m.dizi[i]); }); ad = m.ad + ' makamı dizisi'; yer = m.karar; gucluIdx = m.gucluIdx; oge = 'g:' + m.id;
   } else {
-    const c = rastgele(cesniler(asama === 'dortlu' ? D_TEMEL : B_TEMEL));
-    yapi = c.araliklar; ad = c.ad; yer = c.yer; oge = c.oge;
+    const c = sabit && CESNI[sabit.slice(2)] ? CESNI[sabit.slice(2)] : rastgele(cesniler(asama === 'dortlu' ? D_TEMEL : B_TEMEL));
+    yapi = c.araliklar; ad = c.ad; yer = c.yer; oge = 'g:' + c.id;
   }
   const g = gocurmeBul(yapi, yer, perdesiz ? GOCURME_BASLANGIC_TAM : null);
   if (!g) return gocurmeSorusu(asama, tip, perdesiz);
@@ -435,7 +457,7 @@ function gocurmeSorusu(asama, tip, perdesiz) {
     : '<b>' + ad + '</b> ' + hedef + ' perdesinde: ' +
       g.notalar.map(function (n) { return KOMADAN_PERDE[komaOf(n)].ad; }).join(' – ') +
       gocurmeAdimlari(g.notalar);
-  const baslik = perdesiz ? ad + ' · ' + formul : ad + ' → ' + hedef;
+  const baslik = perdesiz ? ad : ad + ' → ' + hedef;
   if (r < 0.4) {
     // n. ses hangi perde
     let i = gucluIdx && Math.random() < 0.5 ? gucluIdx : 1 + Math.floor(Math.random() * (g.notalar.length - 1));
@@ -464,7 +486,7 @@ function gocurmeSorusu(asama, tip, perdesiz) {
       soru: { metin: baslik, kucuk: true }, alt: perdesiz ? 'Aynı sesten başlayan dört yazım var. Doğru göçürülmüş olan hangisi?' : 'Doğru yazım hangisi?',
       siklar: [{ key: 'd', porte: { notalar: g.notalar, aralik: genis ? 33 : 38, enAz: genis ? 320 : 250 }, genis: true }]
         .concat(yanlislar.map(function (y, i) { return { key: 'y' + i, porte: { notalar: y.n, aralik: genis ? 33 : 38, enAz: genis ? 320 : 250 }, genis: true }; })),
-      dogru: 'd', dogruMetin: g.notalar.map(perdesiz ? notaKisa : perdeAdiNota).join(' – '), aciklama: aciklama,
+      dogru: 'd', dogruMetin: g.notalar.map(perdesiz ? notaKisa : perdeAdiNota).join(' – '), aciklama: aciklama, formul: perdesiz ? formul : null,
       ipucu: perdesiz ? 'Her adımda doğal aralığı bul (Mi–Fa ve Si–Do bakiye, diğerleri tanini), gereken aralıkla farkını işarete çevir.' : 'Her sesin perdesini bul, sonra o harfe göre işaretini seç.'
     };
   }
@@ -473,8 +495,15 @@ function gocurmeSorusu(asama, tip, perdesiz) {
     soru: { metin: baslik, kucuk: true }, alt: perdesiz ? 'İlk ses verildi. Aynı aralıklarla kalan sesleri porteye kur' : 'İlk ses verildi. Göçürülmüş diziyi porteye kur',
     yer: { slotlar: g.notalar.map(function (n, i) { return i === 0 ? { sabit: n } : {}; }), palet: 'aeu', beklenen: g.notalar, harfSirali: true },
     dogruMetin: g.notalar.map(function (n) { return perdesiz ? notaKisa(n) : KOMADAN_PERDE[komaOf(n)].ad; }).join(' – '),
-    aciklama: aciklama, ipucu: 'Her ses bir sonraki harfe yazılır.'
+    aciklama: aciklama, ipucu: 'Her ses bir sonraki harfe yazılır.', formul: formul
   };
+}
+let GOCURME_SABIT = null;   // Tekrar: belirli bir yapının göçürme sorusu
+function gocurmeOgeSorusu(id) {
+  const kim = id.slice(2);
+  GOCURME_SABIT = id;
+  const asama = MAKAM[kim] ? 'makam' : (CESNI[kim] && CESNI[kim].tur === 'Beşli' ? 'besli' : 'dortlu');
+  return gocurmeSorusu(asama, rastgele(['porte', 'kur']), true);
 }
 function gocurmeUretici(asama, perdesiz) {
   return function (n) { const L = []; for (let i = 0; i < n; i++) L.push(gocurmeSorusu(asama, undefined, perdesiz)); return L; };

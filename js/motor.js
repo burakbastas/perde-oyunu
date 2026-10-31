@@ -55,7 +55,7 @@ DAL_SIRA.forEach(function (d) {
 // Ayarlar'da Batı açıksa görünür; Batı'nın ton konuları en sonda.
 const MESK_SIRA = ['km1', 'b11', 'p1', 'b1', 'km2', 'u1', 'p2', 'km3', 'b12', 'db1', 'u2', 'b2', 'db2', 'p3', 'b3', 'db3', 'b13',
   'gc1', 'b4', 'db4', 'b14', 'gc2', 'b15', 'b16', 'b17', 'u3', 'mk1', 'p4', 'mk2', 'a1', 'mk3', 'gc3', 'u4', 'b18', 'db5', 'mk4', 'p5', 'gc4',
-  'u5', 'b19', 'p6', 'a2', 'db6', 'gc5', 'u6', 'b20', 'mk5', 'p7', 'u7', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'];
+  'u5', 'b19', 'p6', 'a2', 'db6', 'gc5', 'u6', 'b20', 'mk5', 'p7', 'u7', 'mk6', 'b5', 'b6', 'b7', 'b8', 'b9', 'b10'];
 const MESK_TR = MESK_SIRA.filter(function (id) { return id[0] !== 'b'; });
 function meskSirasi() {
   return MESK_SIRA.filter(function (id) { return DURUM.ayar.bati || id[0] !== 'b'; }).map(function (id) { return UNITE[id]; }).filter(Boolean);
@@ -64,17 +64,21 @@ function meskSirasi() {
 // ---------- Durum sorguları ----------
 function yildizOf(id) { return DURUM.yildiz[id] || 0; }
 function bittiMi(s) { return yildizOf(s.id) > 0; }
+// Zincir: kilit sırasına giren seviyeler. Köprü (bonus) seviyeleri her zaman isteğe bağlıdır;
+// sonradan eklenen (yeni) seviyeler, oyuncu o üniteyi daha önce bitirdiyse isteğe bağlı sayılır.
+function istegeBagliMi(s) { return !!s.bonus || (!!s.yeni && uniteBitti(s.unite)); }
 function acikMi(s) {
   if (bittiMi(s)) return true;   // daha önce geçilmiş seviye (sıra değişse de) açık kalır
   const L = DAL_SEVIYELERI[s.dal];
-  const i = L.indexOf(s);
-  return i <= 0 || bittiMi(L[i - 1]);
+  let i = L.indexOf(s) - 1;
+  while (i >= 0 && istegeBagliMi(L[i])) i--;
+  return i < 0 || bittiMi(L[i]);
 }
 function uniteBitti(u) { return !!u.boss && bittiMi(u.boss); }
 function uniteBaslamadi(u) { return !u.seviyeler.some(bittiMi); }
 function uniteIlerleme(u) {
-  const b = u.seviyeler.filter(bittiMi).length;
-  return { bitti: b, toplam: u.seviyeler.length };
+  const L = u.seviyeler.filter(function (s) { return !istegeBagliMi(s); });
+  return { bitti: L.filter(bittiMi).length, toplam: L.length || 1 };
 }
 function toplamYildiz() {
   let t = 0;
@@ -89,25 +93,89 @@ function bitenUniteSayisi(dallar) {
 }
 function siradakiSeviye(dal) {
   const L = DAL_SEVIYELERI[dal];
-  for (let i = 0; i < L.length; i++) if (!bittiMi(L[i])) return L[i];
+  for (let i = 0; i < L.length; i++) if (!bittiMi(L[i]) && !istegeBagliMi(L[i])) return L[i];
   return null;
 }
 
 // ---------- Ünvanlar ----------
-// Meşk geleneğindeki mübtedî – mutavassıt – müntehî basamaklarına dayanır
+// Meşk geleneğindeki mübtedî – mutavassıt – müntehî basamaklarına dayanır.
+// Eşikler, toplam Türk müziği ünitesinin ORANIDIR: yeni ünite eklendikçe merdiven kendiliğinden
+// ayarlanır (35 ünitede 2, 5, 9, 13, 17, 20, 35). Ulaşılan en yüksek ünvan kayıtta tutulur ve düşmez.
 const UNVANLAR = [
-  { min: 0,  ad: 'Mübtedî',       yonelme: 'Mübtedî’ye',       anlam: 'Meşke yeni başlayan',                 renk: '#b0703c' },
-  { min: 2,  ad: 'Heveskâr',      yonelme: 'Heveskâr’a',       anlam: 'Mûsikiye gönül vermiş',               renk: '#138f92' },
-  { min: 5,  ad: 'Mutavassıt',    yonelme: 'Mutavassıt’a',     anlam: 'Orta seviyeye ulaşmış',               renk: '#2348a8' },
-  { min: 9,  ad: 'Mûsikişinas',   yonelme: 'Mûsikişinas’a',    anlam: 'Mûsikiden anlayan',                   renk: '#d84a33' },
-  { min: 13, ad: 'Müntehî',       yonelme: 'Müntehî’ye',       anlam: 'İleri seviyeye ulaşmış',              renk: '#15834f' },
-  { min: 17, ad: 'Muallim',       yonelme: 'Muallim’e',        anlam: 'Meşk verebilecek bilgide',            renk: '#7647b3' },
-  { min: 20, ad: 'Üstad-ı Kâmil', yonelme: 'Üstad-ı Kâmil’e',  anlam: 'Temel Türk müziği ünitelerini bitiren', renk: '#d9a520' },
-  { min: TR_DALLAR.reduce(function (t, d) { return t + gercekUniteler(d).length; }, 0), ad: 'Hâce', yonelme: 'Hâce’ye', anlam: 'Bütün Türk müziği ünitelerini bitiren meşk hocası', renk: '#8a1c4a' }
+  { oran: 0,      ad: 'Mübtedî',       yonelme: 'Mübtedî’ye',       anlam: 'Meşke yeni başlayan',                 renk: '#b0703c' },
+  { oran: 2 / 35,  ad: 'Heveskâr',      yonelme: 'Heveskâr’a',       anlam: 'Mûsikiye gönül vermiş',               renk: '#138f92' },
+  { oran: 5 / 35,  ad: 'Mutavassıt',    yonelme: 'Mutavassıt’a',     anlam: 'Orta seviyeye ulaşmış',               renk: '#2348a8' },
+  { oran: 9 / 35,  ad: 'Mûsikişinas',   yonelme: 'Mûsikişinas’a',    anlam: 'Mûsikiden anlayan',                   renk: '#d84a33' },
+  { oran: 13 / 35, ad: 'Müntehî',       yonelme: 'Müntehî’ye',       anlam: 'İleri seviyeye ulaşmış',              renk: '#15834f' },
+  { oran: 17 / 35, ad: 'Muallim',       yonelme: 'Muallim’e',        anlam: 'Meşk verebilecek bilgide',            renk: '#7647b3' },
+  { oran: 20 / 35, ad: 'Üstad-ı Kâmil', yonelme: 'Üstad-ı Kâmil’e',  anlam: 'Temel Türk müziği ünitelerini bitiren', renk: '#d9a520' },
+  { oran: 1,      ad: 'Hâce',          yonelme: 'Hâce’ye',          anlam: 'Bütün Türk müziği ünitelerini bitiren meşk hocası', renk: '#8a1c4a' }
 ];
-function unvanOf(n) { let u = UNVANLAR[0]; UNVANLAR.forEach(function (x) { if (n >= x.min) u = x; }); return u; }
-function unvan() { return unvanOf(bitenUniteSayisi(TR_DALLAR)); }
-function sonrakiUnvan() { const n = bitenUniteSayisi(TR_DALLAR); return UNVANLAR.find(function (x) { return x.min > n; }) || null; }
+function toplamTrUnite() { return TR_DALLAR.reduce(function (t, d) { return t + gercekUniteler(d).length; }, 0); }
+function unvanEsik(x) { return Math.ceil(x.oran * toplamTrUnite() - 1e-9); }
+function unvanSiraHesap(n) { let i = 0; UNVANLAR.forEach(function (x, j) { if (n >= unvanEsik(x)) i = j; }); return i; }
+// Gösterilen ünvan: hesaplanan ile ulaşılmış en yüksek olanın büyüğü
+function unvanSira() {
+  const i = unvanSiraHesap(bitenUniteSayisi(TR_DALLAR));
+  if (i > (DURUM.unvanEn || 0)) DURUM.unvanEn = i;
+  return Math.max(i, DURUM.unvanEn || 0);
+}
+function unvan() { return UNVANLAR[unvanSira()]; }
+function sonrakiUnvan() { return UNVANLAR[unvanSira() + 1] || null; }
+// Şerit ve profil için: ilerleme oranı ve alt yazı
+function unvanDurum() {
+  const i = unvanSira(), u = UNVANLAR[i], s = UNVANLAR[i + 1] || null;
+  const n = bitenUniteSayisi(TR_DALLAR), T = toplamTrUnite();
+  let oran, metin;
+  if (s) {
+    const a = unvanEsik(u), b = unvanEsik(s);
+    oran = Math.max(0, Math.min(1, (n - a) / Math.max(1, b - a)));
+    metin = s.yonelme + ' ' + Math.max(1, b - n) + ' ünite kaldı';
+  } else if (n < T) {
+    oran = n / T; metin = 'Yeni üniteler geldi: ' + n + ' / ' + T;
+  } else { oran = 1; metin = null; }
+  return { i: i, u: u, s: s, n: n, T: T, oran: oran, metin: metin };
+}
+
+// ---------- Kayıt taşıma ----------
+// Her taşıma bir kez çalışır (DURUM.tv). Çalışmadan önce kaydın kopyası ayrı anahtara yazılır.
+// Kural: seviye kimlikleri değişmez; birleşen seviyelerde yıldızlar yeniye geçer, fark cüzdana bonus.
+const TASIMALAR = [
+  // 1 (2.9): bugünkü ünvan kalıcı olarak kayda yazılır; sonraki ünite eklemeleri kimseyi düşürmez
+  // (35 ünitelik eski eşiklerle hesaplanır; böylece 2.8'den doğrudan yeni sürüme geçen de düşmez)
+  function () {
+    const ESKI = [0, 2, 5, 9, 13, 17, 20, 35], n = bitenUniteSayisi(TR_DALLAR);
+    let i = 0; ESKI.forEach(function (e, j) { if (n >= e) i = j; });
+    DURUM.unvanEn = Math.max(DURUM.unvanEn || 0, i, unvanSiraHesap(n));
+  },
+  // 2 (2.10): Sonsuz Meşk rekorları artık puanla; eski (doğru sayısı) rekorlar ayrıca saklanır
+  function () {
+    const r = DURUM.rekor || {}; DURUM.rekorEski = DURUM.rekorEski || {};
+    TR_DALLAR.concat(['karisik']).forEach(function (d) { if (r[d]) { DURUM.rekorEski[d] = r[d]; delete r[d]; } });
+    DURUM.rekor = r;
+  },
+  // 3 (2.11): Koma'nın ilk dört seviyesi ikiye indi; yıldızlar yeni seviyeye, fark cüzdana
+  function () { yildizBirlestir(['km1', 'km2'], 'km1'); yildizBirlestir(['km3', 'km4'], 'km3'); }
+];
+function kayitTasi() {
+  const v = DURUM.tv || 0;
+  if (v >= TASIMALAR.length) return;
+  tasimaYedegi();
+  for (let i = v; i < TASIMALAR.length; i++) {
+    try { TASIMALAR[i](); } catch (e) { console.warn('Taşıma ' + (i + 1) + ' hata verdi', e); }
+  }
+  DURUM.tv = TASIMALAR.length;
+  kaydet();
+}
+// Birleşen seviyeler için yardımcı (ileriki sürümler): eski seviyelerin en yüksek yıldızı yeniye geçer
+function yildizBirlestir(eskiIdler, yeniId) {
+  const L = eskiIdler.map(function (id) { return DURUM.yildiz[id] || 0; });
+  const en = Math.max.apply(null, [DURUM.yildiz[yeniId] || 0].concat(L));
+  const toplam = L.reduce(function (t, x) { return t + x; }, 0);
+  DURUM.yildiz[yeniId] = en;
+  DURUM.bonus = (DURUM.bonus || 0) + Math.max(0, toplam - en);
+  eskiIdler.forEach(function (id) { if (id !== yeniId) delete DURUM.yildiz[id]; });
+}
 
 // ---------- Seri ----------
 let SERI_MESAJ = null;
@@ -139,6 +207,8 @@ function ogeGecerli(id) {
   if (p === 'd') return CESNILER.some(function (c) { return c.oge === id; });
   if (p === 'm') return !!makamBul(id);
   if (p === 'b') return true;
+  if (p === 'u') return !!USUL[id.slice(2)];
+  if (p === 'g') return !!(MAKAM[id.slice(2)] || CESNI[id.slice(2)]);
   return false;
 }
 function vadesiGelenler() {
@@ -157,15 +227,19 @@ function ogeAdi(id) {
   if (p[0] === 'd') return CESNILER.find(function (c) { return c.oge === id; }).ad;
   if (p[0] === 'm') return makamBul(id).ad;
   if (p[0] === 'b') return p[1] === 'a' ? kodAd(p[2]) : tonAd(+p[2], 'majör') + ' / ' + tonAd(+p[2], 'minör');
+  if (p[0] === 'u') return USUL[p[1]].ad;
+  if (p[0] === 'g') return (MAKAM[p[1]] ? MAKAM[p[1]].ad + ' dizisi' : CESNI[p[1]].ad) + ' göçürme';
   return id;
 }
-function ogeDali(id) { return { p: 'perde', k: 'koma', d: 'cesni', m: 'makam', b: 'bati' }[id.split(':')[0]]; }
+function ogeDali(id) { return { p: 'perde', k: 'koma', d: 'cesni', m: 'makam', b: 'bati', u: 'usul', g: 'gocurme' }[id.split(':')[0]]; }
 function ogeSorusu(id) {
   const p = id.split(':')[0];
   if (p === 'p') return perdeOgeSorusu(id);
   if (p === 'k') return komaOgeSorusu(id);
   if (p === 'd') return cesniOgeSorusu(id);
   if (p === 'm') return makamOgeSorusu(id);
+  if (p === 'u') return usulOgeSorusu(id.slice(2));
+  if (p === 'g') return gocurmeOgeSorusu(id);
   return batiOgeSorusu(id);
 }
 
@@ -195,7 +269,10 @@ function turBaslat(o) {
 
 function kalpYaz() {
   const k = $('oyKalp');
-  if (TUR.kalpVar) k.textContent = '❤️'.repeat(Math.max(0, TUR.kalpKalan)) + '🤍'.repeat(Math.max(0, TUR.kalpMax - TUR.kalpKalan)) + (TUR.sonsuz ? '  ♾️ ' + TUR.dogru : '');
+  if (TUR.kalpVar) {
+    const kalan = Math.max(0, TUR.kalpKalan), tam = Math.floor(kalan), yarim = kalan - tam >= 0.5 ? 1 : 0;
+    k.textContent = '❤️'.repeat(tam) + (yarim ? '💔' : '') + '🤍'.repeat(Math.max(0, TUR.kalpMax - tam - yarim)) + (TUR.sonsuz ? (TUR.sonsuz === 'dikte' ? '  ♾️ ' + TUR.dogru : '  ' + sonsuzKat(TUR.dogru).ad + ' · ' + (TUR.puan || 0)) : '');
+  }
   else k.textContent = TUR.etiket || '';
 }
 
@@ -229,7 +306,7 @@ function jokerKullan(j) {
     q.joker = true;
     ipucuGoster(q.veri.ipucu);
   } else if (j.id === 'kalp') {
-    TUR.kalpKalan++; kalpYaz();
+    TUR.kalpKalan = Math.min(TUR.kalpMax, TUR.kalpKalan + 1); kalpYaz();
   } else if (j.id === 'atla') {
     ogeCevap(q.veri.oge, false);
     TUR.atlanan++;
@@ -295,6 +372,19 @@ function soruGoster() {
     g.appendChild(btn);
   }
 
+  // Formülü göster: göçürme ve dizi yazma sorularında formül başlıkta verilmez; isteyen yarım kalp (kalpsiz turda yarım hata) karşılığı açar
+  if (veri.formul) {
+    const fb = h('button', { class: 'dugme ince formulDugme', type: 'button' }, '🔑 Formülü göster' + (TUR.kalpVar ? ' (½ ❤️)' : ' (½ hata)'));
+    fb.disabled = TUR.kalpVar && TUR.kalpKalan <= 0.5;
+    fb.onclick = function () {
+      if (q.cevaplandi || q.formulAcik) return;
+      if (TUR.kalpVar) { if (TUR.kalpKalan <= 0.5) return; TUR.kalpKalan -= 0.5; }
+      TUR.hata += 0.5; q.formulAcik = true;
+      kalpYaz();
+      fb.replaceWith(h('div', { class: 'formulAcik' }, 'Formül: ', h('b', null, veri.formul)));
+    };
+    g.appendChild(fb);
+  }
   const ip = h('div', { id: 'oyIpucu', class: 'ipucu', hidden: true });
   g.appendChild(ip);
   if (TUR.ipucuAcik && veri.ipucu) ipucuGoster(veri.ipucu);
@@ -311,11 +401,22 @@ function soruGoster() {
   else if (veri.tip === 'yer') yerCiz(alan, veri, q, kontrol);
   else if (veri.tip === 'dizi') diziCiz(alan, veri, q, kontrol);
   else if (veri.tip === 'vur') vurCiz(alan, veri, q);
+  else if (veri.tip === 'sinif') sinifCiz(alan, veri, q, kontrol);
 
   jokerYaz();
   ustBilgiYaz();
 
-  if (TUR.sure && veri.tip !== 'vur' && !veri.dinle) {
+  const sk = TUR.sonsuz && TUR.sonsuz !== 'dikte' ? sonsuzKat(TUR.dogru) : null;
+  if (sk && sk.sure && veri.tip !== 'vur' && !veri.dinle) {
+    // Usta ve Pîr katlarında cezasız süre: dolunca kalp gitmez, yalnız bu soru puana sayılmaz
+    const sn = veri.tip === 'secim' ? sk.sure : sk.sure + 15, bas = Date.now(), cubuk = $('oySure');
+    cubuk.hidden = false;
+    TUR.zaman = setInterval(function () {
+      const kalan = sn - (Date.now() - bas) / 1000;
+      cubuk.style.width = Math.max(0, kalan / sn * 100) + '%';
+      if (kalan <= 0) { clearInterval(TUR.zaman); q.sureDoldu = true; }
+    }, 100);
+  } else if (TUR.sure && veri.tip !== 'vur' && !veri.dinle) {
     const sn = (veri.tip === 'secim' ? TUR.sure : TUR.sure + 10);
     const bas = Date.now();
     const cubuk = $('oySure');
@@ -345,6 +446,7 @@ function secimCiz(alan, veri, q) {
     const kayit = { b: b, x: x, dogru: dogrular.indexOf(x.key) >= 0 };
     b.onclick = function () {
       if (q.cevaplandi) return;
+      q.secilen = x.key;
       q.butonlar.forEach(function (y) { y.b.disabled = true; });
       if (kayit.dogru) b.classList.add('dogru');
       else {
@@ -374,18 +476,36 @@ function yerCiz(alan, veri, q, kontrol) {
   kontrol.onclick = function () {
     if (q.cevaplandi || !bil.tamamMi()) return;
     const deger = bil.deger();
-    const esit = function (a, b) {
-      if (y.sadeceAdim) return a.length === b.length && a.every(function (n, i) { return adim(n) === adim(b[i]); });
-      return a.length === b.length && a.every(function (n, i) { return notaEsit(n, b[i]); });
-    };
+    const ayni = function (a, b) { return y.sadeceAdim ? adim(a) === adim(b) : notaEsit(a, b); };
+    const esit = function (a, b) { return a.length === b.length && a.every(function (n, i) { return ayni(n, b[i]); }); };
     const kabul = y.kabul || [y.beklenen];
     const dogru = kabul.some(function (k) { return esit(deger, k); });
-    const goster = kabul.find(function (k) { return esit(deger, k); }) || y.beklenen;
+    // Kısmi puan: elle doldurulan nota sayısı 2+ ise ve yanlışlar yarıdan fazla değilse 1 düzeltme hakkı
+    const serbest = y.slotlar.map(function (sl) { return !sl.sabit; });
+    const yanlisSay = function (k) { return deger.filter(function (n, i) { return serbest[i] && !ayni(n, k[i]); }).length; };
+    const enYakin = kabul.slice().sort(function (a, b) { return yanlisSay(a) - yanlisSay(b); })[0];
+    const serbestSay = serbest.filter(Boolean).length, ys = yanlisSay(enYakin);
+    if (!dogru && !q.duzeltme && kismiAcik() && serbestSay >= 2 && ys * 2 <= serbestSay) {
+      q.duzeltme = true; q.kismiHedef = enYakin;
+      bil.isaretle(deger.map(function (n, i) { return serbest[i] && !ayni(n, enYakin[i]); }));
+      duzeltmeNotu(ys);
+      kontrol.textContent = 'Düzelt ve kontrol et';
+      return;
+    }
+    const goster = kabul.find(function (k) { return esit(deger, k); }) || (q.duzeltme ? q.kismiHedef : y.beklenen);
     bil.kilitle(y.sadeceAdim ? deger.map(function (n, i) { return adim(n) === adim(goster[i]) ? n : goster[i]; }) : goster);
     kontrol.hidden = true;
     const es = dogru || y.sadeceAdim ? null : esSesNotu(deger, y);
-    cevapla(dogru, es ? es.baslik : null, dogru ? null : porteSVG({ notalar: y.beklenen, aralik: 40, etiketler: y.etiketler }), es ? es.metin : null);
+    cevapla(dogru ? (q.duzeltme ? 'yarim' : true) : false, es ? es.baslik : null, dogru ? null : porteSVG({ notalar: y.beklenen, aralik: 40, etiketler: y.etiketler }), es ? es.metin : null);
   };
+}
+// Kısmi puan kalpli turlarda (seviye, final, Sonsuz Meşk) geçerli; Ustalık gibi kalpsiz turlarda değil
+function kismiAcik() { return TUR && TUR.kalpVar; }
+function duzeltmeNotu(ys) {
+  const k = $('oyIpucu');
+  k.innerHTML = '✏️ <b>' + ys + '</b> ' + 'yanlış var: kırmızıları düzelt. Bir hakkın var; düzeltirsen yarım kalp gider.';
+  k.hidden = false;
+  k.classList.add('duzeltNot');
 }
 // Yazılan sesler doğru ama bazıları aynı sesin öteki yazımıysa (ör. Re k.müc. diyezi = Mi bakiye bemolü): açıkla
 function esSesNotu(deger, y) {
@@ -421,7 +541,8 @@ function diziCiz(alan, veri, q, kontrol) {
   alan.appendChild(havuz);
   // Açık uçlu dizide (d.acik) kutu sayısı gösterilmez: kaç taş seçileceği de sorunun parçası
   const enCok = d.acik ? (d.enCok || d.havuz.length) : d.uzunluk;
-  const tamamMi = function () { return d.acik ? secilen.length >= 1 : secilen.length === d.uzunluk; };
+  const dolu = function () { return secilen.filter(Boolean).length; };
+  const tamamMi = function () { return d.acik ? secilen.length >= 1 : dolu() === d.uzunluk; };
   const sonuc = [];   // kontrol sonrası kutu renkleri
   const icerik = function (x) { return x.svg ? x.svg() : x.metin; };
   function ciz() {
@@ -436,14 +557,24 @@ function diziCiz(alan, veri, q, kontrol) {
       }
       const x = secilen[i];
       const s = h('button', { class: 'diziSlot' + (x ? ' dolu' : '') + (d.svgli ? ' svgli' : '') + (d.acik && !x ? ' acikSlot' : '') + (sonuc[i] ? ' ' + sonuc[i] : ''), type: 'button' }, x ? icerik(x) : (d.acik ? '…' : String(i + 1)));
-      s.onclick = function () { if (q.cevaplandi || !x) return; secilen.splice(i, 1); ciz(); };
+      s.onclick = function () {
+        if (q.cevaplandi || !x) return;
+        if (q.duzeltme) { if (sonuc[i] === 'dogru') return; secilen[i] = null; sonuc[i] = ''; }
+        else secilen.splice(i, 1);
+        ciz();
+      };
       slotlar.appendChild(s);
     }
     bosalt(havuz);
     d.havuz.forEach(function (x) {
       const kullanildi = !d.tekrarli && secilen.indexOf(x) >= 0;
-      const b = h('button', { class: 'diziTas' + (d.svgli ? ' svgli' : ''), type: 'button', disabled: kullanildi || q.cevaplandi || secilen.length >= enCok }, icerik(x));
-      b.onclick = function () { if (secilen.length < enCok) { secilen.push(x); ciz(); } };
+      const b = h('button', { class: 'diziTas' + (d.svgli ? ' svgli' : ''), type: 'button', disabled: kullanildi || q.cevaplandi || dolu() >= enCok }, icerik(x));
+      b.onclick = function () {
+        if (dolu() >= enCok) return;
+        const bos = secilen.indexOf(null);
+        if (bos >= 0) { secilen[bos] = x; sonuc[bos] = ''; } else secilen.push(x);
+        ciz();
+      };
       havuz.appendChild(b);
     });
     kontrol.disabled = !tamamMi();
@@ -456,11 +587,77 @@ function diziCiz(alan, veri, q, kontrol) {
     const keys = secilen.map(function (x) { return x.key; });
     const kabul = d.kabul || [d.beklenen];
     const dogru = d.dogruMu ? d.dogruMu(keys) : kabul.some(function (k) { return k.join('|') === keys.join('|'); });
+    // Kısmi puan: sabit uzunluklu dizide (2+ taş) yanlışlar yarıdan fazla değilse 1 düzeltme hakkı
+    if (!dogru && !q.duzeltme && kismiAcik() && !d.acik && !d.dogruMu && d.uzunluk >= 2) {
+      const hedef = kabul.slice().sort(function (a, b) {
+        const ya = keys.filter(function (k, i) { return a[i] !== k; }).length, yb = keys.filter(function (k, i) { return b[i] !== k; }).length;
+        return ya - yb;
+      })[0];
+      const yanlis = keys.map(function (k, i) { return hedef[i] !== k; });
+      const ys = yanlis.filter(Boolean).length;
+      if (ys * 2 <= d.uzunluk) {
+        q.duzeltme = true;
+        yanlis.forEach(function (y, i) { if (y) { secilen[i] = null; sonuc[i] = 'yanlis'; } else sonuc[i] = 'dogru'; });
+        duzeltmeNotu(ys);
+        kontrol.textContent = 'Düzelt ve kontrol et';
+        ciz();
+        return;
+      }
+    }
     keys.forEach(function (key, i) { sonuc[i] = dogru || kabul.some(function (k) { return k[i] === key; }) ? 'dogru' : 'yanlis'; });
     kontrol.hidden = true;
     q.cevaplandi = true;
     ciz();
-    cevapla(dogru, null, !dogru && veri.dogruGorsel ? veri.dogruGorsel() : null);
+    cevapla(dogru ? (q.duzeltme ? 'yarim' : true) : false, null, !dogru && veri.dogruGorsel ? veri.dogruGorsel() : null);
+  };
+}
+
+// Sınıflandır / eşleştir: her satırdaki öğe bir kutuya atanır. veri.sinif = { kutular: [{key, metin}], ogeler: [{key, metin|glif, dogru}] }
+function sinifCiz(alan, veri, q, kontrol) {
+  const c = veri.sinif, secim = {}, sonuc = {};
+  const kap = h('div', { class: 'sinifListe' });
+  alan.appendChild(kap);
+  function ciz() {
+    bosalt(kap);
+    c.ogeler.forEach(function (o) {
+      const satir = h('div', { class: 'sinifSatir' + (sonuc[o.key] ? ' ' + sonuc[o.key] : '') },
+        h('div', { class: 'sinifOge' + (o.glif ? ' bravura' : '') }, o.glif || o.metin));
+      const dug = h('div', { class: 'sinifKutular' + (c.kutular.length > 2 ? ' cok' : '') });
+      c.kutular.forEach(function (k) {
+        const b = h('button', { class: 'sinifKutu' + (secim[o.key] === k.key ? ' secili' : ''), type: 'button', disabled: q.cevaplandi || sonuc[o.key] === 'dogru' }, k.metin);
+        b.onclick = function () { secim[o.key] = k.key; if (sonuc[o.key] === 'yanlis') sonuc[o.key] = ''; ciz(); };
+        dug.appendChild(b);
+      });
+      satir.appendChild(dug);
+      kap.appendChild(satir);
+    });
+    kontrol.disabled = !c.ogeler.every(function (o) { return secim[o.key]; });
+  }
+  ciz();
+  kontrol.hidden = false;
+  kontrol.textContent = 'Kontrol et';
+  kontrol.onclick = function () {
+    if (q.cevaplandi) return;
+    const yanlis = c.ogeler.filter(function (o) { return secim[o.key] !== o.dogru; });
+    if (yanlis.length && !q.duzeltme && kismiAcik() && c.ogeler.length >= 2 && yanlis.length * 2 <= c.ogeler.length) {
+      q.duzeltme = true;
+      c.ogeler.forEach(function (o) { sonuc[o.key] = secim[o.key] === o.dogru ? 'dogru' : 'yanlis'; });
+      duzeltmeNotu(yanlis.length);
+      kontrol.textContent = 'Düzelt ve kontrol et';
+      ciz();
+      return;
+    }
+    c.ogeler.forEach(function (o) { sonuc[o.key] = secim[o.key] === o.dogru ? 'dogru' : 'yanlis'; });
+    q.cevaplandi = true;
+    kontrol.hidden = true;
+    ciz();
+    if (yanlis.length) {
+      kap.querySelectorAll('.sinifSatir.yanlis').forEach(function (el, i) {
+        const o = yanlis[i], k = c.kutular.find(function (x) { return x.key === o.dogru; });
+        el.appendChild(h('div', { class: 'sinifDogru' }, '→ ' + (k ? k.metin : '')));
+      });
+    }
+    cevapla(yanlis.length ? false : (q.duzeltme ? 'yarim' : true));
   };
 }
 
@@ -475,17 +672,25 @@ function cevapla(dogru, ozelMesaj, dogruGorsel, ekAciklama) {
   $('oyKontrol').hidden = true;
   if (q.ipucuBtn) q.ipucuBtn.disabled = true;
   const veri = q.veri;
-  if (dogru) {
+  const yarim = dogru === 'yarim';
+  if (yarim) {
+    // Düzeltilerek doğru: yarım kalp gider, doğru sayılır, tekrar listesine yazılmaz
+    TUR.dogru++; TUR.hata += 0.5; TUR.yarim = (TUR.yarim || 0) + 1;
+    if (TUR.kalpVar) TUR.kalpKalan -= 0.5;
+    sonsuzDogru(q, true);
+  } else if (dogru) {
     TUR.dogru++;
+    sonsuzDogru(q, false);
     if (TUR.kayit && veri.oge && !q.joker) {
       ogeCevap(veri.oge, true);
-      if (!DURUM.kart[veri.oge] && ogeDali(veri.oge) !== 'bati') { DURUM.kart[veri.oge] = 1; TUR.yeniKart.push(ogeAdi(veri.oge)); }
+      if (!DURUM.kart[veri.oge] && 'pkdm'.indexOf(veri.oge[0]) >= 0) { DURUM.kart[veri.oge] = 1; TUR.yeniKart.push(ogeAdi(veri.oge)); }
     }
   } else {
     TUR.hata++;
     if (TUR.kalpVar) TUR.kalpKalan--;
     if (TUR.yanlislar) TUR.yanlislar.push(veri);
     if (TUR.kayit && veri.oge) ogeCevap(veri.oge, false);
+    tekrarSorusuEkle(veri, q);
   }
   if (TUR.tip !== 'deneme') kaydet();
   kalpYaz();
@@ -496,14 +701,16 @@ function cevapla(dogru, ozelMesaj, dogruGorsel, ekAciklama) {
   const ic = bosalt($('oyGeriIc'));
   ic.appendChild(h('div', { class: 'geriBaslik' },
     h('span', { class: 'geriMaskot', html: bulbulSVG(dogru ? 'mutlu' : 'uzgun') }),
-    h('span', null, ozelMesaj || (dogru ? rastgele(OVGU) : 'Doğrusu: ' + (veri.dogruMetin || '')))));
+    h('span', null, ozelMesaj || (yarim ? 'Düzelttin! · yarım kalp' : dogru ? rastgele(OVGU) : 'Doğrusu: ' + (veri.dogruMetin || '')))));
+  const kartVar = !dogru && yanlisKarti(ic, veri, q);
   if (ekAciklama) ic.appendChild(h('div', { class: 'geriAciklama esSes', html: ekAciklama }));
-  if (dogruGorsel) ic.appendChild(h('div', { class: 'geriPorte' }, dogruGorsel));
+  if (dogruGorsel && !kartVar) ic.appendChild(h('div', { class: 'geriPorte' }, dogruGorsel));   // kart aynı bilgiyi gösteriyor
   if (veri.aciklama) {
     const batiMi = (TUR.seviye && TUR.seviye.dal === 'bati') || (veri.oge && veri.oge.indexOf('b:') === 0);
     const ac = h('div', { class: 'geriAciklama', html: veri.aciklama });
     ic.appendChild(batiMi || TUR.tip === 'ortak' ? ac : terimBagla(ac));
   }
+  panelSigdir(sh, ic);
   const devam = $('oyDevam');
   devam.textContent = 'Devam';
   devam.onclick = devamEt;
@@ -513,12 +720,39 @@ function cevapla(dogru, ozelMesaj, dogruGorsel, ekAciklama) {
 
   // Doğru cevapta otomatik geçiş (Ayarlar'dan kapatılabilir).
   // Şık sorusu: kısa. Porteye yazma, dizme ve hesaplı açıklamalar: açıklamanın uzunluğuna göre birkaç saniye.
-  if (dogru && DURUM.ayar.otoGec !== false) {
+  if (dogru && !yarim && DURUM.ayar.otoGec !== false) {
     const acik = veri.aciklama || '';
     const hesapSatir = (acik.match(/<li/g) || []).length;
     const uzun = veri.tip !== 'secim' || acik.indexOf('class="hesap') >= 0;
     otoBaslat(uzun ? Math.min(9000, 3500 + hesapSatir * 700) : 1200);
   }
+}
+
+// Seviyede yanlış yapılan öğe, birkaç soru sonra bir kez daha sorulur (turda en çok 2 kez)
+function tekrarSorusuEkle(veri, q) {
+  if (!TUR || (TUR.tip !== 'seviye' && TUR.tip !== 'yer') || !veri.oge || veri.tekrarSoru) return;
+  if ((TUR.tekrarEklenen || 0) >= 2 || (TUR.kalpVar && TUR.kalpKalan <= 0)) return;
+  let yeni = null;
+  try { yeni = ogeSorusu(veri.oge); } catch (e) { return; }
+  if (!yeni) return;
+  yeni.tekrarSoru = true;
+  TUR.sorular.splice(Math.min(TUR.sorular.length, TUR.k + 3), 0, yeni);
+  TUR.tekrarEklenen = (TUR.tekrarEklenen || 0) + 1;
+  q.tekrarEklendi = true;
+}
+
+// Panel ekrana sığmıyorsa uzun parçaları katla: önce adım adım hesap listeleri, sonra soluk ek açıklamalar
+function panelSigdir(sh, ic) {
+  const tasiyor = function () { return sh.scrollHeight > sh.clientHeight + 2; };
+  if (!tasiyor()) return;
+  ic.querySelectorAll('ol.hesap').forEach(function (ol) {
+    if (!tasiyor()) return;
+    const d = h('details', { class: 'hesapKatla' }, h('summary', null, 'Adım adım hesap (' + ol.children.length + ' adım)'));
+    ol.parentNode.insertBefore(d, ol); d.appendChild(ol);
+  });
+  if (!tasiyor()) return;
+  const gp = ic.querySelector('.geriPorte');
+  if (gp) { const d = h('details', { class: 'hesapKatla' }, h('summary', null, 'Doğru yazımı göster')); gp.parentNode.insertBefore(d, gp); d.appendChild(gp); }
 }
 
 // ---------- Otomatik geçiş ----------
@@ -582,9 +816,9 @@ function turBitir(basari) {
   clearInterval(TUR.zaman);
   $('oyDolgu').style.width = '100%';
   const t = TUR;
-  const sonuc = { basari: basari, hata: t.hata, dogru: t.dogru, toplam: t.sorular.length - t.atlanan, joker: t.jokerKullandi, ceza: t.ceza, yeniKart: t.yeniKart };
+  const sonuc = { basari: basari, hata: t.hata, dogru: t.dogru, toplam: t.sorular.length - t.atlanan, joker: t.jokerKullandi, ceza: t.ceza, yeniKart: t.yeniKart, tur: t, yarim: t.yarim || 0, hataTam: t.hata - 0.5 * (t.yarim || 0) };
   sonuc.yildiz = !basari ? 0 : Math.max(1, 3 - Math.floor(t.hata + t.ceza));
-  if (sonuc.basari && t.jokerKullandi) sonuc.yildiz = Math.min(2, sonuc.yildiz);
+  if (sonuc.basari && (t.jokerKullandi || t.ipuculuTur)) sonuc.yildiz = Math.min(2, sonuc.yildiz);
   if (t.tip !== 'deneme') kaydet();
   if (t.bitince) t.bitince(sonuc);
   if (SERI_MESAJ) { const m = SERI_MESAJ; SERI_MESAJ = null; setTimeout(function () { toast(m, 2600); }, 400); }
@@ -605,40 +839,70 @@ function turdanCik(sor) {
 // =====================================================
 let SON_UNITE = null;   // quiz bitince Dallar'da vurgulanacak ünite
 function yolaDonMetni() { return YOL_FILTRE === null ? 'Meşk Yolu’na dön' : 'Dallar’a dön'; }
-function seviyeBaslat(s) {
+// Bir sorunun karar sayısı: şık sorusu 1, porteye yazma ve dizmede doldurulan her kutu 1
+function kararSayisi(v) {
+  if (!v) return 0;
+  if (v.tip === 'yer') return v.yer.slotlar.filter(function (sl) { return !sl.sabit; }).length || 1;
+  if (v.tip === 'sinif') return v.sinif.ogeler.length;
+  if (v.tip === 'dizi') return v.dizi.acik ? (v.dizi.beklenen || []).length || 1 : v.dizi.uzunluk || 1;
+  return 1;
+}
+// Kalp sayısı seviyedeki toplam karara göre: 20'ye kadar 3, 40'a kadar 4, üstü 5
+function kalpSayisi(sorular) {
+  const k = sorular.reduce(function (t, v) { return t + kararSayisi(v); }, 0);
+  return k <= 20 ? 3 : k <= 40 ? 4 : 5;
+}
+function kalpTahmini(s) {
+  if (s._kalp) return s._kalp;
+  try { s._kalp = kalpSayisi(s.uret(s.soruSay)); } catch (e) { s._kalp = 3; }
+  return s._kalp;
+}
+function seviyeBaslat(s, ek) {
   SON_UNITE = s.unite.id;
   if (s.tip === 'sonsuz') { sonsuzBaslat(s.unite.sonsuzDal || s.dal); return; }
   const q = s.uret(s.soruSay);
-  turBaslat({
-    tip: s.tip, seviye: s, sorular: q, kalp: 3, joker: true, kayit: true, sure: s.sure || 0,
+  turBaslat(Object.assign({
+    tip: s.tip, seviye: s, sorular: q, kalp: kalpTahmini(s), joker: true, kayit: true, sure: s.sure || 0,
     bitince: function (r) { seviyeSonucu(s, r); }
-  });
+  }, ek || {}));
 }
 
 function seviyeSonucu(s, r) {
   const oncekiUnvan = unvan().ad;
   const eski = yildizOf(s.id);
   const uniteOnce = uniteBitti(s.unite);
-  if (r.basari) DURUM.yildiz[s.id] = Math.max(eski, r.yildiz);
+  if (r.basari) { DURUM.yildiz[s.id] = Math.max(eski, r.yildiz); if (DURUM.kalis) delete DURUM.kalis[s.id]; }
   kaydet();
   const yeniUnvan = unvan().ad;
   const L = DAL_SEVIYELERI[s.dal];
   const sonraki = L[L.indexOf(s) + 1];
   const icerik = [];
   if (!r.basari) {
+    // Başarısızlıkta yönlendirme: bir önceki seviye ya da ders; aynı seviyede 2. kalışta ücretsiz ipuçlu deneme
+    DURUM.kalis = DURUM.kalis || {};
+    const kalis = DURUM.kalis[s.id] = (DURUM.kalis[s.id] || 0) + 1;
+    kaydet();
+    const onceki = L[L.indexOf(s) - 1];
+    const ayniUnite = onceki && onceki.unite === s.unite;
     icerik.push(h('div', { class: 'sonucMaskot', html: bulbulSVG('uzgun') }),
       h('h2', null, '💔 Kalpler bitti'),
       h('p', null, r.dogru + ' doğru cevap verdin. Yanlış yaptıkların 🎯 Tekrar listene eklendi.'),
+      hataKartlariBolumu(r.tur),
       kartSatiri(r),
-      dugme('Tekrar dene', function () { modalKapat(); seviyeBaslat(s); }),
+      kalis >= 2 ? h('p', { class: 'kucukNot' }, 'Bu seviyeyi ' + kalis + '. kez denedin. İpuçları açık bir deneme ücretsiz (en fazla 2 ⭐).') : null,
+      kalis >= 2 ? dugme('💡 İpuçlu dene (ücretsiz)', function () { modalKapat(); seviyeBaslat(s, { ipucuAcik: true, ipuculuTur: true }); }) : null,
+      dugme('Tekrar dene', function () { modalKapat(); seviyeBaslat(s); }, kalis >= 2 ? 'gri' : ''),
+      ayniUnite ? dugme('↩︎ Önce “' + onceki.ad + '” seviyesini tekrar et', function () { modalKapat(); seviyeBaslat(onceki); }, 'gri')
+        : s.unite.ders ? dugme('📖 Dersi yeniden gör', function () { modalKapat(); turdanCik(false); uniteDersiAc(s.unite); }, 'gri') : null,
       dugme(yolaDonMetni(), function () { modalKapat(); turdanCik(false); }, 'gri'));
   } else {
     const fark = yildizOf(s.id) - eski;
     icerik.push(h('div', { class: 'sonucMaskot', html: bulbulSVG('mutlu') }),
       h('h2', null, s.tip === 'boss' ? '👑 Ünite tamamlandı!' : '🎉 Seviye tamam!'),
       yildizDizi(r.yildiz),
-      r.joker ? h('p', { class: 'kucukNot' }, 'Joker kullandın: en fazla 2 ⭐') : null,
-      h('p', null, r.dogru + ' doğru · ' + r.hata + ' hata'),
+      r.joker ? h('p', { class: 'kucukNot' }, 'Joker kullandın: en fazla 2 ⭐') : r.tur.ipuculuTur ? h('p', { class: 'kucukNot' }, 'İpuçlu denemede en fazla 2 ⭐') : null,
+      h('p', null, r.dogru + ' doğru · ' + r.hataTam + ' hata' + (r.yarim ? ' · ' + r.yarim + ' düzeltme' : '')),
+      hataKartlariBolumu(r.tur),
       h('p', null, fark > 0 ? '⭐ +' + fark : 'Yıldız rekorunu geçmedin'),
       yeniUnvan !== oncekiUnvan ? h('div', { class: 'yeniUnvan' }, h('span', { class: 'unvanRozet buyuk', html: rozetSVG(unvan().renk) }),
         h('div', null, 'Yeni ünvan: ' + yeniUnvan + '!', h('small', null, unvan().anlam))) : null,
@@ -764,56 +1028,106 @@ function antrenmanBaslat(a) {
 // =====================================================
 // SONSUZ MEŞK
 // =====================================================
+// Meydan okuma modu: soru, seviyenin listedeki yerine göre değil zorluk puanına göre seçilir.
+// Katlar: Kalfa (0–9 doğru) · Usta (10–24) · Pîr (25+). Rekor puanla tutulur.
+const SONSUZ_KATLAR = [
+  { ad: 'Kalfa', min: 0,  esik: 0.30, puan: 1, sik: 4 },
+  { ad: 'Usta',  min: 10, esik: 0.55, puan: 2, sik: 5, sure: 25 },
+  { ad: 'Pîr',   min: 25, esik: 0.75, puan: 3, sik: 6, sure: 20 }
+];
+function sonsuzKat(seri) { let k = SONSUZ_KATLAR[0]; SONSUZ_KATLAR.forEach(function (x) { if (seri >= x.min) k = x; }); return k; }
+// Seviyenin zorluk puanı: karar sayısı, şık sayısı, üretim (yer/dizi), final, süre ve ünitenin dal içindeki sırası
+function seviyeZorluk(s) {
+  if (s._zor !== undefined) return s._zor;
+  let z = 0;
+  try {
+    const L = s.uret(Math.min(4, s.soruSay || 4));
+    const ort = function (f) { return L.reduce(function (t, v) { return t + f(v); }, 0) / Math.max(1, L.length); };
+    z += ort(kararSayisi) * 0.8;
+    z += ort(function (v) { return v.tip === 'secim' ? Math.max(0, (v.siklar || []).length - 3) * 0.4 : 1.5; });
+  } catch (e) { z = 1; }
+  if (s.tip === 'boss') z += 1.2;
+  if (s.sure) z += 1;
+  const uL = gercekUniteler(s.dal);
+  z += Math.max(0, uL.indexOf(s.unite)) / Math.max(1, uL.length) * 2.5;
+  if (s.unite.seviyeler[0] === s) z -= 1.5;          // ünitenin ilk tanıma seviyesi
+  return (s._zor = z);
+}
 function sonsuzHavuz(dal) {
   const dallar = dal === 'karisik' ? TR_DALLAR : [dal];
   let L = [];
   dallar.forEach(function (d) { L = L.concat(DAL_SEVIYELERI[d].filter(function (s) { return s.tip !== 'sonsuz' && bittiMi(s); })); });
   if (!L.length) dallar.forEach(function (d) { L = L.concat(DAL_SEVIYELERI[d].filter(function (s) { return s.tip !== 'sonsuz'; })); });
-  return L;
+  return L.sort(function (a, b) { return seviyeZorluk(a) - seviyeZorluk(b); });
 }
 function sonsuzAcik(dal) {
   if (dal === 'dikte') return acikMi(SEVIYE['sn-dikte']);
   if (dal === 'karisik') return TR_DALLAR.some(function (d) { return DAL_SEVIYELERI[d].some(function (s) { return s.tip !== 'sonsuz' && bittiMi(s); }); });
   return acikMi(SEVIYE['sn-' + dal]);
 }
-// seri arttıkça listenin sonundaki (zor) seviyeler ağırlaşır; zayıf öğeler araya karışır
+// Sorunun sert biçimi: şık sayısı kata göre artar (üretici destekliyorsa), soru meydan okuma etiketi alır
+function sonsuzSert(q, kat) {
+  if (!q) return q;
+  q.kat = kat.ad;
+  return q;
+}
 function sonsuzSorulari(dal, seri, n) {
   if (dal === 'dikte') return sonsuzDikteSorulari(seri, n);
-  const L = sonsuzHavuz(dal);
-  const zor = Math.min(1, seri / 20);
+  const L = sonsuzHavuz(dal), kat = sonsuzKat(seri);
+  const bas = Math.min(L.length - 1, Math.floor(L.length * kat.esik));
+  const P = L.slice(bas);
   const zayif = zayiflar().filter(function (id) { return dal === 'karisik' || ogeDali(id) === dal; });
   const sorular = [];
   for (let i = 0; i < n; i++) {
-    if (zayif.length && Math.random() < 0.2) { try { sorular.push(ogeSorusu(rastgele(zayif))); continue; } catch (e) {} }
-    const r = Math.pow(Math.random(), 1 - 0.75 * zor);
-    const s = L[Math.min(L.length - 1, Math.floor(r * L.length))];
-    try { sorular.push(s.uret(1)[0]); } catch (e) { console.warn(e); }
+    if (zayif.length && Math.random() < 0.2) { try { sorular.push(sonsuzSert(ogeSorusu(rastgele(zayif)), kat)); continue; } catch (e) {} }
+    const s = rastgele(P);
+    try {
+      let q = s.uret(1, kat.sik)[0];
+      if (q && q.tip === 'secim' && q.siklar && q.siklar.length < kat.sik && kat.sik > 4) {
+        const q2 = s.uret(1, kat.sik)[0]; if (q2 && q2.siklar && q2.siklar.length > q.siklar.length) q = q2;
+      }
+      sorular.push(sonsuzSert(q, kat));
+    } catch (e) { console.warn(e); }
   }
   return sorular.filter(Boolean);
 }
 function sonsuzBaslat(dal) {
   if (!sonsuzAcik(dal)) { toast(dal === 'karisik' ? 'Önce birkaç seviye bitir' : '🔒 Önce bu dalın bütün ünitelerini bitir', 2600); return; }
   DURUM.rekor = DURUM.rekor || {};
+  const dikte = dal === 'dikte';
   turBaslat({
-    tip: 'sonsuz', sonsuz: dal, sorular: sonsuzSorulari(dal, 0, 5), kalp: 3, joker: false, kayit: true,
+    tip: 'sonsuz', sonsuz: dal, sorular: sonsuzSorulari(dal, 0, 5), kalp: 3, joker: false, kayit: true, puan: 0,
     bitince: function (r) {
-      const eski = DURUM.rekor[dal] || 0, yeni = r.dogru > eski;
-      if (yeni) DURUM.rekor[dal] = r.dogru;
+      const skor = dikte ? r.dogru : (r.tur.puan || 0);
+      const eski = DURUM.rekor[dal] || 0, yeni = skor > eski;
+      if (yeni) DURUM.rekor[dal] = skor;
       let odul = 0;
-      if (yeni && r.dogru >= 10) { odul = Math.floor(r.dogru / 10) - Math.floor(eski / 10); if (odul > 0) DURUM.bonus += odul; }
+      if (yeni && skor >= 10) { odul = Math.floor(skor / 10) - Math.floor(eski / 10); if (odul > 0) DURUM.bonus += odul; }
       kaydet();
-      const ad = dal === 'karisik' ? 'Her şey karışık' : dal === 'dikte' ? '🎹 Sonsuz dikte' : DALLAR[dal].ikon + ' ' + DALLAR[dal].ad;
+      const kat = sonsuzKat(r.dogru), eskiSurum = (DURUM.rekorEski || {})[dal];
+      const ad = dal === 'karisik' ? 'Her şey karışık' : dikte ? '🎹 Sonsuz dikte' : DALLAR[dal].ikon + ' ' + DALLAR[dal].ad;
       modalAc(h('div', { class: 'sonuc' },
         h('div', { class: 'sonucMaskot', html: bulbulSVG(yeni ? 'mutlu' : 'normal') }),
         h('h2', null, '♾️ Sonsuz Meşk · ' + ad),
-        h('div', { class: 'rekorSayi' }, String(r.dogru)),
+        h('div', { class: 'rekorSayi' }, String(skor)),
+        dikte ? null : h('p', null, r.dogru + ' doğru · ulaştığın kat: ', h('b', null, kat.ad)),
         h('p', null, yeni ? (eski ? '🏅 Yeni rekor! Eski rekorun: ' + eski : '🏅 İlk rekorun!') : 'Rekorun: ' + eski),
-        odul > 0 ? h('p', null, '⭐ +' + odul) : h('p', { class: 'kucukNot' }, 'Rekorunu her 10 doğruda geçince ⭐ +1.'),
+        odul > 0 ? h('p', null, '⭐ +' + odul) : h('p', { class: 'kucukNot' }, dikte ? 'Rekorunu her 10 doğruda geçince ⭐ +1.' : 'Puan: Kalfa katında doğru başına 1, Usta’da 2, Pîr’de 3. Rekorunu her 10 puanda geçince ⭐ +1.'),
+        eskiSurum ? h('p', { class: 'kucukNot' }, 'Eski sistemdeki rekorun (doğru sayısı): ' + eskiSurum) : null,
         h('p', { class: 'kucukNot' }, 'Yanlış yaptıkların Tekrar listene eklendi.'),
         dugme('Bir daha', function () { modalKapat(); sonsuzBaslat(dal); }),
         dugme(yolaDonMetni(), function () { modalKapat(); turdanCik(false); }, 'gri')), { kapatilamaz: true });
     }
   });
+}
+// Sonsuz Meşk'te doğru cevap: kata göre puan; süre dolduysa puan yok; her 15 doğruda +1 kalp
+function sonsuzDogru(q, yarim) {
+  if (!TUR || !TUR.sonsuz || TUR.sonsuz === 'dikte') return;
+  const kat = sonsuzKat(TUR.dogru - 1);
+  if (!q.sureDoldu) TUR.puan = (TUR.puan || 0) + (yarim ? kat.puan / 2 : kat.puan);
+  if (TUR.dogru % 15 === 0 && TUR.kalpKalan < TUR.kalpMax) { TUR.kalpKalan = Math.min(TUR.kalpMax, TUR.kalpKalan + 1); toast('❤️ +1 kalp'); }
+  const yeniKat = sonsuzKat(TUR.dogru);
+  if (yeniKat !== kat) setTimeout(function () { toast('⬆️ ' + yeniKat.ad + ' katına çıktın!', 2200); }, 300);
 }
 
 // Dersten sonra rehberli deneme: 2, 3, 4, 4 şık; ipucu açık; ceza yok

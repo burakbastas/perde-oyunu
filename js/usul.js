@@ -10,9 +10,9 @@ const USUL_HAM = [
   // id, ad, zaman, varsayılan ölçü paydası, vuruşlar [ses, süre(16'lık), sap, hece], mertebeler, küçük usullerin birleşimi (Mus2)
   ['nimsofyan',  'Nim Sofyan',   2, 4,  [['D', 4, 'u', 'düm'], ['T', 4, 'd', 'tek']], [2, 4, 8], null],
   ['semai',      'Semai',        3, 4,  [['D', 4, 'u', 'düm'], ['T', 4, 'd', 'tek'], ['T', 4, 'd', 'tek']], [2, 4, 8], null],
-  ['sofyan',     'Sofyan',       4, 8,  [['D', 4, 'u', 'düüm'], ['T', 2, 'u', 'te'], ['K', 2, 'd', 'ke']], [2, 4, 8], ['nimsofyan', 'nimsofyan']],
+  ['sofyan',     'Sofyan',       4, 4,  [['D', 8, 'u', 'düüm'], ['T', 4, 'u', 'te'], ['K', 4, 'd', 'ke']], [2, 4, 8], ['nimsofyan', 'nimsofyan']],
   ['turkaksagi', 'Türk Aksağı',  5, 8,  [['D', 4, 'u', 'düüm'], ['T', 4, 'd', 'teek'], ['T', 2, 'd', 'tek']], [4, 8], ['nimsofyan', 'semai']],
-  ['yuruksemai', 'Yürük Semai',  6, 4,  [['D', 4, 'u', 'düm'], ['T', 4, 'd', 'tek'], ['T', 4, 'd', 'tek'], ['D', 4, 'u', 'düm'], ['T', 8, 'd', 'teek']], [2, 4, 8], ['semai', 'semai']],
+  ['yuruksemai', 'Yürük Semai',  6, 8,  [['D', 2, 'u', 'düm'], ['T', 2, 'd', 'tek'], ['T', 2, 'd', 'tek'], ['D', 2, 'u', 'düm'], ['T', 4, 'd', 'teek']], [2, 4, 8], ['semai', 'semai']],
   ['devrihindi', 'Devr-i Hindî', 7, 8,  [['D', 2, 'u', 'düm'], ['T', 2, 'd', 'tek'], ['T', 2, 'd', 'tek'], ['D', 4, 'u', 'düüm'], ['T', 4, 'd', 'teek']], [4, 8], ['semai', 'sofyan']],
   ['devrituran', 'Devr-i Turan', 7, 8,  [['D', 4, 'u', 'düüm'], ['T', 4, 'd', 'teek'], ['T', 6, 'd', 'teeek']], [8, 16], ['sofyan', 'semai']],
   ['duyek',      'Düyek',        8, 8,  [['D', 2, 'u', 'düm'], ['T', 4, 'd', 'teek'], ['T', 2, 'd', 'tek'], ['D', 4, 'u', 'düüm'], ['T', 4, 'd', 'teek']], [4, 8], ['sofyan', 'sofyan']],
@@ -220,7 +220,6 @@ function usulSiklar(u, havuz, ayni) {
 }
 // Kendi adı olan mertebeler (Adana Musiki Derneği usul sayfaları)
 const MERTEBE_ADLARI = [
-  { u: 'yuruksemai', p: 8, ad: 'Yürük Semai' }, { u: 'yuruksemai', p: 4, ad: 'Sengin Semai' },
   { u: 'duyek', p: 4, ad: 'Ağır Düyek' }, { u: 'aksak', p: 4, ad: 'Ağır Aksak' }, { u: 'aksaksemai', p: 4, ad: 'Ağır Aksak Semai' }
 ];
 function heceMetni(u) { return u.olaylar.map(function (e) { return e.hece; }).join(' '); }
@@ -241,6 +240,12 @@ function bilgiSoru(B) {
 }
 
 function usulSoru(tip, u, havuz) {
+  const q = usulSoru0(tip, u, havuz);
+  // 3.0.4: usul sorusu Tekrar'a girsin (öğe kimliği u:<id>); genel bilgi soruları hariç
+  if (q && !q.oge && tip !== 'bilgi' && u && u.id) q.oge = 'u:' + u.id;
+  return q;
+}
+function usulSoru0(tip, u, havuz) {
   const q = { oge: null, tip: 'secim', aciklama: usulAciklama(u), ipucu: u.zaman + ' zamanlı' };
   const ayniZaman = /Ayni$/.test(tip);
   tip = tip.replace(/Ayni$/, '');
@@ -355,7 +360,7 @@ function usulSoru(tip, u, havuz) {
     const uu = USUL[x.u], olcu = uu.zaman + '/' + x.p;
     if (Math.random() < 0.5) {
       q.soru = { metin: uu.ad + ' · ' + olcu, kucuk: true }; q.alt = 'Bu mertebenin adı ne?';
-      const dis = karistir(MERTEBE_ADLARI.filter(function (y) { return y.ad !== x.ad; }).map(function (y) { return y.ad; })).slice(0, 3);
+      const dis = karistir(MERTEBE_ADLARI.filter(function (y) { return y.ad !== x.ad; }).map(function (y) { return y.ad; }).concat(['Yürük Semai', 'Sengin Semai'])).slice(0, 3);
       q.siklar = [x.ad].concat(dis).map(function (y) { return { key: y, metin: y }; }); q.dogru = x.ad;
     } else {
       q.soru = { metin: x.ad }; q.alt = 'Hangi usulün hangi mertebesi?';
@@ -621,7 +626,7 @@ USUL_UNITELER[2].ders = function () {
 };
 USUL_UNITELER[3].ders = function () {
   return [{ baslik: 'Uzun küçük usuller', metin: '<p><b>Yürük Semai</b> (6) iki semaiden oluşur. <b>Düyek</b> ve <b>Müsemmen</b> 8, <b>Curcuna</b> ve <b>Aksak Semai</b> 10 zamanlıdır.</p><p>Curcuna onaltılık, Aksak Semai sekizlik birimle yazılır: kalıpları benzer, hızları farklıdır.</p>' },
-    { baslik: 'Adı olan mertebeler', metin: '<p>Bazı mertebelerin kendi adı vardır. Genellikle dörtlüklü, ağır mertebeye <b>Ağır</b> denir:</p><p><b>Yürük Semai</b> 6/8 · <b>Sengin Semai</b> 6/4<br><b>Ağır Düyek</b> 8/4<br><b>Ağır Aksak</b> 9/4<br><b>Ağır Aksak Semai</b> 10/4</p>' }]
+    { baslik: 'Adı olan mertebeler', metin: '<p>Bazı mertebelerin kendi adı vardır. Genellikle dörtlüklü, ağır mertebeye <b>Ağır</b> denir:</p><p><b>Yürük Semai</b> 6/8 (<b>Sengin Semai</b> de 6/8 yazılır; daha ağır icra edilir)<br><b>Ağır Düyek</b> 8/4<br><b>Ağır Aksak</b> 9/4<br><b>Ağır Aksak Semai</b> 10/4</p>' }]
     .concat(usuller(U_UZUN).map(usulKarti));
 };
 USUL_UNITELER[4].ders = function () {
@@ -890,4 +895,11 @@ function bendirSayfasi() {
       secim('Yavaştan hızlan', 'hizlan', '24 aşağıdan başlar, her 4 devirde +4 artar')),
     h('label', { class: 'bendirSes' }, '🔈', sesK, '🔊'),
     dugme('Kapat', modalKapat, 'gri')), { genis: true, kapaninca: dur });
+}
+
+// Tekrar için usul öğe sorusu
+function usulOgeSorusu(id) {
+  const u = USUL[id];
+  const havuz = USULLER.filter(function (x) { return U_HEPSI.indexOf(x.id) >= 0; });
+  return usulSoru(rastgele(['notaAd', 'adNota', 'zaman', 'hece', 'eksik']), u, havuz);
 }
