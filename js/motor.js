@@ -66,7 +66,8 @@ function yildizOf(id) { return DURUM.yildiz[id] || 0; }
 function bittiMi(s) { return yildizOf(s.id) > 0; }
 // Zincir: kilit sırasına giren seviyeler. Köprü (bonus) seviyeleri her zaman isteğe bağlıdır;
 // sonradan eklenen (yeni) seviyeler, oyuncu o üniteyi daha önce bitirdiyse isteğe bağlı sayılır.
-function istegeBagliMi(s) { return !!s.bonus || (!!s.yeni && uniteBitti(s.unite)); }
+// 3.1: Ayarlar'da sesli sorular kapalıysa 👂 seviyeleri de isteğe bağlıdır
+function istegeBagliMi(s) { return !!s.bonus || (!!s.yeni && uniteBitti(s.unite)) || (!!s.kulak && DURUM.ayar.kulak === false); }
 function acikMi(s) {
   if (bittiMi(s)) return true;   // daha önce geçilmiş seviye (sıra değişse de) açık kalır
   const L = DAL_SEVIYELERI[s.dal];
@@ -263,6 +264,8 @@ function turBaslat(o) {
   TUR.kalpVar = (o.kalp || 0) > 0;
   TUR.kalpMax = o.kalp || 0;
   TUR.kalpKalan = o.kalp || 0;
+  // 3.1: sesli soru varsa gitar seslerini dokunuşun içinde yüklemeye başla (telefonlarda ses izni)
+  if (typeof kulakHazirla === 'function' && DURUM.ayar.kulak !== false && (o.sonsuz || o.sorular.some(function (v) { return v && v.dinle && v.dinle.kulak; }))) kulakHazirla();
   ekranAc('ekranOyun');
   soruGoster();
 }
@@ -330,6 +333,7 @@ function ipucuGoster(m) {
 function soruGoster() {
   clearInterval(TUR.zaman);
   if (typeof ritimDur === 'function') ritimDur();
+  if (typeof kulakDur === 'function') kulakDur();
   const veri = TUR.sorular[TUR.k];
   const q = TUR.q = { veri: veri, butonlar: [], cevaplandi: false, ipucuNo: 1 };
   $('oyDolgu').style.width = (TUR.sonsuz ? (TUR.dogru % 10) * 10 : TUR.k / TUR.sorular.length * 100) + '%';
@@ -346,6 +350,7 @@ function soruGoster() {
   if (s.porte) kutu.appendChild(porteSVG(s.porte));
   if (s.svg) kutu.appendChild(h('div', { class: 'ritimKutu' }, s.svg()));
   if (veri.dinle) kutu.appendChild(dinleDugmesi(veri.dinle, true));
+  else if (veri.dinleSecenek && typeof kulakSecenekDugmesi === 'function' && !TUR.sonsuz && DURUM.ayar.kulak !== false) kutu.appendChild(kulakSecenekDugmesi(veri.dinleSecenek));   // 3.1.1
   g.appendChild(kutu);
   if (veri.alt) g.appendChild(h('div', { class: 'soruAlt' }, veri.alt));
 
@@ -393,6 +398,7 @@ function soruGoster() {
   g.appendChild(alan);
   const kontrol = $('oyKontrol');
   kontrol.hidden = true;
+  kontrol.disabled = false;   // 3.2.1: önceki sorudan (sınıflandır/diz) kilitli kalmasın
 
   if (veri.tip === 'secim') {
     secimCiz(alan, veri, q);
@@ -402,6 +408,7 @@ function soruGoster() {
   else if (veri.tip === 'dizi') diziCiz(alan, veri, q, kontrol);
   else if (veri.tip === 'vur') vurCiz(alan, veri, q);
   else if (veri.tip === 'sinif') sinifCiz(alan, veri, q, kontrol);
+  else if (veri.tip === 'acik') acikCiz(alan, veri, q, kontrol);   // 3.2: yazılıya hazırlık (yazili.js)
 
   jokerYaz();
   ustBilgiYaz();
@@ -430,7 +437,7 @@ function soruGoster() {
 }
 
 function secimCiz(alan, veri, q) {
-  const siklar = karistir(veri.siklar);
+  const siklar = veri.sirali ? veri.siklar.slice() : karistir(veri.siklar);   // 3.1: "1. çalım, 2. çalım" gibi şıklar sırasını korur
   const porteli = siklar.some(function (x) { return x.porte || x.svg; });
   const genis = siklar.some(function (x) { return x.genis; });
   const glifli = siklar.some(function (x) { return x.glif; });
@@ -705,6 +712,7 @@ function cevapla(dogru, ozelMesaj, dogruGorsel, ekAciklama) {
   const kartVar = !dogru && yanlisKarti(ic, veri, q);
   if (ekAciklama) ic.appendChild(h('div', { class: 'geriAciklama esSes', html: ekAciklama }));
   if (dogruGorsel && !kartVar) ic.appendChild(h('div', { class: 'geriPorte' }, dogruGorsel));   // kart aynı bilgiyi gösteriyor
+  if (veri.geriEk) { try { const ek = veri.geriEk(q, dogru); if (ek) ic.appendChild(ek); } catch (e) { console.warn(e); } }   // 3.1: sesli sorularda dinle düğmeleri
   if (veri.aciklama) {
     const batiMi = (TUR.seviye && TUR.seviye.dal === 'bati') || (veri.oge && veri.oge.indexOf('b:') === 0);
     const ac = h('div', { class: 'geriAciklama', html: veri.aciklama });
@@ -720,7 +728,7 @@ function cevapla(dogru, ozelMesaj, dogruGorsel, ekAciklama) {
 
   // Doğru cevapta otomatik geçiş (Ayarlar'dan kapatılabilir).
   // Şık sorusu: kısa. Porteye yazma, dizme ve hesaplı açıklamalar: açıklamanın uzunluğuna göre birkaç saniye.
-  if (dogru && !yarim && DURUM.ayar.otoGec !== false) {
+  if (dogru && !yarim && DURUM.ayar.otoGec !== false && !veri.otoYok) {
     const acik = veri.aciklama || '';
     const hesapSatir = (acik.match(/<li/g) || []).length;
     const uzun = veri.tip !== 'secim' || acik.indexOf('class="hesap') >= 0;
@@ -794,7 +802,7 @@ function ekranaDokunKur() {
     if (t.closest('.terim')) { otoIptal(); return; }              // terim okunuyor: bekle
     if (balonKapatiyor) { balonKapatiyor = false; return; }
     if (Date.now() - (TUR.q.cevapZamani || 0) < 400) return;     // cevabı veren dokunuş sayılmasın
-    if (t.closest('a, .terimBalon, .oyUst, #oyJoker, #oyDevam, #oyKontrol')) return;
+    if (t.closest('a, .terimBalon, .oyUst, #oyJoker, #oyDevam, #oyKontrol, .kulakDugmeler, .kulakGeri')) return;
     devamEt();
   });
   // Açıklamayı kaydıran öğrenci okuyordur: otomatik geçişi durdur
@@ -826,7 +834,7 @@ function turBitir(basari) {
 
 function turdanCik(sor) {
   if (!TUR) { anaEkranaDon(); return; }
-  if (!sor) { clearInterval(TUR.zaman); otoIptal(); if (typeof ritimDur === 'function') ritimDur(); TUR = null; modalKapat(); anaEkranaDon(); return; }
+  if (!sor) { clearInterval(TUR.zaman); otoIptal(); if (typeof ritimDur === 'function') ritimDur(); if (typeof kulakDur === 'function') kulakDur(); TUR = null; modalKapat(); anaEkranaDon(); return; }
   modalAc(h('div', null,
     h('h2', null, 'Çıkmak istiyor musun?'),
     h('p', null, 'Bu turdaki ilerleme kaybolur.' + (TUR && TUR.jokerKullandi ? ' Harcadığın yıldızlar iade edilmez.' : '')),
@@ -1056,8 +1064,9 @@ function seviyeZorluk(s) {
 function sonsuzHavuz(dal) {
   const dallar = dal === 'karisik' ? TR_DALLAR : [dal];
   let L = [];
-  dallar.forEach(function (d) { L = L.concat(DAL_SEVIYELERI[d].filter(function (s) { return s.tip !== 'sonsuz' && bittiMi(s); })); });
-  if (!L.length) dallar.forEach(function (d) { L = L.concat(DAL_SEVIYELERI[d].filter(function (s) { return s.tip !== 'sonsuz'; })); });
+  const sesli = function (s) { return !(s.kulak && DURUM.ayar.kulak === false); };   // 3.1
+  dallar.forEach(function (d) { L = L.concat(DAL_SEVIYELERI[d].filter(function (s) { return s.tip !== 'sonsuz' && bittiMi(s) && sesli(s); })); });
+  if (!L.length) dallar.forEach(function (d) { L = L.concat(DAL_SEVIYELERI[d].filter(function (s) { return s.tip !== 'sonsuz' && sesli(s); })); });
   return L.sort(function (a, b) { return seviyeZorluk(a) - seviyeZorluk(b); });
 }
 function sonsuzAcik(dal) {
