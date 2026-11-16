@@ -1,3 +1,54 @@
+# Seyir 0.35 – yükleme notu
+
+Sürüm numaraları 0.x düzenine geçti (3.5.0 → 0.35); 1.0, App Store ve Google Play yayınına ayrıldı. Yenilikler sayfası son üç sürümle sınırlandı.
+
+Türk müziği **Dikte** dalı, 22 üniteye görsel sorular ve "aynı soru arka arkaya" düzeltmesi. Kayıt taşıması yok; var olan seviye kimlikleri aynı, kimsenin ilerlemesi ya da ünvanı değişmez.
+
+Yeni dosyalar: `js/gorsel.js`, `js/tmdikte.js`. Değişenler: `index.html`, `sw.js`, `manifest.webmanifest`, `css/stil.css`, `js/cekirdek.js` (sürüm), `js/motor.js`, `js/arayuz.js`, `js/dikte.js`, `js/kulak.js`, `js/makam.js`, `js/yeni.js`, `js/ahenk.js`, `js/koma.js`, `js/perde.js`, `js/gocurme.js`, `js/usul.js`, `js/cesni.js`, `js/bati.js`, `GUNCELLEME.md`.
+
+## 1. Aynı soru arka arkaya gelmiyor (motor.js)
+- `soruImza(v)`: sorunun ekranda görünen hali ve doğru cevabından imza.
+- `sorulariTekille(sorular, uret)`: seviye turunda aynı soru iki kez çıkmışsa yenisiyle değiştirilir (soru havuzu yetiyorsa).
+- `ardisikAyir()`: her soru çizilmeden önce çalışır; sıradaki soru öncekiyle aynıysa ilerideki farklı bir soruyla yer değiştirir. Sonsuz Meşk, Tekrar ve karışık turlarda da geçerli.
+- Karışık tur üreticisi aynı imzalı soruyu ikinci kez almaz.
+
+## 2. Dikte dalı (`tmd`, üniteler `dk1`–`dk9`, + `sn-tmd` Sonsuz Meşk)
+- `dikte.js` motoru genişletildi: `M.sis` (donanım, harf → işaret, karar koması, ad) varsa sesler komayla çalınır, donanım anahtardan sonra çizilir, notalar perde adıyla anılır; `M.grup` aksak usulün sekizlik grupları (kiriş, sayım tıkları, ölçüye sığma). `DK_OLCU`'ya 3/4, 5/8, 7/8, 9/8 eklendi. Batı ezgi diktesi (b21) davranışı aynı.
+- `tmdikte.js`: bağlam (çeşni / makam / şed) seçimi, usullü üretici, yeni soru türleri (usulü bul, birim say, usulü dinle: ad ve zaman), dokuz ünite ve dersleri.
+- Her soruda çeşninin ya da makamın adı, donanımı ve ilk ses verilir; öğrenci koma işareti seçmez. Aynı çeşni / makam art arda gelmez.
+- Dal `DAL_SIRA`'da, `TR_DALLAR`'da değil: ünvan hesabına ve "Her şey karışık" Sonsuz Meşk'e girmez.
+- Meşk Yolu sırasına serpiştirildi (`MESK_SIRA`). Sesli sorular kapalıysa bütün seviyeler isteğe bağlıdır.
+- Yapılmayan: geçki ünitesi, SymbTr'den gerçek ezgi cümleleri.
+
+## 3. Görsel sorular
+- `gorsel.js`: `porteDokunCiz` (portede notaya dokun; tekli ya da çoklu).
+- Makam 1–4, 6 ve şed makamlar: karar / güçlü / yeden portede (`kararPorte`, `gucluPorte`, `yedenPorte`), güçlüye dizide dokun (`gucluDokun`), makam adından dizi seç (`makamDiziSec`), çeşni birleşimi renkli portede. Makam adı verilen sorularda isteğe bağlı 🔊 Dinle (`dinleSecenek: { makam }`).
+- Ahenk 1–2: yazılan–duyulan klavyesi (`klavyeAd`, `adKlavye`), ney boyları çizimi (`boyAd`, `adBoy`), yeni seviye `a1-kulak` (aynı ezgi iki ahenkte; `yeni: true`).
+- Koma 1: koma cetveli (`cetvelAd`, `adCetvel`). Ses yok.
+- Göçürme 4: kaynak portede, şıklar portede, isteğe bağlı yerinde / göçürülmüş dinleme. Göçürme 5: `kaynakPorte`, `perdePorte`.
+- Perde 6–7: şıklar portede (`perdeSikPorte`). Ses yok.
+- Usul 6–7: birleşim sorularında vuruş çizimleri.
+- Dörtlü-Beşli: aralık dizilişi koma oranlı şeritle (`cesniSeritSVG`).
+- Batı: çevrim portede (`cevrimSec`, `cevrimKur`), minörde yükselen seslere dokun ve diziyi kur (`degisenDokun`, `turKur`), beşliler çemberinde tona dokun (`cemberDokunCiz`). Ses yok.
+
+**Önce test:** `seyir-0.35-test.zip` paketini perde-test deposuna yükle.
+
+# Seyir 0.34 (eski adıyla 3.4.0) – yükleme notu
+
+Batı Teorisi 18–20. ünitelere (Majör tonlar: diyezliler `b6`, bemollüler `b7`, Minör tonlar `b8`) görsel sorular. Yeni dosya yok. Değişenler: `index.html`, `sw.js`, `manifest.webmanifest`, `css/stil.css`, `js/cekirdek.js` (yalnız sürüm), `js/bati.js`, `js/motor.js`, `js/arayuz.js` (Yenilikler), `GUNCELLEME.md`. Kayıt taşıması yok; seviye kimlikleri aynı, kimsenin ilerlemesi değişmez.
+
+- Yeni soru biçimleri (`tonGorselSoru`, bati.js sonu):
+  - `klavyeMajor` / `klavyeMinor`: donanım portede, karar sesine klavyede dokun. `ilgiliKlavye`: verilen karar tuşundan 3 yarım ses aşağı/yukarı.
+  - `donanimYaz`: donanımı porteye yaz (işaret türünü seç, sırayla yerlerine dokun; üstüne dokunup kaydırarak düzelt). Harf ve sıra doğruysa doğru; oktav alışılmış yerde değilse doğru yazım geri bildirimde gösterilir. Kısmi puan: yanlışlar yarıdan fazla değilse bir düzeltme hakkı.
+  - `diziKur`: majör dizi portede, her notanın işaretini seç (mevcut `yer` tipi).
+  - Porteli şıklar: `donanimDogru` (hangisi doğru yazılmış), `diziTon` / `diziTonMinor` (diziden donanım), `ilgiliPorte` (karar sesinden ilgili tonun kararı), `ayniAdPorte`.
+- Motor: yeni soru tipi `ozel` (`q.ozel = { karar, ciz(alan, veri, q, kontrol) }`); soru portesinde `kirp: true`.
+- Seviye karışımları: yalnız yazılı (yazı → yazı) soru b6 ve b7’de kalmadı, b8’de yalnız b8-2’nin beşte biri. `b6-yer` ve `b7-yer` “Donanımı porteye yaz” oldu (yazılı taş dizme `donanimDiz` seviyelerden çıktı, kod duruyor).
+- Dersler: b6’ya “Klavyede gör”, b8’e “Klavyede küçük üçlü” kartı.
+- Düzeltmeler: b6/b7’de `tonDonanim` soruların %30’unda minör ton soruyordu (minör b8’de anlatılıyor) → `tonDonanimMajor`. Batı `yer` sorularında (aralık kurma dahil) harfi doğru, işareti yanlış cevaba “Ses doğru, yazım farklı” deniyordu (`esSesNotu` koma hesabı ♯/♭ tanımıyor) → Batı paletinde bu not kapalı.
+
+**Önce test:** `seyir-3.4.0-test.zip` paketini perde-test deposuna yükle.
+
 # Seyir 3.3.2 – yükleme notu
 
 Hata denetimi düzeltmeleri. Yeni dosya yok, yeni içerik yok. Değişenler: `index.html`, `sw.js`, `manifest.webmanifest`, `css/stil.css` (yalnız `?v=`), `js/cekirdek.js`, `js/motor.js`, `js/arayuz.js`, `js/ortak.js`, `js/kulak-aralik.js`, `GUNCELLEME.md`. Kayıt taşıması yok; `DURUM.kulak.aralik.ust` ilk açılışta eski kayıttan hesaplanır.
